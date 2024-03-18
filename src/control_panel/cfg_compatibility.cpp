@@ -47,7 +47,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       ImGui::TreePop  ();
     }
 
-    if ( ImGui::CollapsingHeader ("渲染后端",
+    if ( ImGui::CollapsingHeader ("后端",
            SK_IsInjected () ? ImGuiTreeNodeFlags_DefaultOpen :
                               0 ) )
     {
@@ -405,7 +405,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       RECT window = { };
       RECT client = { };
 
-      ImGui::TextColored (ImColor (1.f,1.f,1.f), "Window Management:  "); ImGui::SameLine ();
+      ImGui::TextColored (ImColor (1.f,1.f,1.f), "窗口管理:  "); ImGui::SameLine ();
       ImGui::RadioButton ("Dimensions", &window_pane, 0);                 ImGui::SameLine ();
       ImGui::RadioButton ("Details",    &window_pane, 1);
       ImGui::Separator   (                             );

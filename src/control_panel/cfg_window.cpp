@@ -30,7 +30,7 @@ SK::ControlPanel::Window::Draw (void)
   static auto& rb =
     SK_GetCurrentRenderBackend ();
 
-  if ( ImGui::CollapsingHeader ("Window Management") )
+  if ( ImGui::CollapsingHeader ("窗口管理") )
   {
     ImGui::PushStyleColor (ImGuiCol_Header,        ImVec4 (0.02f, 0.68f, 0.90f, 0.45f));
     ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.07f, 0.72f, 0.90f, 0.80f));

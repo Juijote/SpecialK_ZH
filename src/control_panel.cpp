@@ -2250,7 +2250,7 @@ DisplayModeMenu (bool windowed)
   bool       force  = windowed ? config.display.force_windowed :
                                  config.display.force_fullscreen;
 
-  const char* modes = "Windowed Mode\0Fullscreen Mode\0\0";
+  const char* modes = "窗口模式\0全屏模式\0\0";
 
 
   // Engaging fullscreen mode in OpenGL is more complicated than I want to
@@ -2339,13 +2339,13 @@ DisplayModeMenu (bool windowed)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("This may lockup non-compliant graphics engines;"
-                         " save your game first!");
+      ImGui::SetTooltip ("这可能会锁定不兼容的图形引擎；"
+                         " 首先保存你的游戏！");
     }
 
     ImGui::SameLine ();
 
-    if (ImGui::Checkbox ("Force Override", &force))
+    if (ImGui::Checkbox ("强制覆盖", &force))
     {
       switch (mode)
       {
@@ -3176,7 +3176,7 @@ SK_ImGui_ControlPanel (void)
         io.ConfigFlags & ImGuiConfigFlags_NavEnableSetMousePos;
 
       if (
-        ImGui::MenuItem ("虚拟 游戏手柄 / 键盘鼠标", "", &nav_moves_mouse)
+        ImGui::MenuItem ("显示 游戏手柄 / 键盘鼠标", "", &nav_moves_mouse)
       )
       {
         io.ConfigFlags = nav_moves_mouse ?
@@ -3243,7 +3243,7 @@ SK_ImGui_ControlPanel (void)
           SK_RunLHIfBitness ( 64, GetProcAddress (hModReShade, "?SK_ImGui_DrawCallback@@YAIPEAX@Z"),
                                   GetProcAddress (hModReShade, "?SK_ImGui_DrawCallback@@YGIPAX@Z" ) ) );
 
-        if (ImGui::MenuItem ( "浏览游戏目录", "" ))
+        if (ImGui::MenuItem ( "打开游戏目录", "" ))
         {
           SK_ShellExecuteW ( nullptr, L"explore", SK_GetHostPath (), nullptr, nullptr, SW_NORMAL);
         }
@@ -3251,7 +3251,7 @@ SK_ImGui_ControlPanel (void)
 #if 0
         if (SK::SteamAPI::AppID () != 0 && SK::SteamAPI::GetDataDir () != "")
         {
-          if (ImGui::BeginMenu ("浏览 Steam 目录"))
+          if (ImGui::BeginMenu ("打开 Steam 目录"))
           {
             if (ImGui::MenuItem ("云数据", ""))
             {
@@ -3274,7 +3274,7 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::Separator ();
 
-        if (ImGui::MenuItem ( "浏览 Special K 日志", "" ))
+        if (ImGui::MenuItem ( "打开 Special K 日志", "" ))
         {
           std::wstring log_dir =
             std::wstring (SK_GetConfigPath ()) + LR"(\logs)";
@@ -3377,7 +3377,7 @@ SK_ImGui_ControlPanel (void)
         {
           ImGui::Separator ();
 
-          if (ImGui::MenuItem ("安装 Wrapper DLL"))
+          if (ImGui::MenuItem ("安装封装 DLL"))
           {
             if (SK_Inject_SwitchToRenderWrapper ())
               wrappable = false;
@@ -3388,7 +3388,7 @@ SK_ImGui_ControlPanel (void)
         {
           ImGui::Separator ();
 
-          if (ImGui::MenuItem ("卸载 Wrapper DLL"))
+          if (ImGui::MenuItem ("卸载封装 DLL"))
           {
             wrappable =
               SK_Inject_SwitchToGlobalInjector ();
@@ -4203,7 +4203,7 @@ SK_ImGui_ControlPanel (void)
           if (ImGui::MenuItem (R"("Kaldaien's Mod")", "论坛", &selected, true))
             SK_SteamOverlay_GoToURL ("https://discourse.differentk.fyi/", true);
 #else
-          if (ImGui::MenuItem (R"("Kaldaien's Mod")", "Discord 频道", &selected, true))
+          if (ImGui::MenuItem (R"("Kaldaien's Mod")", "Discord", &selected, true))
             SK_SteamOverlay_GoToURL ("https://discord.gg/SpecialK", true);
 #endif
         }
@@ -4569,7 +4569,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
           ImGui::SameLine    ();
           ImGui::BeginGroup  ();
-          ImGui::Text        ("\t生效电源模式:\t %hs",
+          ImGui::Text        ("\t已激活电源模式:\t %hs",
                               SK_Power_GetEffectiveModeStr (effective_power_mode));
 
           if (effective_power_mode != EffectivePowerModeGameMode)
@@ -4760,7 +4760,7 @@ SK_ImGui_ControlPanel (void)
                  SK_GetBitness () == 32 ? "           [ 32-bit ]" :
                                           "           [ 64-bit ]" );
 
-    ImGui::MenuItem ("渲染 API        ",
+    ImGui::MenuItem ("    API    ",
                                   szAPIName,
                                     nullptr, false);
 
@@ -4860,8 +4860,8 @@ SK_ImGui_ControlPanel (void)
       bool bFakeFullscreen =
         rb.isFakeFullscreen ();
 
-      if (ImGui::MenuItem ( bFakeFullscreen ? " \"Fullscreen\" Resolution"
-                                            : " Window Resolution      ", szResolution))
+      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全屏\" 分辨率"
+                                            : " 窗口分辨率      ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
         config.window.res.override.y = (int)((float)(client.bottom - client.top)  * g_fDPIScale);
@@ -4875,7 +4875,7 @@ SK_ImGui_ControlPanel (void)
 
     else
     {
-      if (ImGui::MenuItem (" Fullscreen Resolution ", szResolution))
+      if (ImGui::MenuItem (" 全屏分辨率 ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
         config.window.res.override.y = (int)((float)(client.bottom - client.top)  * g_fDPIScale);
@@ -4922,7 +4922,7 @@ SK_ImGui_ControlPanel (void)
     {
       if (SK_API_IsDXGIBased (rb.api))
       {
-        ImGui::OpenPopup         ("DXGI Fullscreen Control Panel");
+        ImGui::OpenPopup         ("DXGI 全屏控制面板");
         ImGui::SetNextWindowSize (ImVec2 (-1.0f, -1.0f), ImGuiCond_Always);
       }
     }
@@ -4939,7 +4939,7 @@ SK_ImGui_ControlPanel (void)
                                      device_x,
                                        device_y );
 
-      if (ImGui::MenuItem (" Device Resolution     ", szResolution))
+      if (ImGui::MenuItem (" 设备分辨率     ", szResolution))
       {
         config.window.res.override.x = device_x;
         config.window.res.override.y = device_y;
@@ -4957,7 +4957,7 @@ SK_ImGui_ControlPanel (void)
 
       bool selected = true;
 
-      if (ImGui::MenuItem (" Override Resolution    ",
+      if (ImGui::MenuItem (" 叠加层分辨率    ",
                                     szResolution,
                                        &selected)
          )
@@ -5008,7 +5008,7 @@ SK_ImGui_ControlPanel (void)
       else
       {
         if (rb.gsync_state.disabled.for_app)
-          strcat (szGSyncStatus, "   Disabled in this Game");
+          strcat (szGSyncStatus, "   在此游戏中禁用");
         else
           strcat (szGSyncStatus, "   Unsupported");
       }
@@ -5024,14 +5024,14 @@ SK_ImGui_ControlPanel (void)
         }
       }
 
-      ImGui::MenuItem (" G-Sync Status   ", szGSyncStatus, nullptr, true);
+      ImGui::MenuItem (" G-Sync 状态   ", szGSyncStatus, nullptr, true);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    ();
         ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
         ImGui::SameLine        ();
-        ImGui::TextUnformatted ("Right-click to configure G-Sync / FastSync");
+        ImGui::TextUnformatted ("右键配置 G-Sync / FastSync");
 
         if (rb.gsync_state.capable && (! rb.gsync_state.maybe_active))
         {
@@ -5039,8 +5039,8 @@ SK_ImGui_ControlPanel (void)
           {
             ImGui::Separator ();
             ImGui::BulletText (
-              "Presentation Model Tracking is not working, G-Sync status in D3D12 is "
-              "unknown without it."
+              "演示模型跟踪不起作用，D3D12 中的 G-Sync 状态为 "
+              "没有它就不知道。"
             );
           }
 
@@ -5050,7 +5050,7 @@ SK_ImGui_ControlPanel (void)
           {
             ImGui::Separator ();
             ImGui::BulletText (
-              "The current Presentation Mode uses DWM Composition and cannot activate G-Sync"
+              "当前的演示模式使用 DWM 合成，无法激活 G-Sync"
             );
           }
         }
@@ -5059,7 +5059,7 @@ SK_ImGui_ControlPanel (void)
 
       if (ImGui::IsItemClicked () || SK_ImGui_IsItemRightClicked ())
       {
-        ImGui::OpenPopup         ("G-Sync Control Panel");
+        ImGui::OpenPopup         ("G-Sync 控制面板");
         ImGui::SetNextWindowSize (ImVec2 (-1.0f, -1.0f), ImGuiCond_Always);
       }
 
@@ -5129,7 +5129,7 @@ SK_ImGui_ControlPanel (void)
 
     static bool has_own_scale = (hModTBFix != nullptr);
 
-    if ((! has_own_scale) && ImGui::CollapsingHeader ("用户界面渲染设置"))
+    if ((! has_own_scale) && ImGui::CollapsingHeader ("用户界面设置"))
     {
       ImGui::TreePush    ("");
 
@@ -5196,7 +5196,7 @@ SK_ImGui_ControlPanel (void)
   {
     ImGui::PushItemWidth (ImGui::GetWindowWidth () * 0.666f);
 
-    if ( ImGui::CollapsingHeader ("帧率限制器", ImGuiTreeNodeFlags_CollapsingHeader |
+    if ( ImGui::CollapsingHeader ("FPS 限制器", ImGuiTreeNodeFlags_CollapsingHeader |
                                                        ImGuiTreeNodeFlags_DefaultOpen ) )
     {
       SK_ImGui_DrawGraph_FramePacing ();
@@ -5213,7 +5213,7 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::BeginGroup ();
 
-        if (ImGui::Checkbox ("帧率限制", &limit))
+        if (ImGui::Checkbox ("FPS 限制", &limit))
         {
           if (__target_fps != 0.0f) // Negative zero... it exists and we don't want it.
               __target_fps = -__target_fps;
@@ -7081,11 +7081,11 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("  Hello");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("请参阅 Discord 发布频道，在下面");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("请参阅 Discord 发布，在下面");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("  请参阅 Discord 发布频道，在下面");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("  请参阅 Discord 发布，在下面");                    ImGui::SameLine ();
     }
     ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "帮助 | 发布");                    ImGui::SameLine ();
     ImGui::TextUnformatted   ("用于该项目的测试版 / 稳定版更新。");

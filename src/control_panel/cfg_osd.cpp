@@ -102,7 +102,7 @@ SK::ControlPanel::OSD::Draw (void)
     ImGui::GetIO ();
 
   bool bOSDIsOpen =
-    ImGui::CollapsingHeader ("屏幕显示 (OSD)");
+    ImGui::CollapsingHeader ("显示 (OSD)");
 
   if (bOSDIsOpen)
   {
@@ -142,7 +142,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::SameLine   ();
       ImGui::Checkbox   ("时间 ",       &config.time.show);
       ImGui::SameLine   ();
-      ImGui::Checkbox   ("帧率",    &config.fps.show);
+      ImGui::Checkbox   ("FPS",    &config.fps.show);
       ImGui::EndGroup   ();
       
       ImGui::BeginGroup ();
@@ -152,7 +152,7 @@ SK::ControlPanel::OSD::Draw (void)
                   config.fps.show + config.fps.frametime + config.fps.advanced;
 
         ImGui::SameLine ();
-        ImGui::Combo    ("更多", &idx, "基础\0简单帧率\0帧率 + 帧时间 (ms)\0高级帧率分析\0\0", 4);
+        ImGui::Combo    ("更多", &idx, "基础\0简单 FPS\0FPS + 帧时间 (ms)\0高级 FPS 分析\0\0", 4);
 
              if (idx == 3) { config.fps.show = config.fps.frametime = config.fps.advanced       = true;  config.fps.compact = false; }
         else if (idx == 2) { config.fps.show = config.fps.frametime = true; config.fps.advanced = false; config.fps.compact = false; }

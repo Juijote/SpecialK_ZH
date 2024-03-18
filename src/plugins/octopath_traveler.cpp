@@ -170,7 +170,7 @@ SK_OPT_PlugInCfg (void)
       ImGui::TreePop  ();
     }
 
-    if (ImGui::CollapsingHeader ("Window Management##Octopus_BugPlug", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("W窗口管理##Octopus_BugPlug", ImGuiTreeNodeFlags_DefaultOpen))
     {
       bool changed = false;
 

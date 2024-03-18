@@ -567,7 +567,7 @@ SK::ControlPanel::Steam::DrawFooter (void)
                              szNumber, &fmt,
                                szPrettyNumber, 32 );
 
-      ImGui::Text       (" %s Players in-Game on Steam  ", szPrettyNumber);
+      ImGui::Text       (" %s Steam 上正在游玩中的玩家  ", szPrettyNumber);
       ImGui::NextColumn (   );
     }
 

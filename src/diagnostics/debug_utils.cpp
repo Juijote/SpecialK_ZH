@@ -3071,7 +3071,7 @@ SK_Exception_HandleThreadName (
                 ( config.render.framerate.enable_mmcss ?
                     SK_MMCS_GetTaskForThreadIDEx ( dwTid,
                       info->szName, "Playback",
-                                    "Window Manager" ) : nullptr );
+                                    "窗口管理器" ) : nullptr );
 
               if (task_me != nullptr)
               {

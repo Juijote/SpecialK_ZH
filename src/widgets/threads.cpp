@@ -1480,11 +1480,11 @@ public:
                 if (ptEntry->name._Equal (L"EngineWindowThread"))
                 {
                   SK_MMCS_TaskEntry* task_me =
-                    SK_MMCS_GetTaskForThreadIDEx (ptEntry->dwTid, utf8_name.c_str (), "Playback", "Window Manager");
+                    SK_MMCS_GetTaskForThreadIDEx (ptEntry->dwTid, utf8_name.c_str (), "Playback", "窗口管理器");
 
                   if (task_me != nullptr)
                   {
-                    task_me->setMaxCharacteristics ("Playback", "Window Manager");
+                    task_me->setMaxCharacteristics ("Playback", "窗口管理器");
                     task_me->setPriority           (AVRT_PRIORITY_NORMAL);
                   }
                 }
