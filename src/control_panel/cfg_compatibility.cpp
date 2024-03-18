@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file is part of Special K.
  *
  * Special K is free software : you can redistribute it
@@ -38,7 +38,7 @@ SK::ControlPanel::Compatibility::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.14f, 0.78f, 0.87f, 0.80f));
     ImGui::TreePush       ("");
 
-    if (ImGui::CollapsingHeader ("Third-Party Software"))
+    if (ImGui::CollapsingHeader ("第三方软件"))
     {
       ImGui::TreePush ("");
       ImGui::Checkbox     ("Disable GeForce Experience and NVIDIA Shield", &config.compatibility.disable_nv_bloat);
@@ -47,7 +47,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       ImGui::TreePop  ();
     }
 
-    if ( ImGui::CollapsingHeader ("Render Backends",
+    if ( ImGui::CollapsingHeader ("渲染后端",
            SK_IsInjected () ? ImGuiTreeNodeFlags_DefaultOpen :
                               0 ) )
     {
