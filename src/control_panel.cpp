@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -2339,8 +2320,8 @@ DisplayModeMenu (bool windowed)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("这可能会锁定不兼容的图形引擎；"
-                         " 首先保存你的游戏！");
+      ImGui::SetTooltip ("这可能会锁定不兼容的图形引擎，"
+                         "请首先保存你的游戏！");
     }
 
     ImGui::SameLine ();
@@ -2855,7 +2836,7 @@ DisplayModeMenu (bool windowed)
     }
 
     modes =
-      "Bordered\0Borderless\0Borderless Fullscreen\0\0";
+      "有边框\0无边框\0无边框全屏\0\0";
 
     static bool                     queued_changes = false;
     static std::stack <std::string> change_commands;

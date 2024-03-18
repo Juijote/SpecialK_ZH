@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -567,7 +548,7 @@ SK::ControlPanel::Steam::DrawFooter (void)
                              szNumber, &fmt,
                                szPrettyNumber, 32 );
 
-      ImGui::Text       (" %s Steam 上正在游玩中的玩家  ", szPrettyNumber);
+      ImGui::Text       ("Steam 上正在游玩的玩家 %s", szPrettyNumber);
       ImGui::NextColumn (   );
     }
 
