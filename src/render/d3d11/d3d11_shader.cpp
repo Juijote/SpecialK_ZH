@@ -2183,7 +2183,7 @@ const concurrency::concurrent_unordered_set <SK_ComPtr <ID3D11ShaderResourceView
   if ( blacklist.find (shader) !=
        blacklist.cend (      )  )
   {
-    if (ImGui::MenuItem ("Enable Shader"))
+    if (ImGui::MenuItem ("启用着色器"))
     {
       registrant->releaseTrackingRef (blacklist, shader);
       InterlockedDecrement (&SK_D3D11_DrawTrackingReqs);
@@ -2193,7 +2193,7 @@ const concurrency::concurrent_unordered_set <SK_ComPtr <ID3D11ShaderResourceView
 
   else
   {
-    if (ImGui::MenuItem ("Disable Shader"))
+    if (ImGui::MenuItem ("禁用着色器"))
     {
       registrant->addTrackingRef (blacklist, shader);
       InterlockedIncrement (&SK_D3D11_DrawTrackingReqs);

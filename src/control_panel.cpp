@@ -3176,7 +3176,7 @@ SK_ImGui_ControlPanel (void)
         io.ConfigFlags & ImGuiConfigFlags_NavEnableSetMousePos;
 
       if (
-        ImGui::MenuItem ("Virtual Gamepad/Keyboard Cursor", "", &nav_moves_mouse)
+        ImGui::MenuItem ("虚拟 游戏手柄 / 键盘鼠标", "", &nav_moves_mouse)
       )
       {
         io.ConfigFlags = nav_moves_mouse ?
@@ -3184,16 +3184,16 @@ SK_ImGui_ControlPanel (void)
           ( io.ConfigFlags & ~ImGuiConfigFlags_NavEnableSetMousePos );
       }
 
-      ImGui::MenuItem ("Display Active Input APIs",       "", &config.imgui.show_input_apis);
+      ImGui::MenuItem ("显示活动输入 API",       "", &config.imgui.show_input_apis);
 
       if (config.apis.NvAPI.enable && sk::NVAPI::nv_hardware)
       {
         //ImGui::TextWrapped ("%hs", SK_NvAPI_GetGPUInfoStr ().c_str ());
-        ImGui::MenuItem    ("Display G-Sync Status",     "", &config.apis.NvAPI.gsync_status);
+        ImGui::MenuItem    ("显示 G-Sync 状态",     "", &config.apis.NvAPI.gsync_status);
       }
 
-      ImGui::MenuItem  ("Display Playtime in Title",     "", &config.platform.show_playtime);
-      ImGui::MenuItem  ("Display Mac-style Menu at Top", "", &config.imgui.use_mac_style_menu);
+      ImGui::MenuItem  ("在标题中显示游玩时间",     "", &config.platform.show_playtime);
+      ImGui::MenuItem  ("在顶部显示 Mac 风格菜单", "", &config.imgui.use_mac_style_menu);
       ImGui::Separator ();
 
       DisplayModeMenu (windowed);
@@ -3234,7 +3234,7 @@ SK_ImGui_ControlPanel (void)
       }
 
 
-      if (ImGui::BeginMenu (ICON_FA_SAVE "  File"))
+      if (ImGui::BeginMenu (ICON_FA_SAVE "  文件"))
       {
         static HMODULE hModReShade      = SK_ReShade_GetDLL ();
         static bool    bIsReShadeCustom =
@@ -3243,7 +3243,7 @@ SK_ImGui_ControlPanel (void)
           SK_RunLHIfBitness ( 64, GetProcAddress (hModReShade, "?SK_ImGui_DrawCallback@@YAIPEAX@Z"),
                                   GetProcAddress (hModReShade, "?SK_ImGui_DrawCallback@@YGIPAX@Z" ) ) );
 
-        if (ImGui::MenuItem ( "Browse Game Directory", "" ))
+        if (ImGui::MenuItem ( "浏览游戏目录", "" ))
         {
           SK_ShellExecuteW ( nullptr, L"explore", SK_GetHostPath (), nullptr, nullptr, SW_NORMAL);
         }
@@ -3251,16 +3251,16 @@ SK_ImGui_ControlPanel (void)
 #if 0
         if (SK::SteamAPI::AppID () != 0 && SK::SteamAPI::GetDataDir () != "")
         {
-          if (ImGui::BeginMenu ("Browse Steam Directories"))
+          if (ImGui::BeginMenu ("浏览 Steam 目录"))
           {
-            if (ImGui::MenuItem ("Cloud Data", ""))
+            if (ImGui::MenuItem ("云数据", ""))
             {
               SK_ShellExecuteA ( nullptr, "explore",
                                    SK::SteamAPI::GetDataDir ().c_str (),
                                      nullptr, nullptr, SW_NORMAL );
             }
 
-            if (ImGui::MenuItem ("Cloud Config", ""))
+            if (ImGui::MenuItem ("云配置", ""))
             {
               SK_ShellExecuteA ( nullptr, "explore",
                                    SK::SteamAPI::GetConfigDir ().c_str (),
@@ -3274,7 +3274,7 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::Separator ();
 
-        if (ImGui::MenuItem ( "Browse Special K Logs", "" ))
+        if (ImGui::MenuItem ( "浏览 Special K 日志", "" ))
         {
           std::wstring log_dir =
             std::wstring (SK_GetConfigPath ()) + LR"(\logs)";
@@ -3305,7 +3305,7 @@ SK_ImGui_ControlPanel (void)
 
           else
           {
-            if (ImGui::MenuItem ("Initialize Texture Mods", "", nullptr))
+            if (ImGui::MenuItem ("初始化纹理模块", "", nullptr))
             {
               ec              = { };
               bHasTextureMods =
@@ -3377,7 +3377,7 @@ SK_ImGui_ControlPanel (void)
         {
           ImGui::Separator ();
 
-          if (ImGui::MenuItem ("Install Wrapper DLL"))
+          if (ImGui::MenuItem ("安装 Wrapper DLL"))
           {
             if (SK_Inject_SwitchToRenderWrapper ())
               wrappable = false;
@@ -3388,7 +3388,7 @@ SK_ImGui_ControlPanel (void)
         {
           ImGui::Separator ();
 
-          if (ImGui::MenuItem ("Uninstall Wrapper DLL"))
+          if (ImGui::MenuItem ("卸载 Wrapper DLL"))
           {
             wrappable =
               SK_Inject_SwitchToGlobalInjector ();
@@ -3410,7 +3410,7 @@ SK_ImGui_ControlPanel (void)
         {
           extern bool
               SK_CanRestartGame (void);
-          if (SK_CanRestartGame () && ImGui::MenuItem ("Restart Game"))
+          if (SK_CanRestartGame () && ImGui::MenuItem ("重新游戏"))
           {
             SK_ImGui_WantRestart = true;
             SK_ImGui_WantExit    = true;
@@ -3423,7 +3423,7 @@ SK_ImGui_ControlPanel (void)
         //  ImGui::SetTooltip ("Exit and Automatically Restart (useful for settings that require a restart)");
         //}
 
-        if (ImGui::MenuItem ("Exit Game", "Alt+F4"))
+        if (ImGui::MenuItem ("退出游戏", "Alt+F4"))
         {
           SK_ImGui_WantRestart = false;
           SK_ImGui_WantExit    = true;
@@ -3432,7 +3432,7 @@ SK_ImGui_ControlPanel (void)
         ImGui::EndMenu  ();
       }
 
-      if (ImGui::BeginMenu (ICON_FA_DESKTOP "  Display"))
+      if (ImGui::BeginMenu (ICON_FA_DESKTOP "  显示"))
       {
         DisplayMenu    ();
         ImGui::EndMenu ();
@@ -3455,7 +3455,7 @@ SK_ImGui_ControlPanel (void)
         if (ImGui::IsItemHovered ( ))
         {
           ImGui::BeginTooltip    ( );
-          ImGui::TextUnformatted ("Controls Luminance of Overlays while in HDR Mode");
+          ImGui::TextUnformatted ("在 HDR 模式下控制叠加层的亮度");
           ImGui::Separator       ( );
 
           ImGui::Spacing         ( );
@@ -4191,7 +4191,7 @@ SK_ImGui_ControlPanel (void)
 #pragma endregion Legacy AutoUpdate: Scheduled For Removal (!!)
 
 
-      if (ImGui::BeginMenu (ICON_FA_QUESTION "  Help"))
+      if (ImGui::BeginMenu (ICON_FA_QUESTION "  帮助"))
       {
         bool selected = false;
 
@@ -4335,7 +4335,7 @@ SK_ImGui_ControlPanel (void)
             {
               default:
               case 0:
-                if (ImGui::MenuItem ("Enable Ansel for this Game", "", nullptr))
+                if (ImGui::MenuItem ("在游戏中启用 Ansel", "", nullptr))
                 {
                   SK_NvAPI_EnableAnsel (SK_GetDLLRole ());
                   enablement =
@@ -4343,7 +4343,7 @@ SK_ImGui_ControlPanel (void)
                 } break;
 
               case 1:
-                if (ImGui::MenuItem ("Disable Ansel for this Game", "", nullptr))
+                if (ImGui::MenuItem ("在游戏中禁用 Ansel", "", nullptr))
                 {
                   SK_NvAPI_DisableAnsel (SK_GetDLLRole ());
                   enablement =

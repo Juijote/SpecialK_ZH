@@ -655,8 +655,8 @@ public:
 
       ImGui::Columns    (2, nullptr, false);
       ImGui::BeginGroup ( );
-      changed |= ImGui::MenuItem ("Draw Gaze Cursor", nullptr, &gaze_cursor.draw);
-      changed |= ImGui::MenuItem ("Widget Gazing",    nullptr, &widget_gazing);
+      changed |= ImGui::MenuItem ("绘制凝视光标", nullptr, &gaze_cursor.draw);
+      changed |= ImGui::MenuItem ("小部件凝视",    nullptr, &widget_gazing);
       ImGui::EndGroup   ();
       ImGui::SameLine   (); ImGui::Spacing  ();
       ImGui::NextColumn ();

@@ -2198,7 +2198,7 @@ void ShowDemoWindow(bool* p_open) {
     ImGui::SetNextWindowSize(ImVec2(600, 750), ImGuiCond_FirstUseEver);
     ImGui::Begin("ImPlot Demo", p_open, ImGuiWindowFlags_MenuBar);
     if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("Tools")) {
+        if (ImGui::BeginMenu("工具")) {
             ImGui::MenuItem("Metrics",      nullptr, &show_implot_metrics);
             ImGui::MenuItem("Style Editor", nullptr, &show_implot_style_editor);
             ImGui::Separator();

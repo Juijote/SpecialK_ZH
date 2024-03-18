@@ -20288,7 +20288,7 @@ const std::set          <ID3D11ShaderResourceView *>& set_of_resources,
 {
   if (blacklist.count (shader))
   {
-    if (ImGui::MenuItem ("Enable Shader"))
+    if (ImGui::MenuItem ("启用着色器"))
     {
       blacklist.erase (shader);
     }
@@ -20296,7 +20296,7 @@ const std::set          <ID3D11ShaderResourceView *>& set_of_resources,
 
   else
   {
-    if (ImGui::MenuItem ("Disable Shader"))
+    if (ImGui::MenuItem ("禁用着色器"))
     {
       blacklist.emplace (shader);
     }

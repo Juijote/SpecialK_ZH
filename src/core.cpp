@@ -971,8 +971,8 @@ void BasicInit (void)
   // Add a notification that will not go away until a user reads it...
   SK_ImGui_CreateNotification (
     "Notification.HelloWorld", SK_ImGui_Toast::Success,
-    "Notifications can be configured by right-clicking them.",
-    "Special K Notification System Initialized Successfully",
+    "可以通过右键单击通知来配置通知。",
+    "Special K 通知系统初始化成功",
       25000, SK_ImGui_Toast::ShowCaption |
              SK_ImGui_Toast::ShowTitle   |
              SK_ImGui_Toast::ShowOnce    |
