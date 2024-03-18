@@ -446,7 +446,7 @@ SK_ImGui_WarningWithTitle ( const wchar_t* wszMessage,
 void
 SK_ImGui_Warning (const wchar_t* wszMessage)
 {
-  SK_ImGui_WarningWithTitle (wszMessage, "Special K Warning");
+  SK_ImGui_WarningWithTitle (wszMessage, "Special K 警告");
 }
 
 void
@@ -572,15 +572,15 @@ SK_ImGui_ConfirmExit (void)
                                       );
 
   if (! ImGui::IsPopupOpen ( SK_ImGui_WantRestart ?
-                "Confirm Forced Software Restart" :
-                "Confirm Forced Software Termination" ) )
+                "确认强制软件重启" :
+                "确认强制软件关闭" ) )
   {
     SK_ImGui_WantExit = false;
     orig_nav_state    = nav_usable;
 
     ImGui::OpenPopup ( SK_ImGui_WantRestart ?
-          "Confirm Forced Software Restart" :
-          "Confirm Forced Software Termination" );
+          "确认强制软件重启" :
+          "确认强制软件关闭" );
   }
 }
 
@@ -647,7 +647,7 @@ SK_ImGui_ConfirmDisplaySettings (bool *pDirty_, std::string display_name_, DEVMO
                                                      0.925f * io.DisplaySize.y )
                                         );
 
-    ImGui::OpenPopup ("Confirm Display Setting Changes");
+    ImGui::OpenPopup ("确认显示设置更改");
   }
 }
 
@@ -819,10 +819,10 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K  (v ";
     title += SK_GetVersionStrA ();
-    title += ")";
+    title += ")[Juij 汉化][2024-03-18]";
   }
 
-  title += "  Control Panel";
+  title += "  控制面板";
 
   extern __time64_t __SK_DLL_AttachTime;
 
@@ -4200,10 +4200,10 @@ SK_ImGui_ControlPanel (void)
         ImGui::TreePush ("");
         {
 #if 0
-          if (ImGui::MenuItem (R"("Kaldaien's Mod")", "Discourse Forums", &selected, true))
+          if (ImGui::MenuItem (R"("Kaldaien's Mod")", "论坛", &selected, true))
             SK_SteamOverlay_GoToURL ("https://discourse.differentk.fyi/", true);
 #else
-          if (ImGui::MenuItem (R"("Kaldaien's Mod")", "Discord Server", &selected, true))
+          if (ImGui::MenuItem (R"("Kaldaien's Mod")", "Discord 频道", &selected, true))
             SK_SteamOverlay_GoToURL ("https://discord.gg/SpecialK", true);
 #endif
         }
@@ -4211,7 +4211,7 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::Separator ();
 
-        if (ImGui::BeginMenu ("Support Us##Donate"))
+        if (ImGui::BeginMenu ("支持我们##Donate"))
         {
           if (ImGui::MenuItem ( "Recurring Donation + Perks", "Become a Patron", &selected ))
           {
@@ -4263,8 +4263,8 @@ SK_ImGui_ControlPanel (void)
         }
 
 
-        if ( ImGui::MenuItem ( "Release History",
-                                 "Downloads",
+        if ( ImGui::MenuItem ( "发布历史",
+                                 "下载",
                                    &selected
                              )
            )
@@ -4274,14 +4274,14 @@ SK_ImGui_ControlPanel (void)
           );
         }
 
-        if (ImGui::MenuItem ("About this Software...", "Licensed Software", &selected))
+        if (ImGui::MenuItem ("关于软件...", "Licensed Software", &selected))
           eula.show = true;
 
         ImGui::Separator ();
 
-        if (ImGui::BeginMenu ("ImGui Debug"))
+        if (ImGui::BeginMenu ("ImGui 调试"))
         {
-          ImGui::SeparatorText ("ImGui Debug");
+          ImGui::SeparatorText ("ImGui 调试");
 
           ImGui::MenuItem  ("Demo",      "", &imgui_demo);
 
@@ -4760,7 +4760,7 @@ SK_ImGui_ControlPanel (void)
                  SK_GetBitness () == 32 ? "           [ 32-bit ]" :
                                           "           [ 64-bit ]" );
 
-    ImGui::MenuItem ("Active Render API        ",
+    ImGui::MenuItem ("渲染 API        ",
                                   szAPIName,
                                     nullptr, false);
 
@@ -5129,7 +5129,7 @@ SK_ImGui_ControlPanel (void)
 
     static bool has_own_scale = (hModTBFix != nullptr);
 
-    if ((! has_own_scale) && ImGui::CollapsingHeader ("UI Render Settings"))
+    if ((! has_own_scale) && ImGui::CollapsingHeader ("用户界面渲染设置"))
     {
       ImGui::TreePush    ("");
 
@@ -5196,7 +5196,7 @@ SK_ImGui_ControlPanel (void)
   {
     ImGui::PushItemWidth (ImGui::GetWindowWidth () * 0.666f);
 
-    if ( ImGui::CollapsingHeader ("Framerate Limiter", ImGuiTreeNodeFlags_CollapsingHeader |
+    if ( ImGui::CollapsingHeader ("帧率限制器", ImGuiTreeNodeFlags_CollapsingHeader |
                                                        ImGuiTreeNodeFlags_DefaultOpen ) )
     {
       SK_ImGui_DrawGraph_FramePacing ();
@@ -5213,7 +5213,7 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::BeginGroup ();
 
-        if (ImGui::Checkbox ("Framerate Limit", &limit))
+        if (ImGui::Checkbox ("帧率限制", &limit))
         {
           if (__target_fps != 0.0f) // Negative zero... it exists and we don't want it.
               __target_fps = -__target_fps;
@@ -7220,7 +7220,7 @@ SK_ImGui_StageNextFrame (void)
     if (config.input.gamepad.xinput.ui_slot < 4)
     {
                                          ImGui::SameLine ();
-      ImGui::TextUnformatted ("  or  "); ImGui::SameLine ();
+      ImGui::TextUnformatted ("  或  "); ImGui::SameLine ();
 
       if (SK_ImGui_HasPlayStationController ())
       {

@@ -939,9 +939,9 @@ SK::ControlPanel::Input::Draw (void)
           {
             ImGui::BeginTooltip ();
             if (bHasPlayStation)
-              ImGui::TextUnformatted ("Exit \"Control Panel Exclusive Input Mode\" by Holding Share/Select or Pressing Caps Lock");
+              ImGui::TextUnformatted ("Exit \"控制面板专用输入模式\" by Holding Share/Select or Pressing Caps Lock");
             else
-              ImGui::TextUnformatted ("Exit \"Control Panel Exclusive Input Mode\" by Holding Back or Pressing Caps Lock");
+              ImGui::TextUnformatted ("Exit \"控制面板专用输入模式\" by Holding Back or Pressing Caps Lock");
             ImGui::Separator ();
             if (bHasPlayStation)
             {

@@ -28,7 +28,7 @@ using namespace SK::ControlPanel;
 bool
 SK::ControlPanel::Compatibility::Draw (void)
 {
-  if ( ImGui::CollapsingHeader ("Compatibility Settings###SK_CPL") )
+  if ( ImGui::CollapsingHeader ("兼容性设置###SK_CPL") )
   {
     static SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();

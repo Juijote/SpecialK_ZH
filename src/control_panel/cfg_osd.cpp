@@ -30,7 +30,7 @@ bool
 SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
 {
   const bool bRet =
-    ImGui::Checkbox ("Show OSD in Video Capture", &config.render.osd.draw_in_vidcap);
+    ImGui::Checkbox ("在视频录制中显示 OSD", &config.render.osd.draw_in_vidcap);
 
   if (bRet)
   {
@@ -57,7 +57,7 @@ SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
       //
       SK_Thread_Create ( [](LPVOID toggle) -> DWORD
       {
-        SetCurrentThreadDescription (                 L"[SK] Video Capture OSD Failsafe" );
+        SetCurrentThreadDescription (                 L"[SK] 视频录制 OSD 故障保护" );
         SetThreadPriority           ( SK_GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL );
         SetThreadPriorityBoost      ( SK_GetCurrentThread (), TRUE                          );
 
@@ -69,7 +69,7 @@ SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
         {
           *pToggle->dest = pToggle->original;
 
-          SK_ImGui_Warning (L"Disabling OSD in video capture is not supported in this game.");
+          SK_ImGui_Warning (L"此游戏不支持在视频录制时禁用 OSD。");
         }
 
         InterlockedExchange (&pToggle->testing, FALSE);
@@ -85,10 +85,10 @@ SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
   if (ImGui::IsItemHovered ())
   {
     ImGui::BeginTooltip    ();
-    ImGui::TextUnformatted ("Controls visibility in some Video Capture software");
+    ImGui::TextUnformatted ("控制在某些视频录制软件中的可见性");
     ImGui::Separator       ();
-    ImGui::BulletText      ("Desktop Capture mode is unaffected, only Game Capture");
-    ImGui::BulletText      ("Enabled by default for maximum compatibility");
+    ImGui::BulletText      ("桌面录制模式不受影响，仅游戏录制");
+    ImGui::BulletText      ("默认启用以获得最大兼容性");
     ImGui::EndTooltip      ();
   }
 
@@ -102,7 +102,7 @@ SK::ControlPanel::OSD::Draw (void)
     ImGui::GetIO ();
 
   bool bOSDIsOpen =
-    ImGui::CollapsingHeader ("On Screen Display (OSD)");
+    ImGui::CollapsingHeader ("屏幕显示 (OSD)");
 
   if (bOSDIsOpen)
   {
@@ -111,13 +111,13 @@ SK::ControlPanel::OSD::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
     ImGui::TreePush       ("");
 
-    ImGui::Checkbox ("Display OSD", &config.osd.show);
+    ImGui::Checkbox ("显示 OSD", &config.osd.show);
 
     bool show_banner =
       config.version_banner.duration > 0.0f;
 
     ImGui::SameLine ();
-    ImGui::Checkbox ("Show Startup Banner", &show_banner);
+    ImGui::Checkbox ("显示启动提示", &show_banner);
 
     if (show_banner && config.version_banner.duration <= 0.0f)
                        config.version_banner.duration = 15.0f;
@@ -133,16 +133,16 @@ SK::ControlPanel::OSD::Draw (void)
     else
       config.version_banner.duration = 0.0f;
 
-    if (config.osd.show && ImGui::CollapsingHeader ("Basic Monitoring", ImGuiTreeNodeFlags_DefaultOpen))
+    if (config.osd.show && ImGui::CollapsingHeader ("基础监控", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
       ImGui::BeginGroup ();
-      ImGui::Checkbox   ("Title ",       &config.title.show);
+      ImGui::Checkbox   ("标题 ",       &config.title.show);
       ImGui::SameLine   ();
-      ImGui::Checkbox   ("Clock ",       &config.time.show);
+      ImGui::Checkbox   ("时间 ",       &config.time.show);
       ImGui::SameLine   ();
-      ImGui::Checkbox   ("Framerate",    &config.fps.show);
+      ImGui::Checkbox   ("帧率",    &config.fps.show);
       ImGui::EndGroup   ();
       
       ImGui::BeginGroup ();
@@ -152,7 +152,7 @@ SK::ControlPanel::OSD::Draw (void)
                   config.fps.show + config.fps.frametime + config.fps.advanced;
 
         ImGui::SameLine ();
-        ImGui::Combo    ("Details", &idx, "Compact\0Simple FPS\0FPS + Frame Time (ms)\0Advanced Frame Pacing Analysis\0\0", 4);
+        ImGui::Combo    ("更多", &idx, "基础\0简单帧率\0帧率 + 帧时间 (ms)\0高级帧率分析\0\0", 4);
 
              if (idx == 3) { config.fps.show = config.fps.frametime = config.fps.advanced       = true;  config.fps.compact = false; }
         else if (idx == 2) { config.fps.show = config.fps.frametime = true; config.fps.advanced = false; config.fps.compact = false; }
@@ -166,12 +166,12 @@ SK::ControlPanel::OSD::Draw (void)
         ImGui::Checkbox ("VRR", &config.fps.compact_vrr);
         ImGui::SameLine ();
       }
-      ImGui::Checkbox   ("Frame Number", &config.fps.framenumber);
+      ImGui::Checkbox   ("累计帧数", &config.fps.framenumber);
       ImGui::EndGroup   ();
 
       // New line
 
-      ImGui::Checkbox   ("GPU Stats",    &config.gpu.show);
+      ImGui::Checkbox   ("GPU 统计数据",    &config.gpu.show);
       ImGui::SameLine   ();
       ImGui::BeginGroup ();
       if (config.gpu.show)
@@ -180,14 +180,14 @@ SK::ControlPanel::OSD::Draw (void)
 
         int temp_unit = config.system.prefer_fahrenheit ? 1 : 0;
 
-        ImGui::RadioButton (" Celsius ",    &temp_unit, 0); ImGui::SameLine ();
-        ImGui::RadioButton (" Fahrenheit ", &temp_unit, 1); ImGui::SameLine ();
-        ImGui::Checkbox    (" Print Slowdown", &config.gpu.print_slowdown);
+        ImGui::RadioButton (" 摄氏度 ",    &temp_unit, 0); ImGui::SameLine ();
+        ImGui::RadioButton (" 华氏度 ", &temp_unit, 1); ImGui::SameLine ();
+        ImGui::Checkbox    (" 输出速度减慢", &config.gpu.print_slowdown);
 
         config.system.prefer_fahrenheit = temp_unit == 1 ? true : false;
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("On NVIDIA GPUs, this will print driver throttling details (e.g. power saving)");
+          ImGui::SetTooltip ("在 NVIDIA GPU 上，这将输出驱动程序节流详细信息（例如省电）");
 
         ImGui::TreePop  ();
       }
@@ -196,15 +196,15 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::TreePop    ();
     }
 
-    if (config.osd.show && ImGui::CollapsingHeader ("Extended Monitoring"))
+    if (config.osd.show && ImGui::CollapsingHeader ("监控扩展"))
     {
       ImGui::TreePush     ("");
 
       ImGui::PushStyleVar (ImGuiStyleVar_WindowRounding, 16.0f);
-      ImGui::BeginChild   ("WMI Monitors", ImVec2 (font.size * 50.0f,font.size_multiline * 6.05f), true, ImGuiWindowFlags_NavFlattened);
+      ImGui::BeginChild   ("WMI 监视器", ImVec2 (font.size * 50.0f,font.size_multiline * 6.05f), true, ImGuiWindowFlags_NavFlattened);
 
       ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, 0.785f, 0.0784f, 1.0f));
-      ImGui::TextWrapped    ("These functions spawn a WMI monitoring service and may take several seconds to start.");
+      ImGui::TextWrapped    ("这些函数会生成 WMI 监视服务，并且可能需要几秒钟才能启动。");
       ImGui::PopStyleColor  ();
 
       bool spawn = false;
@@ -212,7 +212,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::Separator ( );
       ImGui::BeginColumns ("ExtendedMonitoringColumns", 3, ImGuiOldColumnFlags_NoResize);
 
-      spawn |= ImGui::Checkbox ("CPU Stats",         &config.cpu.show);
+      spawn |= ImGui::Checkbox ("CPU 统计数据",         &config.cpu.show);
 
       if (! config.cpu.show)
         SKIF_ImGui_PushDisableState ( );

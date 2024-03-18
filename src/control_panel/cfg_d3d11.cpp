@@ -362,13 +362,13 @@ SK::ControlPanel::D3D11::Draw (void)
   bool uncollapsed = false;
 
   if (SK_GL_OnD3D11)
-    uncollapsed = ImGui::CollapsingHeader ("OpenGL-IK Settings",   ImGuiTreeNodeFlags_DefaultOpen);
+    uncollapsed = ImGui::CollapsingHeader ("OpenGL-IK 设置",   ImGuiTreeNodeFlags_DefaultOpen);
   else if (vulkan)
-    uncollapsed = ImGui::CollapsingHeader ("Vulkan Settings",      ImGuiTreeNodeFlags_DefaultOpen);
+    uncollapsed = ImGui::CollapsingHeader ("Vulkan 设置",      ImGuiTreeNodeFlags_DefaultOpen);
   else if (d3d11)
-    uncollapsed = ImGui::CollapsingHeader ("Direct3D 11 Settings", ImGuiTreeNodeFlags_DefaultOpen);
+    uncollapsed = ImGui::CollapsingHeader ("Direct3D 11 设置", ImGuiTreeNodeFlags_DefaultOpen);
   else if (d3d12)
-    uncollapsed = ImGui::CollapsingHeader ("Direct3D 12 Settings", ImGuiTreeNodeFlags_DefaultOpen);
+    uncollapsed = ImGui::CollapsingHeader ("Direct3D 12 设置", ImGuiTreeNodeFlags_DefaultOpen);
 
   if (uncollapsed)
   {
