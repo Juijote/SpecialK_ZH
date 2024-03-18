@@ -150,7 +150,7 @@ SK::ControlPanel::Input::Draw (void)
     ImGui::SetNextItemOpen (true, ImGuiCond_Once);
 
   const bool input_mgmt_open =
-    ImGui::CollapsingHeader ("Input Management");
+    ImGui::CollapsingHeader ("输入管理");
 
   if (config.imgui.show_input_apis)
   {
@@ -582,7 +582,7 @@ SK::ControlPanel::Input::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
     ImGui::TreePush       ("");
 
-    if (ImGui::CollapsingHeader ("Mouse Cursor"))
+    if (ImGui::CollapsingHeader ("鼠标光标"))
     {
       auto _CursorBoundaryWidget = [&]()
       {

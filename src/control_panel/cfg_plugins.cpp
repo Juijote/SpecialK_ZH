@@ -189,7 +189,7 @@ auto
 bool
 SK::ControlPanel::PlugIns::Draw (void)
 {
-  if (ImGui::CollapsingHeader ("Plug-Ins"))
+  if (ImGui::CollapsingHeader ("插件"))
   {
     ImGui::TreePush ("");
 

@@ -2095,18 +2095,18 @@ SK_FAR_PlugInCfg (void)
   }
 
 
-  ImGui::PushID ((const char *)u8"NieR:Automata�_CPL");
+  ImGui::PushID ((const char *)u8"NieR:Automata�_CPL");
 
   bool changed = false;
 
-  if (ImGui::CollapsingHeader ((const char *)u8"NieR:Automata�", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader ((const char *)u8"NieR:Automata�", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImGui::PushStyleColor (ImGuiCol_Header,        ImVec4 (0.90f, 0.40f, 0.40f, 0.45f));
     ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.45f, 0.45f, 0.80f));
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.53f, 0.53f, 0.80f));
     ImGui::TreePush       ("");
 
-    if ((! game_state.isSteam2021 ()) && ImGui::CollapsingHeader ("Post-Processing", ImGuiTreeNodeFlags_DefaultOpen))
+    if ((! game_state.isSteam2021 ()) && ImGui::CollapsingHeader ("后期处理", ImGuiTreeNodeFlags_DefaultOpen))
     {
 #if 0
       if (game_state.patchable)

@@ -118,7 +118,7 @@ struct {
 bool
 SK_Persona4_PlugInCfg (void)
 {
-  if (ImGui::CollapsingHeader ("Persona 4 Golden", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader ("女神异闻录 4 黄金版", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImGui::TreePush ("");
 

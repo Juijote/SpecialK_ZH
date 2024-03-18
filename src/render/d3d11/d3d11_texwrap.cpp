@@ -24773,7 +24773,7 @@ SK_D3D11_ShaderModDlg (SK_TLS* pTLS = SK_TLS_Bottom ())
   
                     _SetupShaderHeaderColors (sk_shader_class::Pixel);
 
-                    if (ImGui::CollapsingHeader ("Pixel Shaders##rtv_refs", ImGuiTreeNodeFlags_DefaultOpen))
+                    if (ImGui::CollapsingHeader ("像素着色器##rtv_refs", ImGuiTreeNodeFlags_DefaultOpen))
                     {
                       ImGui::TreePush ("");
   

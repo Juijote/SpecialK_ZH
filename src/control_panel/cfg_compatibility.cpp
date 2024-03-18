@@ -285,7 +285,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       ImGui::TreePop    ();
     }
 
-    if (ImGui::CollapsingHeader ("Hardware Monitoring"))
+    if (ImGui::CollapsingHeader ("硬件监控"))
     {
       ImGui::TreePush ("");
       ImGui::Checkbox ("NvAPI  ", &config.apis.NvAPI.enable);
@@ -309,7 +309,7 @@ SK::ControlPanel::Compatibility::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.45f, 0.45f, 0.80f));
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.53f, 0.53f, 0.80f));
 
-    if (ImGui::CollapsingHeader ("Debugging"))
+    if (ImGui::CollapsingHeader ("调试"))
     {
       ImGui::TreePush   ("");
       ImGui::BeginGroup (  );

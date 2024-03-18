@@ -412,7 +412,7 @@ SK_DGPU_PlugInCfg (void)
       ImGui::TreePop    ();
     }
 
-    if (ImGui::CollapsingHeader ("Screen Flares", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("屏幕光斑", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 

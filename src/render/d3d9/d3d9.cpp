@@ -8091,7 +8091,7 @@ SK_D3D9_TextureModDlg (void)
   ImGui::PushItemWidth (ImGui::GetWindowWidth () * 0.666f);
 
 #if 0
-  if (ImGui::CollapsingHeader ("Preliminary Documentation"))
+  if (ImGui::CollapsingHeader ("预备文件"))
   {
     ImGui::BeginChild (ImGui::GetID ("ModDescription"), ImVec2 (font_size * 66.0f, font_size * 25.0f), true);
       ImGui::TextColored    (ImVec4 (0.9f, 0.7f, 0.5f, 1.0f), "Texture Modding Overview"); ImGui::SameLine ();
@@ -8773,7 +8773,7 @@ SK_D3D9_TextureModDlg (void)
   {
     ImGui::TreePush ("");
 
-    if (ImGui::CollapsingHeader ("Pixel Shaders"))
+    if (ImGui::CollapsingHeader ("像素着色器"))
     {
       std::scoped_lock <SK_Thread_HybridSpinlock>
             scope_lock (*lock_ps);

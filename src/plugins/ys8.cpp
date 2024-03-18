@@ -791,7 +791,7 @@ SK_YS8_ControlPanel (void)
       ImGui::TreePop         ();
     }
 
-    if (ImGui::CollapsingHeader ("Performance###SK_YS8_PERF", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("性能###SK_YS8_PERF", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
@@ -840,7 +840,7 @@ SK_YS8_ControlPanel (void)
       ImGui::TreePop (   );
     }
 
-    if (ImGui::CollapsingHeader ("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("阴影", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
@@ -1062,7 +1062,7 @@ const
         }
 
 
-        if (ImGui::CollapsingHeader ("Sound Effects"))
+        if (ImGui::CollapsingHeader ("声音特效"))
         {
           _SK_YS8_ImportExportUI ( SK_FormatStringW (LR"(%s\SK_Export\se)", wszWorkDir).c_str (),
                                      "Export##SK_YS8_EXP_SE",
@@ -1081,7 +1081,7 @@ const
       }
 
 
-      if (ImGui::CollapsingHeader ("In-Game Text"))
+      if (ImGui::CollapsingHeader ("游戏内文字"))
       {
         _SK_YS8_ImportExportUI ( SK_FormatStringW (LR"(%s\SK_Export\text)", wszWorkDir).c_str (),
                                    "Export##SK_YS8_EXP_TEXT",
@@ -1124,7 +1124,7 @@ const
       ImGui::TreePop       ( );
     }
 
-    if (ImGui::CollapsingHeader ("Post-Processing###SK_YS8_POSTPROC"))
+    if (ImGui::CollapsingHeader ("后期处理###SK_YS8_POSTPROC"))
     {
       ImGui::TreePush ("");
 

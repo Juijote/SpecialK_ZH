@@ -506,7 +506,7 @@ SK_TVFix_PlugInCfg (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.14f, 0.78f, 0.87f, 0.80f));
 
     ImGui::BeginGroup ();
-    if (ImGui::CollapsingHeader ("Post-Processing", ImGuiTreeNodeFlags_DefaultOpen |
+    if (ImGui::CollapsingHeader ("后期处理", ImGuiTreeNodeFlags_DefaultOpen |
                                                     ImGuiTreeNodeFlags_AllowOverlap))
     {
       ImGui::TreePush ("");

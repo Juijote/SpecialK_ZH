@@ -535,7 +535,7 @@ SK_FFXV_PlugInCfg (void)
     static auto& shaders =
       SK_D3D11_Shaders.get ();
 
-    if (ImGui::Checkbox ((const char *)u8R"(Ignis Vision �)", &ignis_vision))
+    if (ImGui::Checkbox ((const char *)u8R"(Ignis Vision �)", &ignis_vision))
     {
       if (ignis_vision)
       {
@@ -549,7 +549,7 @@ SK_FFXV_PlugInCfg (void)
 
     ImGui::SameLine ();
 
-    if (ImGui::Checkbox ((const char *)u8R"((No)Hair Club for Men�)", &hair_club))
+    if (ImGui::Checkbox ((const char *)u8R"((No)Hair Club for Men�)", &hair_club))
     {
       if (hair_club)
       {
@@ -682,7 +682,7 @@ SK_FFXV_PlugInCfg (void)
 bool
 SK_SO4_PlugInCfg (void)
 {
-  if (ImGui::CollapsingHeader ("STAR OCEAN - THE LAST HOPE - 4K & Full HD Remaster", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader ("星之海洋 - 最后的希望 - 4K & 高清重制版", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImGui::TreePush ("");
 
@@ -714,7 +714,7 @@ volatile LONG SK_POE2_ThreadBoostsKilled = 0;
 bool
 SK_POE2_PlugInCfg (void)
 {
-  if (ImGui::CollapsingHeader ("Pillars of Eternity II: Deadfire", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader ("永恒之柱 II：死亡之火", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImGui::TreePush ("");
 
@@ -1069,7 +1069,7 @@ SKX_Keybinding (SK_Keybind* binding, sk::ParameterStringW* param)
 bool
 SK_SM_PlugInCfg (void)
 {
-  if (ImGui::CollapsingHeader ("Shenmue I & II", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader ("莎木 I & II", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImGui::TreePush ("");
 
@@ -1079,7 +1079,7 @@ SK_SM_PlugInCfg (void)
         ( ReadAcquire (&__SK_SHENMUE_FullAspectCutscenes) != 0 );
 
       bool changed =
-        ImGui::Checkbox ( "Enable 16:9 Aspect Ratio Cutscenes",
+        ImGui::Checkbox ( "启用 16:9 宽高比过场动画",
                           &bSK_SHENMUE_FullAspectCutscenes );
 
       //ImGui::SameLine ();
@@ -1398,11 +1398,11 @@ bool SK_SO2R_PlugInCfg (void)
   auto dll_ini =
     SK_GetDLLConfig ();
 
-  if (ImGui::CollapsingHeader ("STAR OCEAN THE SECOND STORY R", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader ("星之海洋 2 二次进化", ImGuiTreeNodeFlags_DefaultOpen))
   {
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("Enable Wide Aspect Ratios", &SK_SO2R_UltraWidescreen))
+    if (ImGui::Checkbox ("启用宽高比", &SK_SO2R_UltraWidescreen))
     {
       dll_ini->get_section (L"SO2R.PlugIn").
              add_key_value (L"UnlockAspectRatio",

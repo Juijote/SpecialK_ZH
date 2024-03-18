@@ -4569,7 +4569,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
           ImGui::SameLine    ();
           ImGui::BeginGroup  ();
-          ImGui::Text        ("\tEffective Power Mode:\t %hs",
+          ImGui::Text        ("\t生效电源模式:\t %hs",
                               SK_Power_GetEffectiveModeStr (effective_power_mode));
 
           if (effective_power_mode != EffectivePowerModeGameMode)
@@ -5327,13 +5327,13 @@ SK_ImGui_ControlPanel (void)
 
           if ( ImGui::DragFloat ( label, &target_mag,
                                       1.0f, 24.0f, 166.0f, target > 0 ?
-                          ( active ? "%6.3f fps  (Limit Engaged)" :
-                                     "%6.3f fps  (~Window State)" )
+                          ( active ? "%6.3f fps  (限制参与)" :
+                                     "%6.3f fps  (~窗口状态)" )
                                                                   :
                                                            target < 0 ?
-                                             "%6.3f fps  (Graphing Only)"
+                                             "%6.3f fps  (仅图表)"
                                                                   :
-                                             "VSYNC Rate (No Preference)" )
+                                             "VSYNC 速率（无优先级）" )
              )
           {
             target =
@@ -6233,7 +6233,7 @@ SK_ImGui_ControlPanel (void)
   Notifications::Draw ();
 
   const bool open_widgets =
-    ImGui::CollapsingHeader ("Widgets");
+    ImGui::CollapsingHeader ("小部件");
 
   if (ImGui::IsItemHovered ( ))
   {
@@ -6380,7 +6380,7 @@ SK_ImGui_ControlPanel (void)
   }
 
 
-  if (ImGui::CollapsingHeader ("Screenshots"))
+  if (ImGui::CollapsingHeader ("截图"))
   {
     ImGui::TreePush ("");
 

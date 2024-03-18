@@ -773,7 +773,7 @@ SK_Yakuza0_PlugInCfg (void)
            dof_shader4->Enable||
           blur_shader0->Enable );
 
-      if (ImGui::CollapsingHeader ("Post-Processing", ImGuiTreeNodeFlags_DefaultOpen))
+      if (ImGui::CollapsingHeader ("后期处理", ImGuiTreeNodeFlags_DefaultOpen))
       {
         ImGui::TreePush ("");
 
@@ -1217,7 +1217,7 @@ SK_Yakuza0_PlugInCfg (void)
 
     if (config.steam.screenshots.enable_hook)
     {
-      if (ImGui::CollapsingHeader ("Screenshots###YAKUZA_SCREENSHOTS"))
+      if (ImGui::CollapsingHeader ("截图###YAKUZA_SCREENSHOTS"))
       {
         ImGui::TreePush  ("");
         ImGui::PushID    ("Y0_Screenshots");

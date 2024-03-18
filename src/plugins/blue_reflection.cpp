@@ -366,7 +366,7 @@ SK_IT_PlugInCfg (void)
       ImGui::TreePop  ();
     }
 
-    if (ImGui::CollapsingHeader ("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("阴影", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 

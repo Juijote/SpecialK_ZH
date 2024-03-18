@@ -587,7 +587,7 @@ bool SK_SF_PlugInCfg (void)
 
     if (plugin.cachedFPSLimitAddr > 0)
     {
-      if (ImGui::CollapsingHeader ("Performance"))
+      if (ImGui::CollapsingHeader ("性能"))
       {
         ImGui::TreePush ("");
 
@@ -795,10 +795,10 @@ bool SK_SF_PlugInCfg (void)
         }
 
         bool changed_scale =
-          ImGui::Combo ("DLSS Mode", (int *)&dlss_prefs.mode, "Off\0"
-                                                              "Max Performance\t(50% Scale)\0"
-                                                              "Balanced\t\t\t\t  (58% Scale)\0"
-                                                              "Max Quality\t\t\t  (66% Scale)\0"
+          ImGui::Combo ("DLSS Mode", (int *)&dlss_prefs.mode, "关闭\0"
+                                                              "最高性能\t(50% Scale)\0"
+                                                              "均衡\t\t\t\t  (58% Scale)\0"
+                                                              "最高质量\t\t\t  (66% Scale)\0"
                                                               "DLAA\t\t\t\t\t\t(100% Scale)\0\0");
 
         changed |= changed_scale;

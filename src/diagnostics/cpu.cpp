@@ -571,28 +571,28 @@ SK_Power_GetEffectiveModeStr (EFFECTIVE_POWER_MODE mode)
   switch (mode)
   {
     case EffectivePowerModeBatterySaver:
-      return "Battery Saver";
+      return "省电";
 
     case EffectivePowerModeBetterBattery:
-      return "Better Battery";
+      return "节能";
 
     case EffectivePowerModeBalanced:
-      return "Balanced";
+      return "均衡";
 
     case EffectivePowerModeHighPerformance:
-      return "High Performance";
+      return "高性能";
 
     case EffectivePowerModeMaxPerformance:
-      return "Max Performance";
+      return "最高性能";
 
     case EffectivePowerModeGameMode:
-      return "Game Mode";
+      return "游戏模式";
 
     case EffectivePowerModeMixedReality:
-      return "Mixed Reality";
+      return "混合现实";
 
     default:
-      return "Unknown Mode";
+      return "未知模式";
   }
 }
 

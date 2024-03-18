@@ -69,7 +69,7 @@ SK_OPT_PlugInCfg (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.45f, 0.45f, 0.80f));
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.53f, 0.53f, 0.80f));
 
-    if (ImGui::CollapsingHeader ("Post-Processing", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("后期处理", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
