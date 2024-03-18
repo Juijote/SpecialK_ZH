@@ -1229,7 +1229,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   int active_display = rb.active_display;
 
   // If list is empty, don't show the menu, stupid :)
-  if (display_list [0] != '\0' && ImGui::Combo ("Active Monitor", &active_display, display_list.data ()))
+  if (display_list [0] != '\0' && ImGui::Combo ("活动监测", &active_display, display_list.data ()))
   {
     config.display.monitor_handle  = rb.displays [active_display].monitor;
 
@@ -1255,7 +1255,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     }
   }
 
-  if (ImGui::Combo (   "Resolution",  &resolution.idx,
+  if (ImGui::Combo (   "分辨率",  &resolution.idx,
                                        resolution.string.c_str () ))
   {
     DEVMODEW
@@ -1294,7 +1294,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       ImGui::SetTooltip ("Higher Resolutions are Available by selecting a Different Refresh Rate");
 
 
-  if (ImGui::Combo ( "Refresh Rate",  &refresh.idx,
+  if (ImGui::Combo ( "刷新率",  &refresh.idx,
                                        refresh.string.c_str () ))
   {
     DEVMODEW
@@ -1397,7 +1397,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     static bool changed = false;
 
-    if (ImGui::Combo ("VSYNC", &idx, vsync_list.data ()))
+    if (ImGui::Combo ("垂直同步", &idx, vsync_list.data ()))
     {
       last_present_interval = -1;
 
@@ -1489,7 +1489,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       rb.displays [rb.active_display];
 
     int         selection = 0;
-    std::string output_list = "  No Preference";
+    std::string output_list = "  无优先级";
     
     output_list += '\0';
     output_list += "  System Default";
@@ -1517,7 +1517,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (selection == 0)
     {
-      if (_wcsicmp (display.audio.paired_device, L"No Preference"))
+      if (_wcsicmp (display.audio.paired_device, L"无优先级"))
       {
         if (! _wcsicmp (display.audio.paired_device, L"System Default"))
         {
@@ -1528,7 +1528,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     output_list += '\0';
 
-    if (ImGui::Combo ("Audio Device", &selection, output_list.c_str ()))
+    if (ImGui::Combo ("音频设备", &selection, output_list.c_str ()))
     {
       if (selection > 1)
       {
@@ -1538,7 +1538,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       else
       {
         if (selection == 1) wcsncpy (display.audio.paired_device, L"System Default", 127);
-        else                wcsncpy (display.audio.paired_device, L"No Preference",  127);
+        else                wcsncpy (display.audio.paired_device, L"无优先级",  127);
 
         SK_WASAPI_EndPointMgr->setPersistedDefaultAudioEndpoint (GetCurrentProcessId (), eRender, L"");
       }
@@ -1589,8 +1589,8 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     auto state_orig = state;
 
-    if ( ImGui::Combo ( "Dithering", (int *)&state,
-                                      "  Default\0  Enable\0  Disable\0\0" ) )
+    if ( ImGui::Combo ( "抖色", (int *)&state,
+                                      "  默认\0  启用\0  禁用\0\0" ) )
     {
       if ( NVAPI_OK !=
            NvAPI_Disp_SetDitherControl ( rb.displays [rb.active_display].nvapi.gpu_handle,
@@ -1619,9 +1619,9 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
       auto mode_orig = mode;
 
-      if ( ImGui::Combo ( "Mode", (int *)&mode,
-                                  " Spatial Dynamic\0 Spatial Static\0 Spatial Dynamic 2x2\0"
-                                  " Spatial Static 2x2\0 Temporal\0\0" ) )
+      if ( ImGui::Combo ( "模式", (int *)&mode,
+                                  " 空间动态\0 空间静态\0 空间动态 2x2\0"
+                                  " 空间静态 2x2\0 时态\0\0" ) )
       {
         if ( NVAPI_OK !=
              NvAPI_Disp_SetDitherControl ( rb.displays [rb.active_display].nvapi.gpu_handle,
@@ -1643,7 +1643,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
          NvAPI_Disp_GetDitherControl ( rb.displays [rb.active_display].nvapi.display_id,
                                       &dither_ctl ) )
     {
-      ImGui::Text ( "Dithering: %s, Bits: %s, Mode: %s",
+      ImGui::Text ( "抖色: %s, Bits: %s, Mode: %s",
                       dither_ctl.state == NV_DITHER_STATE_DEFAULT            ?  "Default" :
                       dither_ctl.state == NV_DITHER_STATE_ENABLED            ?  "Enabled" :
                       dither_ctl.state == NV_DITHER_STATE_DISABLED           ? "Disabled" : "Unknown",
@@ -1663,7 +1663,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   {
     // XXX: 9/9/22, Need to fix re-enumeration of displays after doing this so the drop-down menu text is correct
     //
-    if (ImGui::Button ("Make Primary Display"))
+    if (ImGui::Button ("设为主显示"))
     {
       struct monitor_s {
         DEVMODE dm             = { };
@@ -1724,7 +1724,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     }
 
     if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Setting a monitor as primary gives it control of DWM composition rate and lowers latency when using mismatched refresh rates");
+        ImGui::SetTooltip ("将显示器设置为主显示器可以控制 DWM 合成速率，并在使用不匹配的刷新速率时降低延迟");
   }
 
   ImVec2 vHDRPos;
@@ -1735,7 +1735,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     bool hdr_enable =
       rb.displays [rb.active_display].hdr.enabled;
 
-    if (ImGui::Checkbox ("Enable HDR", &hdr_enable))
+    if (ImGui::Checkbox ("启用 HDR", &hdr_enable))
     {
       DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE
         setHdrState                     = { };
@@ -1806,7 +1806,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   ImGui::BeginGroup ();
 
-  if (ImGui::Checkbox ("Ignore DPI Scaling",      &bDPIAware))
+  if (ImGui::Checkbox ("忽略 DPI 缩放",      &bDPIAware))
   {
     config.dpi.disable_scaling                  = (bDPIAware);
     config.dpi.per_monitor.aware                = (bDPIAware);
@@ -1847,7 +1847,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   if (display_list [0] != '\0')
   {
-    if (ImGui::Checkbox ("Prefer Selected Monitor", &config.display.save_monitor_prefs))
+    if (ImGui::Checkbox ("优先选择显示器", &config.display.save_monitor_prefs))
     {
       if (config.display.save_monitor_prefs)
       {
@@ -1868,10 +1868,10 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     }
 
     if (ImGui::IsItemHovered ())
-      ImGui::SetTooltip ("Changes to 'Active Monitor' using this menu (not keybinds) will be remembered");
+      ImGui::SetTooltip ("使用此菜单（而不是按键绑定）对“活动显示器”所做的更改将被记住");
   }
 
-  if (ImGui::Checkbox ("Remember Display Mode", &config.display.resolution.save))
+  if (ImGui::Checkbox ("记住显示模式", &config.display.resolution.save))
   {
     if (config.display.resolution.save)
     {
@@ -1960,7 +1960,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   ImGui::EndGroup    ();
   ImGui::EndGroup    ();
 
-  if (ImGui::Checkbox ("Aspect Ratio Stretch", &config.display.aspect_ratio_stretch))
+  if (ImGui::Checkbox ("宽高比拉伸", &config.display.aspect_ratio_stretch))
   {
     config.window.center =
       config.display.aspect_ratio_stretch;
@@ -1992,11 +1992,9 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   if (ImGui::IsItemHovered ())
   {
     ImGui::BeginTooltip ();
-    ImGui::Text         ("Fills the game's monitor with a background wherever"
-                         " the game's window does not cover");
+    ImGui::Text         ("在游戏窗口未覆盖的地方用背景填充游戏显示器");
     ImGui::Separator    ();
-    ImGui::BulletText   ("For best results, use the game's internal Windowed"
-                         " mode option (not Borderless / Borderless Fullscreen)");
+    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全屏）");
 
     if (display.mpo_planes <= 1)
     {
@@ -2004,8 +2002,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f),
                          "  " ICON_FA_EXCLAMATION_TRIANGLE );
       ImGui::SameLine    (                                 );
-      ImGui::Text        ( " Multiplane Overlays are Unsupported,"
-                           " performance and latency will suffer if this is used." );
+      ImGui::Text        ( " 不支持多平面叠加层，如果使用它，性能和延迟将会受到影响。" );
     }
 
     ImGui::EndTooltip   ();
@@ -2864,7 +2861,7 @@ DisplayModeMenu (bool windowed)
       }
     }
 
-    if (ImGui::Combo ("Window Style###SubMenu_WindowBorder_Combo", &mode, modes) &&
+    if (ImGui::Combo ("窗口样式###SubMenu_WindowBorder_Combo", &mode, modes) &&
                                                                     mode != orig_mode)
     {
       //
@@ -2929,7 +2926,7 @@ DisplayModeMenu (bool windowed)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("Your game should be set to Windowed mode in its graphics settings if you intend to override this mode.");
+      ImGui::SetTooltip ("如果你打算覆盖此模式，则应将游戏的图形设置设置为窗口模式。");
     }
 
     ImGui::Separator ();
@@ -2960,7 +2957,7 @@ SK_NV_LatencyControlPanel (void)
   ImGui::Separator ();
 
   bool bLatencyManagement =
-    ImGui::TreeNodeEx ("NVIDIA Latency Management", ImGuiTreeNodeFlags_DefaultOpen);
+    ImGui::TreeNodeEx ("NVIDIA 延迟管理", ImGuiTreeNodeFlags_DefaultOpen);
 
   static bool     native_disabled =
     config.nvidia.reflex.disable_native;
@@ -2973,7 +2970,7 @@ SK_NV_LatencyControlPanel (void)
     static bool need_restart = false;
 
     changed |=
-      ImGui::Checkbox ("Disable This Game's Native Reflex", &config.nvidia.reflex.disable_native);
+      ImGui::Checkbox ("禁用该游戏的原生 Reflex", &config.nvidia.reflex.disable_native);
 
     if (changed)
     {
@@ -2985,11 +2982,11 @@ SK_NV_LatencyControlPanel (void)
     if (ImGui::IsItemHovered ())
     {
       ImGui::BeginTooltip    ();
-      ImGui::TextUnformatted ("Some games have -really- broken implementations of Reflex.");
+      ImGui::TextUnformatted ("有些游戏确实破坏了 Reflex 的实现。");
       ImGui::Separator       ();
-      ImGui::BulletText      ("It may be better to disable native Reflex and use SK's implementation in some cases.");
-      ImGui::BulletText      ("If using SK's Latency Analysis to quantify CPU/GPU-bound state and dial-in game settings\r\n\t"
-                              " for best performance, it is important to temporarily disable native Reflex.");
+      ImGui::BulletText      ("在某些情况下，禁用原生 Reflex 并使用 SK 的实现可能会更好。");
+      ImGui::BulletText      ("如果使用 SK 的延迟分析来量化 CPU / GPU 绑定状态和输入游戏设置\r\n\t"
+                              " 为了获得最佳性能，暂时禁用原生 Reflex 非常重要。");
       ImGui::EndTooltip      ();
     }
 
@@ -2999,7 +2996,7 @@ SK_NV_LatencyControlPanel (void)
       ImGui::SeparatorEx    (ImGuiSeparatorFlags_Vertical);
       ImGui::SameLine       ();
       ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
-      ImGui::BulletText     ("Game Restart Required");
+      ImGui::BulletText     ("需要重新启动游戏");
       ImGui::PopStyleColor  ();
     }
   }
@@ -3015,13 +3012,11 @@ SK_NV_LatencyControlPanel (void)
     ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f),
                        "  " ICON_FA_EXCLAMATION_TRIANGLE );
     ImGui::SameLine    (                                 );
-    ImGui::Text        ( " Reflex Latency modes do not"
-                         " work correctly on Secondary"
-                         " monitors."                    );
+    ImGui::Text        ( "Reflex 延迟模式在辅助显示器上无法正常工作。");
     ImGui::EndGroup    (                                 );
 
     if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Use the Display menu to assign Primary monitors");
+        ImGui::SetTooltip ("使用“显示”菜单分配主显示器");
   }
 
   SK_ImGui_DrawConfig_Latency ();
@@ -3039,7 +3034,7 @@ SK_DXGI_FullscreenControlPanel (void)
 
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("Enable Fake Fullscreen Mode", &config.render.dxgi.fake_fullscreen_mode))
+    if (ImGui::Checkbox ("启用假全屏模式", &config.render.dxgi.fake_fullscreen_mode))
     {
       // "Fake Fullscreen" requires background rendering
       if (config.render.dxgi.fake_fullscreen_mode)
@@ -3051,17 +3046,17 @@ SK_DXGI_FullscreenControlPanel (void)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("For resolutions at or lower than your desktop, prevent TRUE fullscreen from engaging.");
+      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全屏。");
     }
 
-    if (ImGui::Checkbox ("Allow Refresh Rate Changes", &config.display.allow_refresh_change))
+    if (ImGui::Checkbox ("允许 FPS 更改", &config.display.allow_refresh_change))
     {
       ImGui::CloseCurrentPopup ();
     }
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("If disallowed, your desktop's refresh rate will be used to avoid display mode changes.");
+      ImGui::SetTooltip ("如果不允许，你的桌面刷新率将用于避免显示模式更改。");
     }
 
     ImGui::TreePop  ();
@@ -7060,7 +7055,7 @@ SK_ImGui_StageNextFrame (void)
 
     if (*szName != '\0')
     {
-      ImGui::Text            ("  Hello");                                                            ImGui::SameLine ();
+      ImGui::Text            ("  你好");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
       ImGui::TextUnformatted ("请参阅 Discord 发布，在下面");                      ImGui::SameLine ();
     }

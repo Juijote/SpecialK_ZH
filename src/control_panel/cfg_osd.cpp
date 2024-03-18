@@ -128,7 +128,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::SliderFloat ( "##Show Startup Banner",
                          &config.version_banner.duration,
                                                     0.0f, 30.0f,
-                           "%3.1f Seconds" );
+                           "%3.1f 秒" );
     }
     else
       config.version_banner.duration = 0.0f;
@@ -152,7 +152,7 @@ SK::ControlPanel::OSD::Draw (void)
                   config.fps.show + config.fps.frametime + config.fps.advanced;
 
         ImGui::SameLine ();
-        ImGui::Combo    ("更多", &idx, "基础\0简单 FPS\0FPS + 帧时间 (ms)\0高级 FPS 分析\0\0", 4);
+        ImGui::Combo    ("更多", &idx, "基础\0简单 FPS\0FPS + 时间 (ms)\0高级 FPS 分析\0\0", 4);
 
              if (idx == 3) { config.fps.show = config.fps.frametime = config.fps.advanced       = true;  config.fps.compact = false; }
         else if (idx == 2) { config.fps.show = config.fps.frametime = true; config.fps.advanced = false; config.fps.compact = false; }
@@ -166,7 +166,7 @@ SK::ControlPanel::OSD::Draw (void)
         ImGui::Checkbox ("VRR", &config.fps.compact_vrr);
         ImGui::SameLine ();
       }
-      ImGui::Checkbox   ("累计帧数", &config.fps.framenumber);
+      ImGui::Checkbox   ("累计 FPS 生成", &config.fps.framenumber);
       ImGui::EndGroup   ();
 
       // New line
@@ -201,7 +201,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::TreePush     ("");
 
       ImGui::PushStyleVar (ImGuiStyleVar_WindowRounding, 16.0f);
-      ImGui::BeginChild   ("WMI 监视器", ImVec2 (font.size * 50.0f,font.size_multiline * 6.05f), true, ImGuiWindowFlags_NavFlattened);
+      ImGui::BeginChild   ("WMI 显示器", ImVec2 (font.size * 50.0f,font.size_multiline * 6.05f), true, ImGuiWindowFlags_NavFlattened);
 
       ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, 0.785f, 0.0784f, 1.0f));
       ImGui::TextWrapped    ("这些函数会生成 WMI 监视服务，并且可能需要几秒钟才能启动。");

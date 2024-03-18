@@ -371,7 +371,7 @@ SK::ControlPanel::Window::Draw (void)
 
       bool changed = false;
 
-      changed |= ImGui::RadioButton ("No Preference",         &config.window.always_on_top,  NoPreferenceOnTop); ImGui::SameLine ();
+      changed |= ImGui::RadioButton ("无优先级",         &config.window.always_on_top,  NoPreferenceOnTop); ImGui::SameLine ();
       changed |= ImGui::RadioButton ("Prevent Always-On-Top", &config.window.always_on_top, PreventAlwaysOnTop); ImGui::SameLine ();
       changed |= ImGui::RadioButton ("Force Always-On-Top",   &config.window.always_on_top,        AlwaysOnTop); ImGui::SameLine ();
       changed |= ImGui::RadioButton ("Multitasking-On-Top",   &config.window.always_on_top,   SmartAlwaysOnTop);

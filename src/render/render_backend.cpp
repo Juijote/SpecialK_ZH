@@ -3099,7 +3099,7 @@ SK_RenderBackend_V2::routeAudioForDisplay (SK_RenderBackend_V2::output_s *pDispl
 
   if (_wcsicmp (pDisplay->audio.paired_device, L"System Default"))
   {
-    if (_wcsicmp (pDisplay->audio.paired_device, L"No Preference"))
+    if (_wcsicmp (pDisplay->audio.paired_device, L"无优先级"))
     {
       routed =
         SK_WASAPI_EndPointMgr->setPersistedDefaultAudioEndpoint (
