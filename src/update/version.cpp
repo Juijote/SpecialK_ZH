@@ -1393,9 +1393,9 @@ SK_Version_GetLatestBranchInfo_V1 (const wchar_t* wszProduct, const char* szBran
 
   static SK_BranchInfo_V1 __INVAID_BRANCH
   {
-    0x1, SK_GetVersionStrW (), L"N/A", L"No Description Available",
+    0x1, SK_GetVersionStrW (), L"N/A", L"没有可用的描述",
 
-        SK_VersionInfo_V1 { L"Unknown (or Custom Install)", L"N/A", -1 },
+        SK_VersionInfo_V1 { L"未知（或自定义安装）", L"N/A", -1 },
 
     0x1, L"NotUsed", L"Invalid"
   };

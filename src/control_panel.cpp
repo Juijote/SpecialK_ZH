@@ -7081,14 +7081,14 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("  Hello");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("please see the Discord Release Channel, under");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("请参阅 Discord 发布频道，在下面");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("  Please see the Discord Release Channel, under");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("  请参阅 Discord 发布频道，在下面");                    ImGui::SameLine ();
     }
-    ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "Help | Releases");                    ImGui::SameLine ();
-    ImGui::TextUnformatted   ("for beta / stable updates to this project.");
+    ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "帮助 | 发布");                    ImGui::SameLine ();
+    ImGui::TextUnformatted   ("用于该项目的测试版 / 稳定版更新。");
 
     ImGui::Spacing ();
     ImGui::Spacing ();
@@ -7172,7 +7172,7 @@ SK_ImGui_StageNextFrame (void)
           SK_WideCharToUTF8 (SK_Version_GetLastCheckTime_WStr ());
       }
 
-      ImGui::Text          ("You are currently using"); ImGui::SameLine ();
+      ImGui::Text          ("当前正在使用版本"); ImGui::SameLine ();
       ImGui::TextColored   (ImColor::HSV (.15f,.9f,1.f), "%s",
                             SK_GetVersionStrA ()); ImGui::SameLine ();
                             //utf8_release_title.c_str());ImGui::SameLine ();
@@ -7202,7 +7202,7 @@ SK_ImGui_StageNextFrame (void)
 
     ImGui::Spacing         ();
 
-    ImGui::TextUnformatted ("Press ");                    ImGui::SameLine ();
+    ImGui::TextUnformatted ("按 ");                    ImGui::SameLine ();
 
     ImGui::TextColored     ( ImColor::HSV (.16f, 1.f, 1.f),
                                R"('%hs)", SK_WideCharToUTF8 (virtualToHuman [VK_CONTROL]).c_str () );
@@ -7285,7 +7285,7 @@ SK_ImGui_StageNextFrame (void)
       ImGui::SameLine ();
     }
 
-    ImGui::TextUnformatted (  " to open Special K's configuration menu. " );
+    ImGui::TextUnformatted (  " 打开 Special K 的配置菜单。 " );
 
     ImGui::SameLine (); ImGui::Spacing     ();
     ImGui::SameLine (); ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
@@ -7293,7 +7293,7 @@ SK_ImGui_StageNextFrame (void)
     ImGui::SameLine ();
     ImGui::TextColored  (ImVec4 (0.999f, 0.666f, 0.333f, 1.f), ICON_FA_INFO_CIRCLE);
     ImGui::SameLine ();
-    ImGui::TextUnformatted ("Configure this Startup Banner in OSD Settings.");
+    ImGui::TextUnformatted ("在 OSD 设置中配置此启动提示。");
 
     ImGui::End             ( );
     ImGui::PopStyleColor   (2);
