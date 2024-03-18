@@ -296,7 +296,7 @@ struct sk_config_t
       struct font_params_s {
         std::string file   = "";
         float       size   = 7.0F;
-      } chinese      { "arial.ttf",     18.0f },
+      } chinese      { "msyh.ttc",     18.0f },
         cyrillic     { "arial.ttf",    18.0f },
         default_font { "arial.ttf",    18.0f },
         japanese     { "msgothic.ttc", 18.0f },
