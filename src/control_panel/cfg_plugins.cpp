@@ -124,7 +124,7 @@ SK_ImGui_PlugInSelector (iSK_INI* ini, const std::string& name, const wchar_t* p
     else
       ImGui::Text       ("默认情况下建议延迟加载顺序。");
     ImGui::Separator    ();
-    ImGui::BulletText   ("如果插件未显示或游戏崩溃，请尝试尽早加载。");
+    ImGui::BulletText   ("如果插件未显示或游戏报错，请尝试尽早加载。");
     ImGui::BulletText   ("提前插件在 Special K 之前处理渲染；如果提前加载，ReShade 会将其效果应用到 Special K 的 UI。");
     ImGui::BulletText   ("延缓插件具有未定义的加载顺序，但可能允许 ReShade 在某些顽固游戏中作为插件加载。");
     ImGui::EndTooltip   ();
@@ -308,7 +308,7 @@ SK::ControlPanel::PlugIns::Draw (void)
         ImGui::TextUnformatted ("除非需要特定的附加组件，否则应首选兼容模式。");
         ImGui::Separator       ();
         ImGui::BulletText      ("加载顺序在兼容模式下无关紧要。");
-        ImGui::BulletText      ("幀生成游戏在兼容模式下更加稳定。");
+        ImGui::BulletText      ("Frame 生成游戏在兼容模式下更加稳定。");
         ImGui::BulletText      ("可能会禁用对某些 ReShade 附加组件的支持。");
         ImGui::BulletText      ("对非兼容模式提供的支持非常少。");
         ImGui::EndTooltip      ();
@@ -339,7 +339,7 @@ SK::ControlPanel::PlugIns::Draw (void)
       ImGui::EndGroup   ();
       ImGui::EndGroup   ();
 
-      if (ImGui::Button ("打开 ReShade 配置/日志"))
+      if (ImGui::Button ("查看 ReShade 配置/日志"))
       {
         std::wstring reshade_profile_path =
           std::wstring (SK_GetConfigPath ()) + LR"(\ReShade)";

@@ -15,9 +15,9 @@ PresentModeToString (PresentMode mode)
 {
   switch (mode)
   {
-    case PresentMode::Hardware_Legacy_Flip:                 return "硬件:  传统跳帧";
-    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "硬件:  旧帧绘制到前端缓冲区";
-    case PresentMode::Hardware_Independent_Flip:            return "硬件:  独立跳帧";
+    case PresentMode::Hardware_Legacy_Flip:                 return "硬件:  传统跳Frame";
+    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "硬件:  旧Frame绘制到前端缓冲区";
+    case PresentMode::Hardware_Independent_Flip:            return "硬件:  独立跳Frame";
     case PresentMode::Composed_Flip:                        return "合成:  绘制";
     case PresentMode::Composed_Copy_GPU_GDI:                return "合成:  使用 GPU GDI 绘制";
     case PresentMode::Composed_Copy_CPU_GDI:                return "合成:  使用 CPU GDI 绘制";

@@ -294,10 +294,10 @@ SK::ControlPanel::Compatibility::Draw (void)
     {
       ImGui::TreePush   ("");
       ImGui::BeginGroup (  );
-      ImGui::Checkbox   ("启用崩溃处理程序",          &config.system.handle_crashes);
+      ImGui::Checkbox   ("启用报错处理程序",          &config.system.handle_crashes);
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("在 logs/crash.log 中播放《合金装备》警报声和崩溃日志");
+        ImGui::SetTooltip ("在 logs/crash.log 中播放《合金装备》警报声和报错日志");
 
       ImGui::Checkbox  ("ReHook 加载库",             &config.compatibility.rehook_loadlibrary);
 

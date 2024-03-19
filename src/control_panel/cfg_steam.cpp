@@ -466,7 +466,7 @@ SK::ControlPanel::Steam::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("修复了成就数据泛滥时出现崩溃的游戏");
+          ImGui::Text         ("修复了成就数据泛滥时出现报错的游戏");
           ImGui::Separator    ();
           ImGui::BulletText   ("当 Special K 获取好友成就时，这些游戏可能会关闭 SteamAPI");
           ImGui::BulletText   ("如果 SteamAPI FPS 显示卡住，请打开此选项并重新启动游戏");
@@ -488,7 +488,7 @@ SK::ControlPanel::Steam::Draw (void)
           ImGui::TextColored  (ImColor::HSV (0.159f, 1.0f, 1.0f), "修复了使用 SteamAPI 拒绝离线模式的讨厌游戏");
           ImGui::Separator    ();
           ImGui::BulletText   ("这是一个比想象要大得多的问题。");
-          ImGui::BulletText   ("这还修复了一些在 Steam 断开连接时崩溃的游戏（与 DRM 无关）。");
+          ImGui::BulletText   ("这还修复了一些在 Steam 断开连接时报错的游戏（与 DRM 无关）。");
           ImGui::EndTooltip   ();
         }
 

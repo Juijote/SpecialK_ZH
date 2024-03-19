@@ -1518,7 +1518,7 @@ auto DeclKeybind =
 
     Keybind ( &config.widgets.hide_all_widgets_keybind,  L"Temporarily hide all widgets",                              osd_ini,         L"Widgets.Global"),
     Keybind ( &config.reshade.toggle_overlay_keybind,    L"Toggle ReShade Overlay (Add-On version)",                   osd_ini,         L"ReShade.AddOn"),
-    Keybind ( &config.reshade.inject_reshade_keybind,    L"Inject ReShade (6.0+) as a Global PlugIn",                  osd_ini,         L"ReShade.AddOn"),
+    Keybind ( &config.reshade.inject_reshade_keybind,    L"将 ReShade (6.0+) 作为全局插件注入",                  osd_ini,         L"ReShade.AddOn"),
 
 
     // Input

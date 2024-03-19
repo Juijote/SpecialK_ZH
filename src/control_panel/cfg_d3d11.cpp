@@ -427,7 +427,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
               ImGui::TextUnformatted ("除非在 SK 的 INI 中将 GlobalInjectDelay 设置为 0.0，否则这些选项将不起作用。");
               ImGui::Separator       ();
-              ImGui::BulletText      ("将 GlobalInjectDelay 设置为 0.0 将破坏游戏的 DLSS3 帧生成实现。");
+              ImGui::BulletText      ("将 GlobalInjectDelay 设置为 0.0 将破坏游戏的 DLSS3 Frame 生成实现。");
             }
           }
         }
@@ -2086,7 +2086,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 
       ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
       ImGui::SameLine        ();
-      ImGui::TextUnformatted ("右键单击配置全屏 / 窗口模式");
+      ImGui::TextUnformatted ("右键单击配置全荧幕 / 窗口模式");
       ImGui::EndTooltip      ();
     }
   }

@@ -1990,7 +1990,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     ImGui::BeginTooltip ();
     ImGui::Text         ("在游戏窗口未覆盖的地方用背景填充游戏显示器");
     ImGui::Separator    ();
-    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全屏）");
+    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全荧幕）");
 
     if (display.mpo_planes <= 1)
     {
@@ -2224,7 +2224,7 @@ DisplayModeMenu (bool windowed)
   bool       force  = windowed ? config.display.force_windowed :
                                  config.display.force_fullscreen;
 
-  const char* modes = "窗口模式\0全屏模式\0\0";
+  const char* modes = "窗口模式\0全荧幕模式\0\0";
 
 
   // Engaging fullscreen mode in OpenGL is more complicated than I want to
@@ -2829,7 +2829,7 @@ DisplayModeMenu (bool windowed)
     }
 
     modes =
-      "有边框\0无边框\0无边框全屏\0\0";
+      "有边框\0无边框\0无边框全荧幕\0\0";
 
     static bool                     queued_changes = false;
     static std::stack <std::string> change_commands;
@@ -3024,13 +3024,13 @@ SK_NV_LatencyControlPanel (void)
 void
 SK_DXGI_FullscreenControlPanel (void)
 {
-  if (ImGui::BeginPopup ("DXGI 全屏控制面板"))
+  if (ImGui::BeginPopup ("DXGI 全荧幕控制面板"))
   {
-    ImGui::TextUnformatted ("D3D11 / D3D12 全屏设置\t(Experimental)");
+    ImGui::TextUnformatted ("D3D11 / D3D12 全荧幕设置\t(Experimental)");
 
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("启用假全屏模式", &config.render.dxgi.fake_fullscreen_mode))
+    if (ImGui::Checkbox ("启用假全荧幕模式", &config.render.dxgi.fake_fullscreen_mode))
     {
       // "Fake Fullscreen" requires background rendering
       if (config.render.dxgi.fake_fullscreen_mode)
@@ -3042,7 +3042,7 @@ SK_DXGI_FullscreenControlPanel (void)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全屏。");
+      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全荧幕。");
     }
 
     if (ImGui::Checkbox ("允许 FPS 更改", &config.display.allow_refresh_change))
@@ -3215,7 +3215,7 @@ SK_ImGui_ControlPanel (void)
           SK_RunLHIfBitness ( 64, GetProcAddress (hModReShade, "?SK_ImGui_DrawCallback@@YAIPEAX@Z"),
                                   GetProcAddress (hModReShade, "?SK_ImGui_DrawCallback@@YGIPAX@Z" ) ) );
 
-        if (ImGui::MenuItem ( "打开游戏目录", "" ))
+        if (ImGui::MenuItem ( "查看游戏目录", "" ))
         {
           SK_ShellExecuteW ( nullptr, L"explore", SK_GetHostPath (), nullptr, nullptr, SW_NORMAL);
         }
@@ -3223,7 +3223,7 @@ SK_ImGui_ControlPanel (void)
 #if 0
         if (SK::SteamAPI::AppID () != 0 && SK::SteamAPI::GetDataDir () != "")
         {
-          if (ImGui::BeginMenu ("打开 Steam 目录"))
+          if (ImGui::BeginMenu ("查看 Steam 目录"))
           {
             if (ImGui::MenuItem ("云数据", ""))
             {
@@ -3246,7 +3246,7 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::Separator ();
 
-        if (ImGui::MenuItem ( "打开 Special K 日志", "" ))
+        if (ImGui::MenuItem ( "查看 Special K 日志", "" ))
         {
           std::wstring log_dir =
             std::wstring (SK_GetConfigPath ()) + LR"(\logs)";
@@ -3581,7 +3581,7 @@ SK_ImGui_ControlPanel (void)
         ImGui::Separator ();
 
         bool hdr_changed =
-            ImGui::Checkbox ( "保留全范围 HDR 屏幕截图",
+            ImGui::Checkbox ( "保存全范围 HDR 屏幕截图",
                                 &config.screenshots.png_compress );
 
         // Show AVIF options in 64-bit builds
@@ -4825,7 +4825,7 @@ SK_ImGui_ControlPanel (void)
       bool bFakeFullscreen =
         rb.isFakeFullscreen ();
 
-      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全屏\" 分辨率"
+      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全荧幕\" 分辨率"
                                             : " 窗口分辨率      ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
@@ -4840,7 +4840,7 @@ SK_ImGui_ControlPanel (void)
 
     else
     {
-      if (ImGui::MenuItem (" 全屏分辨率 ", szResolution))
+      if (ImGui::MenuItem (" 全荧幕分辨率 ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
         config.window.res.override.y = (int)((float)(client.bottom - client.top)  * g_fDPIScale);
@@ -4887,7 +4887,7 @@ SK_ImGui_ControlPanel (void)
     {
       if (SK_API_IsDXGIBased (rb.api))
       {
-        ImGui::OpenPopup         ("DXGI 全屏控制面板");
+        ImGui::OpenPopup         ("DXGI 全荧幕控制面板");
         ImGui::SetNextWindowSize (ImVec2 (-1.0f, -1.0f), ImGuiCond_Always);
       }
     }
@@ -6349,21 +6349,20 @@ SK_ImGui_ControlPanel (void)
 
     if (SK::SteamAPI::AppID () > 0 && SK::SteamAPI::GetCallbacksRun ())
     {
-      if (ImGui::Checkbox ("Enable Steam Screenshot Hook", &config.steam.screenshots.enable_hook))
+      if (ImGui::Checkbox ("启用 Steam 屏幕截图挂钩", &config.steam.screenshots.enable_hook))
       {
         rb.screenshot_mgr->init ();
       }
 
       if (ImGui::IsItemHovered ())
       {
-        ImGui::SetTooltip ( "In D3D11/12 games, integrates SK's high-performance/quality screenshot capture "
-                            "system, adding HDR -> LDR support and other things." );
+        ImGui::SetTooltip ( "在 D3D11 / 12 游戏中，集成了 SK 的高性能/高质量截图捕捉系统，添加了 HDR -> LDR 支持等功能。" );
       }
 
       if (config.steam.screenshots.enable_hook)
       {
         ImGui::TreePush ("");
-        ImGui::Checkbox ("Show OSD in Steam Screenshots",
+        ImGui::Checkbox ("在 Steam 屏幕截图中显示 OSD",
                                     &config.screenshots.show_osd_by_default);
         ImGui::TreePop  (  );
       }
@@ -6371,20 +6370,20 @@ SK_ImGui_ControlPanel (void)
 
     bool png_changed = false;
 
-    ImGui::Checkbox ("Copy Screenshots to Clipboard",    &config.screenshots.copy_to_clipboard);
-    ImGui::Checkbox ("Play Sound on Screenshot Capture", &config.screenshots.play_sound       );
+    ImGui::Checkbox ("将屏幕截图复制到剪贴板",    &config.screenshots.copy_to_clipboard);
+    ImGui::Checkbox ("在屏幕截图捕获时播放声音", &config.screenshots.play_sound       );
 
     png_changed =
       ImGui::Checkbox (
-        rb.isHDRCapable () ? "Keep HDR Screenshots          " :
-                        "Keep Lossless .PNG Screenshots",
+        rb.isHDRCapable () ? "保存 HDR 屏幕截图          " :
+                        "保存无损 .PNG 屏幕截图",
                                     &config.screenshots.png_compress
                       );
 
     if (rb.isHDRCapable ())
     {
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("See the HDR Menu to configure HDR Screenshot Format and Compression Settings.");
+        ImGui::SetTooltip ("请参阅 HDR 菜单来配置 HDR 屏幕截图格式和压缩设置。");
     }
 
     const bool bHasPlatformIntegration =
@@ -6392,7 +6391,7 @@ SK_ImGui_ControlPanel (void)
 
     if (bHasPlatformIntegration)
     {
-      ImGui::Checkbox ("Add Nickname to Metadata", &config.screenshots.embed_nickname);
+      ImGui::Checkbox ("将昵称添加到元数据", &config.screenshots.embed_nickname);
 
       if (ImGui::IsItemHovered ())
       {
@@ -6400,7 +6399,7 @@ SK_ImGui_ControlPanel (void)
         SK_RunOnce (SK_Platform_GetUserName (szName, 511));
 
         ImGui::SetTooltip (
-          "Add your platform's nickname ('%hs') to screenshots as the Author",
+          "以作者身份将你的平台名称 ('%hs') 添加到屏幕截图中",
                    szName );
       }
     }
@@ -6448,7 +6447,7 @@ SK_ImGui_ControlPanel (void)
       ImGui::BeginGroup (  );
       ImGui::Separator  (  );
       ImGui::TreePush   ("");
-      ImGui::Text ( "%u files using %hs",
+      ImGui::Text ( "%u 文件使用 %hs",
                       repo.files,
                         SK_WideCharToUTF8 (SK_File_SizeToString (repo.liSize.QuadPart, Auto, pTLS).data ()).c_str ()
                   );
@@ -6456,13 +6455,13 @@ SK_ImGui_ControlPanel (void)
       if (SK::SteamAPI::AppID () > 0 && SK::SteamAPI::GetCallbacksRun () && ImGui::IsItemHovered ())
       {
         ImGui::SetTooltip ( rb.isHDRCapable () ?
-                              "Steam does not support HDR Screenshots, so SK maintains its own storage for .JXR Screenshots" :
-                              "Steam does not support .PNG Screenshots, so SK maintains its own storage for Lossless Screenshots." );
+                              "Steam 不支持 HDR 屏幕截图，因此 SK 维护自己的 .JXR 屏幕截图保存" :
+                              "Steam 不支持 .PNG 屏幕截图，因此 SK 维护自己的无损屏幕截图保存。" );
       }
 
       ImGui::SameLine ();
 
-      if (ImGui::Button ("Browse"))
+      if (ImGui::Button ("查看"))
       {
         SK_ShellExecuteW ( nullptr,
           L"explore",
@@ -7040,13 +7039,13 @@ SK_ImGui_StageNextFrame (void)
 
     if (*szName != '\0')
     {
-      ImGui::Text            ("  你好");                                                            ImGui::SameLine ();
+      ImGui::Text            ("你好");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
       ImGui::TextUnformatted ("请参阅 Discord 发布");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("  请参阅 Discord 发布");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("请参阅 Discord 发布");                    ImGui::SameLine ();
     }
     ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "帮助 | 发布");                    ImGui::SameLine ();
     ImGui::TextUnformatted   ("用于该项目的测试版 / 稳定版更新。");
@@ -7384,18 +7383,18 @@ SK_ImGui_StageNextFrame (void)
   {
     SK_ImGui_ConfirmDisplaySettings (nullptr, "", {});
 
-    if ( ImGui::BeginPopupModal ( "Confirm Display Setting Changes",
+    if ( ImGui::BeginPopupModal ( "确认显示设置更改",
                                     nullptr,
                                       ImGuiWindowFlags_AlwaysAutoResize |
                                       ImGuiWindowFlags_NoScrollbar      |
                                       ImGuiWindowFlags_NoScrollWithMouse )
        )
     {
-      ImGui::TextColored ( ImColor::HSV (0.075f, 1.0f, 1.0f), "\n         Display Settings Will Revert in %4.1f Seconds...\n\n",
+      ImGui::TextColored ( ImColor::HSV (0.075f, 1.0f, 1.0f), "\n         显示设置将在 %4.1f 秒后恢复...\n\n",
                                                 15.0f - ( (float)SK_timeGetTime () - (float)SK_ImGui_DisplayChangeTime ) / 1000.0f );
       ImGui::Separator   ();
 
-      ImGui::TextColored (ImColor::HSV (0.15f, 1.0f, 1.0f),     " Keep Changes?");
+      ImGui::TextColored (ImColor::HSV (0.15f, 1.0f, 1.0f),     " 保留更改?");
 
       ImGui::SameLine    (); ImGui::Spacing (); ImGui::SameLine ();
 
@@ -7422,7 +7421,7 @@ SK_ImGui_StageNextFrame (void)
 
       ImGui::SameLine    ();
 
-      if (ImGui::Button  ("No"))
+      if (ImGui::Button  ("否"))
       {
         SK_ImGui_UnconfirmedDisplayChanges = true;
         SK_ImGui_DisplayChangeTime         =    0;
@@ -7432,11 +7431,11 @@ SK_ImGui_StageNextFrame (void)
 
       ImGui::SameLine (); ImGui::Spacing (); ImGui::SameLine ();
 
-      ImGui::Checkbox ( "Enable Confirmation",
+      ImGui::Checkbox ( "确认启用",
                           &config.display.confirm_mode_changes );
 
       if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("If disabled, resolution changes will apply immediately with no confirmation.");
+          ImGui::SetTooltip ("如果禁用，分辨率更改将立即应用，无需确认。");
 
       ImGui::EndPopup ();
     }
@@ -7474,8 +7473,8 @@ SK_ImGui_StageNextFrame (void)
   }
 
   if ( ImGui::BeginPopupModal ( SK_ImGui_WantRestart ?
-                   "Confirm Forced Software Restart" :
-                   "Confirm Forced Software Termination",
+                   "确认强制游戏重启" :
+                   "确认强制游戏终止",
                                   nullptr,
                                     ImGuiWindowFlags_AlwaysAutoResize |
                                     ImGuiWindowFlags_NoScrollbar      |
@@ -7491,7 +7490,7 @@ SK_ImGui_StageNextFrame (void)
                                               szConfirmRestart :
                                               szConfirmExit;
     static const char* szDisclaimer     =
-      "\n         You will lose any unsaved game progress.      \n\n";
+      "\n         将丢失所有未保存的游戏进度。      \n\n";
 
     ImGui::TextColored (ImColor::HSV (0.075f, 1.0f, 1.0f), "%hs", szDisclaimer);
     ImGui::Separator   ();
@@ -7571,7 +7570,7 @@ SK_ImGui_StageNextFrame (void)
       ImGui::TextUnformatted (" ");
       ImGui::SameLine    ();
 
-      if (ImGui::Checkbox ( "Enable Alt + F4",
+      if (ImGui::Checkbox ( "启用 Alt + F4",
                               &config.input.keyboard.catch_alt_f4 ))
       {
         // If user turns off here, then also turn off keyboard hook bypass
@@ -7582,12 +7581,12 @@ SK_ImGui_StageNextFrame (void)
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
-        ImGui::Text         ("If disabled, game's default Alt + F4 behavior will apply");
+        ImGui::Text         ("如果禁用，游戏的默认 Alt + F4 行为将适用");
 
         if (SK_ImGui_Visible)
         {
           ImGui::Separator  ();
-          ImGui::BulletText ("Alt + F4 always displays a confirmation if the control panel is visible");
+          ImGui::BulletText ("如果控制面板可见，Alt + F4 始终显示确认信息");
         }
         ImGui::EndTooltip   ();
       }
@@ -7606,17 +7605,17 @@ SK_ImGui_StageNextFrame (void)
                                                      0.925f * io.DisplaySize.y )
                                         );
 
-    if (! ImGui::IsPopupOpen ("Fullscreen / Windowed Display Mode Switch Failure"))
+    if (! ImGui::IsPopupOpen ("全荧幕 / 窗口显示模式切换失败"))
     {
       SK_ImGui_WantExit = false;
       orig_nav_state    = nav_usable;
 
-      ImGui::OpenPopup ("Fullscreen / Windowed Display Mode Switch Failure");
+      ImGui::OpenPopup ("全荧幕 / 窗口显示模式切换失败");
     }
   }
 
   if ( ImGui::BeginPopupModal (
-         "Fullscreen / Windowed Display Mode Switch Failure",
+         "全荧幕 / 窗口显示模式切换失败",
            nullptr,
              ImGuiWindowFlags_AlwaysAutoResize |
              ImGuiWindowFlags_NoScrollbar      |
