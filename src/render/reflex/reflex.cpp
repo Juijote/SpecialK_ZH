@@ -2,6 +2,7 @@
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/nvapi.h>
+#include <imgui/font_awesome.h>
 
 #ifdef  __SK_SUBSYSTEM__
 #undef  __SK_SUBSYSTEM__
@@ -698,20 +699,30 @@ SK_NV_AdaptiveSyncControl (void)
     static auto& rb =
       SK_GetCurrentRenderBackend ();
 
+    // We need to force a GSync status check at least once
+    //   in order to draw this correctly
+    SK_RunOnce (
+    {
+      config.apis.NvAPI.implicit_gsync = true;
+
+      if (rb.api == SK_RenderAPI::D3D12)
+      {
+        // It is necessary to start PresentMon in D3D12, or the VRR indicator will not work
+        extern void SK_SpawnPresentMonWorker (void);
+                    SK_SpawnPresentMonWorker ();
+      }
+    });
+
     for ( auto& display : rb.displays )
     {
       if (display.monitor == rb.monitor)
       {
         static NV_GET_ADAPTIVE_SYNC_DATA
                      getAdaptiveSync   = { };
-
         static DWORD lastChecked       = 0;
-        static NvU64 lastFlipTimeStamp = 0;
-        static NvU64 lastFlipFrame     = 0;
-        static double   dFlipPrint     = 0.0;
 
-        if (SK_timeGetTime () > lastChecked + 333)
-        {                       lastChecked = SK_timeGetTime ();
+        if (SK::ControlPanel::current_time > lastChecked + 333)
+        {                                    lastChecked = SK::ControlPanel::current_time;
 
           ZeroMemory (&getAdaptiveSync,  sizeof (NV_GET_ADAPTIVE_SYNC_DATA));
                        getAdaptiveSync.version = NV_GET_ADAPTIVE_SYNC_DATA_VER;
@@ -722,57 +733,14 @@ SK_NV_AdaptiveSyncControl (void)
                            &getAdaptiveSync )
              )
           {
-#ifdef _PRINT_EFFECTIVE_FPS
-            static constexpr auto      _SampleSize = 32;
-            struct {
-              NvU64 lastFlipTimeStamp [_SampleSize] = { 0 };
-              UINT  tail                            =   0;
-            } static flip_history;
-
-            int flips = 0;
-
-            if (flip_history.lastFlipTimeStamp [flip_history.tail] != getAdaptiveSync.lastFlipTimeStamp && getAdaptiveSync.lastFlipRefreshCount <= 1)
-            {
-              flip_history.tail++;
-
-              if (flip_history.tail > _SampleSize-1)
-                  flip_history.tail = 0;
-
-              flip_history.lastFlipTimeStamp [flip_history.tail] = getAdaptiveSync.lastFlipTimeStamp;
-            }
-
-            NvU64 oldest_flip = MAXUINT64;
-            NvU64 newest_flip = 0;
-
-            for (UINT i = 0 ; i < _SampleSize ; ++i)
-            {
-              newest_flip =
-                std::max (flip_history.lastFlipTimeStamp [i], newest_flip);
-            }
-
-            for (UINT i = 0 ; i < _SampleSize ; ++i)
-            {
-              if (flip_history.lastFlipTimeStamp [i] > newest_flip - SK_QpcFreq)// && (i == 0 || flip_history.lastFlipTimeStamp [i] != flip_history.lastFlipTimeStamp [i - 1]))
-              {
-                ++flips;
-
-                oldest_flip =
-                  std::min (flip_history.lastFlipTimeStamp [i], oldest_flip);
-              }
-            }
-
-            dFlipPrint =
-              static_cast <double> (flips)                     /
-             (static_cast <double> (newest_flip - oldest_flip
-#endif
-              rb.gsync_state.update (true);
-#ifdef _PRINT_EFFECTIVE_FPS
-            }
-#endif
+            rb.gsync_state.update (true);
           }
 
-          else lastChecked = SK_timeGetTime () + 333;
+          else lastChecked = SK::ControlPanel::current_time + 333;
         }
+
+        float fEffectiveRefresh =
+          rb.displays [rb.active_display].nvapi.vblank_counter.getVBlankHz (SK::ControlPanel::current_time);
 
         ImGui::Text       ("自适应同步状态 %hs", SK_WideCharToUTF8 (rb.display_name).c_str ());
         ImGui::Separator  ();
@@ -780,11 +748,11 @@ SK_NV_AdaptiveSyncControl (void)
         ImGui::Text       ("当前状态:");
         if (! getAdaptiveSync.bDisableAdaptiveSync)
         {
-          ImGui::Text     ("Frame 分割:");
+          ImGui::Text     ("当前刷新:");
 
           if (getAdaptiveSync.maxFrameInterval != 0)
           {
-            ImGui::Text     ("Minimum Refresh:");
+            ImGui::Text   ("最小刷新:");
           }
         }
         ImGui::EndGroup   ();
@@ -796,12 +764,24 @@ SK_NV_AdaptiveSyncControl (void)
                                                                      "Inactive" );
         if (! getAdaptiveSync.bDisableAdaptiveSync)
         {
-          ImGui::Text     ( getAdaptiveSync.bDisableFrameSplitting ? "Disabled" :
-                                                                     "Enabled" );
+          auto *pLimiter =
+            SK::Framerate::GetLimiter (
+              rb.swapchain.p, false   );
+
+          if (pLimiter != nullptr)
+              pLimiter->frame_history_snapshots->frame_history.calcMean ();
+
+          ImGui::Text     ( "%#5.01f Hz", fEffectiveRefresh );
+
+          if (! config.apis.NvAPI.gsync_status)
+          {
+            ImGui::SameLine ();
+            ImGui::Text   ( " " ICON_FA_EXCLAMATION_TRIANGLE " G-Sync Status is disabled in the Display menu!");
+          }
 
           if (getAdaptiveSync.maxFrameInterval != 0)
           {
-            ImGui::Text   ( "%#6.2f Hz ",
+            ImGui::Text   ( "%#5.01f Hz ",
                              1000000.0 / static_cast <double> (getAdaptiveSync.maxFrameInterval) );
           }
         }
@@ -829,6 +809,8 @@ SK_NV_AdaptiveSyncControl (void)
 
           if (! getAdaptiveSync.bDisableAdaptiveSync)
           {
+            ImGui::SameLine ();
+
             toggle_split =
               ImGui::Button (
                 getAdaptiveSync.bDisableFrameSplitting == 0x0 ?
@@ -838,21 +820,17 @@ SK_NV_AdaptiveSyncControl (void)
         }
 
         ImGui::EndGroup   ();
-        ImGui::SameLine   ();
-        ImGui::BeginGroup ();
-
-        if (rb.displays [rb.active_display].nvapi.monitor_caps.data.caps.isRLACapable)
-        {
-          if (ImGui::Button ("Trigger Reflex Flash"))
-          {
-            rb.setLatencyMarkerNV (TRIGGER_FLASH);
-          }
-        }
-        ImGui::EndGroup   ();
-#ifdef _PRINT_EFFECTIVE_FPS
-        ImGui::SameLine   ();
-        ImGui::Text       ("有效刷新:\t%#6.2f Hz", dFlipPrint);
-#endif
+        //ImGui::SameLine   ();
+        //ImGui::BeginGroup ();
+        //
+        //if (rb.displays [rb.active_display].nvapi.monitor_caps.data.caps.isRLACapable)
+        //{
+        //  if (ImGui::Button ("Trigger Reflex Flash"))
+        //  {
+        //    rb.setLatencyMarkerNV (TRIGGER_FLASH);
+        //  }
+        //}
+        //ImGui::EndGroup   ();
 
         if (toggle_sync || toggle_split)
         {
