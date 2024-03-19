@@ -197,7 +197,7 @@ SK::ControlPanel::Steam::Draw (void)
       }
 
       if (files.empty ())
-          files.emplace_back (sk_steam_cloud_entry_s { "No Files", "", 0L, 0LL, false });
+          files.emplace_back (sk_steam_cloud_entry_s { "没有文件", "", 0L, 0LL, false });
     }
 
 
@@ -221,7 +221,7 @@ SK::ControlPanel::Steam::Draw (void)
       ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
 
       const bool summarize =
-        ImGui::CollapsingHeader ("Wasted Disk Space", ImGuiTreeNodeFlags_DefaultOpen);
+        ImGui::CollapsingHeader ("浪费的磁盘空间", ImGuiTreeNodeFlags_DefaultOpen);
 
       ImGui::PopStyleColor (3);
 
@@ -231,7 +231,7 @@ SK::ControlPanel::Steam::Draw (void)
 
         if (
           ImGui::MenuItem ( SK_FormatString (
-                              "Steam is currently wasting %ws on %i redistributable files!",
+                              "Steam 目前在 %i 个可再发行文件上浪费了 %ws！",
                                 SK_File_SizeToStringF (redist_size, 5, 2).data,
                                   redist_count
                             ).c_str (), "" )
@@ -242,14 +242,14 @@ SK::ControlPanel::Steam::Draw (void)
         }
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("Click here to free the wasted space.");
+          ImGui::SetTooltip ("单击此处释放浪费的空间。");
 
         ImGui::TreePop  ();
       }
     }
 #endif
 
-    if (app_has_cloud_storage == 1 && ImGui::CollapsingHeader ("Cloud Storage"))
+    if (app_has_cloud_storage == 1 && ImGui::CollapsingHeader ("云储存"))
     {
       bool dirty = false;
 
@@ -344,7 +344,7 @@ SK::ControlPanel::Steam::Draw (void)
           ImGui::BeginGroup      ();
           ImGui::Text            ( "Key %zi:",
                                          idx++ );
-          ImGui::TextUnformatted ( "First Activated:" );
+          ImGui::TextUnformatted ( "首次激活:" );
           ImGui::EndGroup        ();
 
           ImGui::SameLine        ();
@@ -373,7 +373,7 @@ SK::ControlPanel::Steam::Draw (void)
         ImGui::BeginGroup        ();
         for ( const auto& it : denuvo_files.get () )
         {
-          if (ImGui::Button      (SK_FormatString ("  Delete Me  ###%ws", it.path.c_str ()).c_str ()))
+          if (ImGui::Button      (SK_FormatString ("  删除我  ###%ws", it.path.c_str ()).c_str ()))
           {
             if (DeleteFileW (it.path.c_str ()))
               retest = true;
@@ -382,7 +382,7 @@ SK::ControlPanel::Steam::Draw (void)
             {
               SK_ImGui_Warning (
                 SK_FormatStringW (
-                  L"Could not delete file: '%ws'", it.path.c_str ()
+                  L"无法删除文件: '%ws'", it.path.c_str ()
                 ).c_str ()
               );
             }
@@ -391,10 +391,10 @@ SK::ControlPanel::Steam::Draw (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip  ();
-            ImGui::Text          ("Force Denuvo to Re-Activate the next time the Game Starts");
+            ImGui::Text          ("强制 Denuvo 在下次游戏开始时重新激活");
             ImGui::Separator     ();
-            ImGui::BulletText    ("Useful if you plan to go offline for an extended period.");
-            ImGui::BulletText    (" >> RESTART the game immediately after doing this to re-activate <<");
+            ImGui::BulletText    ("如果你计划长时间离线，这很有用。");
+            ImGui::BulletText    (" >> 执行此操作后立即重启游戏以重新激活 <<");
             ImGui::EndTooltip    ();
           }
 
@@ -424,13 +424,13 @@ SK::ControlPanel::Steam::Draw (void)
     if ( config.steam.disable_overlay ||
          config.platform.silent ) bDefaultOpen = true;
 
-    if (ImGui::CollapsingHeader ("Compatibility", bDefaultOpen ? ImGuiTreeNodeFlags_DefaultOpen
+    if (ImGui::CollapsingHeader ("兼容性", bDefaultOpen ? ImGuiTreeNodeFlags_DefaultOpen
                                                                : 0x0))
     {
       ImGui::TreePush   ("");
       ImGui::BeginGroup (  );
 
-      if (ImGui::Checkbox (" Disable SteamAPI Integration", &config.platform.silent))
+      if (ImGui::Checkbox (" 禁用 SteamAPI 集成", &config.platform.silent))
       {
         SK_SaveConfig ();
       }
@@ -438,17 +438,17 @@ SK::ControlPanel::Steam::Draw (void)
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    ();
-        ImGui::TextUnformatted ("Turns off almost all Steam-related features");
+        ImGui::TextUnformatted ("关闭几乎所有与 Steam 相关的功能");
         ImGui::Separator       ();
-        ImGui::BulletText      ("Steam Input problems will not be fixed, and background input will be unsupported in Steam Input games.");
-        ImGui::BulletText      ("Optimized Steam screenshots and achievement popups will be disabled.");
-        ImGui::BulletText      ("The Steam Overlay can still be disabled");
+        ImGui::BulletText      ("Steam 输入问题不会得到修复，并且 Steam 输入游戏将不支持后台输入。");
+        ImGui::BulletText      ("优化 Steam 截图和成就弹出窗口将被禁用。");
+        ImGui::BulletText      ("Steam 界面仍然可以禁用");
         ImGui::Separator       ();
-        ImGui::TextUnformatted ("If compatibility is not a problem, consider disabling individual Steam features, rather than all of them.");
+        ImGui::TextUnformatted ("如果兼容性不是问题，请考虑禁用单个 Steam 功能，而不是全部。");
         ImGui::EndTooltip      ();        
       }
 
-      if (ImGui::Checkbox (" Prevent Overlay From Drawing  ",    &config.steam.disable_overlay))
+      if (ImGui::Checkbox (" 防止绘制重叠  ",    &config.steam.disable_overlay))
       {
         SetEnvironmentVariable (
           L"SteamNoOverlayUIDrawing", config.steam.disable_overlay ?
@@ -461,15 +461,15 @@ SK::ControlPanel::Steam::Draw (void)
 
       if (! config.platform.silent)
       {
-        ImGui::Checkbox (" Disable User Stats Receipt Callback",   &config.steam.block_stat_callback);
+        ImGui::Checkbox (" 禁用用户统计收据回调",   &config.steam.block_stat_callback);
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Fix for Games that Panic when Flooded with Achievement Data");
+          ImGui::Text         ("修复了成就数据泛滥时出现崩溃的游戏");
           ImGui::Separator    ();
-          ImGui::BulletText   ("These Games may shutdown SteamAPI when Special K fetches Friend Achievements");
-          ImGui::BulletText   ("If SteamAPI Frame Counter is STUCK, turn this option ON and restart the Game");
+          ImGui::BulletText   ("当 Special K 获取好友成就时，这些游戏可能会关闭 SteamAPI");
+          ImGui::BulletText   ("如果 SteamAPI FPS 显示卡住，请打开此选项并重新启动游戏");
           ImGui::EndTooltip   ();
         }
       }
@@ -480,27 +480,27 @@ SK::ControlPanel::Steam::Draw (void)
         ImGui::SameLine   (  );
         ImGui::BeginGroup (  );
 
-        ImGui::Checkbox   (" Bypass Online \"DRM\" Checks  ",      &config.steam.spoof_BLoggedOn);
+        ImGui::Checkbox   (" 绕过在线 \"DRM\" 检查  ",      &config.steam.spoof_BLoggedOn);
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::TextColored  (ImColor::HSV (0.159f, 1.0f, 1.0f), "Fixes pesky games that use SteamAPI to deny Offline mode");
+          ImGui::TextColored  (ImColor::HSV (0.159f, 1.0f, 1.0f), "修复了使用 SteamAPI 拒绝离线模式的讨厌游戏");
           ImGui::Separator    ();
-          ImGui::BulletText   ("This is a much larger problem than you would believe.");
-          ImGui::BulletText   ("This also fixes some games that crash when Steam disconnects (unrelated to DRM).");
+          ImGui::BulletText   ("这是一个比想象要大得多的问题。");
+          ImGui::BulletText   ("这还修复了一些在 Steam 断开连接时崩溃的游戏（与 DRM 无关）。");
           ImGui::EndTooltip   ();
         }
 
-        ImGui::Checkbox   (" Load Steam Overlay Early  ",          &config.steam.preload_overlay);
+        ImGui::Checkbox   (" 尽早加载 Steam 叠加层  ",          &config.steam.preload_overlay);
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("Can make the Steam Overlay work in situations it otherwise would not.");
+          ImGui::SetTooltip ("可以使 Steam 界面在原本无法正常工作的情况下正常工作。");
 
-        ImGui::Checkbox   (" Load Steam Client DLL Early  ",       &config.steam.preload_client);
+        ImGui::Checkbox   (" 尽早加载 Steam 客户端 DLL  ",       &config.steam.preload_client);
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("May prevent some Steam DRM-based games from hanging at startup.");
+          ImGui::SetTooltip ("可能会阻止某些基于 Steam DRM 的游戏在启动时挂起。");
       }
 
       ImGui::EndGroup ();
@@ -514,9 +514,9 @@ SK::ControlPanel::Steam::Draw (void)
       (! SK_Steam_PiratesAhoy ());
 
     if (valid)
-      ImGui::MenuItem ("SteamAPI Valid",   "", &valid, false);
+      ImGui::MenuItem ("SteamAPI 有效",   "", &valid, false);
     else
-      ImGui::MenuItem ("SteamAPI Invalid", "", &valid, false);
+      ImGui::MenuItem ("SteamAPI 无效", "", &valid, false);
 
     return true;
   }

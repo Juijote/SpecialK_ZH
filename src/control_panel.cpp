@@ -800,7 +800,7 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K  (v ";
     title += SK_GetVersionStrA ();
-    title += ")[Juij 汉化][2024-03-18]";
+    title += ")[Juij 汉化测试]";//[2024-03-18]
   }
 
   title += "  控制面板";
@@ -6194,15 +6194,15 @@ SK_ImGui_ControlPanel (void)
   Notifications::Draw ();
 
   const bool open_widgets =
-    ImGui::CollapsingHeader ("小部件");
+    ImGui::CollapsingHeader ("小组件");
 
   if (ImGui::IsItemHovered ( ))
   {
     ImGui::BeginTooltip ();
-    ImGui::Text         ("Advanced Graphical Extensions to the OSD");
+    ImGui::Text         ("OSD 的高级图形扩展");
     ImGui::Separator    ();
-    ImGui::BulletText   ("Widgets are Graphical Representations of Performance Data");
-    ImGui::BulletText   ("Right-click a Widget to Access its Config Menu");
+    ImGui::BulletText   ("小组件是性能数据的图形表示");
+    ImGui::BulletText   ("右键单击小组件以访问其配置菜单");
     ImGui::EndTooltip   ();
   }
 
@@ -6220,7 +6220,7 @@ SK_ImGui_ControlPanel (void)
 
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("Framepacing", &framepacing))
+    if (ImGui::Checkbox ("FPS 生成", &framepacing))
     {
       SK_ImGui_Widgets->frame_pacing->setVisible (framepacing).
                                       setActive  (framepacing);
@@ -6244,7 +6244,7 @@ SK_ImGui_ControlPanel (void)
     //ImGui::Checkbox ("Disk",         &SK_ImGui_Widgets->disk);
     //ImGui::SameLine ();
 
-    if (ImGui::Checkbox ("Volume Control", &volumecontrol))
+    if (ImGui::Checkbox ("音量控制", &volumecontrol))
     {
       SK_ImGui_Widgets->volume_control->setVisible (volumecontrol).
                                         setActive  (volumecontrol);
@@ -6256,14 +6256,14 @@ SK_ImGui_ControlPanel (void)
       if ((int)render_api & (int)SK_RenderAPI::D3D11)
       {
         ImGui::SameLine ();
-        ImGui::Checkbox ("Texture Cache", &SK_ImGui_Widgets->texcache);
+        ImGui::Checkbox ("纹理缓存", &SK_ImGui_Widgets->texcache);
       }
 
       ImGui::SameLine ();
 
       if ((int)render_api & (int)SK_RenderAPI::D3D11)
       {
-        if (ImGui::Checkbox ("Pipeline Stats###Pipeline11", &pipeline11))
+        if (ImGui::Checkbox ("管道统计###Pipeline11", &pipeline11))
         {
           SK_ImGui_Widgets->d3d11_pipeline->setVisible (pipeline11).
                                             setActive  (pipeline11);
@@ -6274,7 +6274,7 @@ SK_ImGui_ControlPanel (void)
 
       if (rb.isReflexSupported ())
       {
-        if (ImGui::Checkbox ("Latency Analysis###ReflexLatency", &latency))
+        if (ImGui::Checkbox ("延迟分析###ReflexLatency", &latency))
         {
           SK_ImGui_Widgets->latency->setVisible (latency).
                                      setActive  (latency);
@@ -6285,7 +6285,7 @@ SK_ImGui_ControlPanel (void)
     if (rb.isHDRCapable () || __SK_HDR_16BitSwap || __SK_HDR_10BitSwap)
     {
       ImGui::SameLine ();
-      if (ImGui::Checkbox ("HDR Display", &hdr))
+      if (ImGui::Checkbox ("HDR显示", &hdr))
       {
         SK_ImGui_Widgets->hdr_control->setVisible (hdr).
                                        setActive  (hdr);
@@ -6300,7 +6300,7 @@ SK_ImGui_ControlPanel (void)
 #if 0
     ImGui::SameLine ();
 
-    if (ImGui::Checkbox ("Tobii Eyetracker", &tobii))
+    if (ImGui::Checkbox ("Tobii 眼球追踪器", &tobii))
     {
       SK_ImGui_Widgets->tobii->setVisible (tobii).
                                setActive  (tobii);
@@ -6311,7 +6311,7 @@ SK_ImGui_ControlPanel (void)
 
     ImGui::SameLine ();
 
-    if (ImGui::Checkbox ("Threads", &threads))
+    if (ImGui::Checkbox ("线程数", &threads))
     {
       SK_ImGui_Widgets->thread_profiler->setVisible (threads).
                                          setActive  (threads);
@@ -7021,7 +7021,7 @@ SK_ImGui_StageNextFrame (void)
     ImGui::SetNextWindowPos  (ImVec2 (10, 10));
     ImGui::SetNextWindowSize (ImVec2 ( io.DisplayFramebufferScale.x        - 20.0f,
                                        ImGui::GetFrameHeightWithSpacing () * 4.5f  ), ImGuiCond_Always );
-    ImGui::Begin             ( "Splash Screen##SpecialK",
+    ImGui::Begin             ( "启动画面##SpecialK",
                                  nullptr,
                                    ImGuiWindowFlags_NoTitleBar      |
                                    ImGuiWindowFlags_NoScrollbar     |
@@ -7042,11 +7042,11 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("  你好");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("请参阅 Discord 发布，在下面");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("请参阅 Discord 发布");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("  请参阅 Discord 发布，在下面");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("  请参阅 Discord 发布");                    ImGui::SameLine ();
     }
     ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "帮助 | 发布");                    ImGui::SameLine ();
     ImGui::TextUnformatted   ("用于该项目的测试版 / 稳定版更新。");

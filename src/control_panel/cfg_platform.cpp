@@ -200,7 +200,7 @@ SK::ControlPanel::Platform::Draw (void)
             int  mode    = (config.platform.achievements.popup.show + config.platform.achievements.popup.animate);
             bool changed = false;
 
-            ImGui::Text          ("绘图模式:");                              ImGui::SameLine ();
+            ImGui::Text          ("绘制模式:");                              ImGui::SameLine ();
 
             // Animated popups are not supported in ImGui
             //
@@ -210,17 +210,17 @@ SK::ControlPanel::Platform::Draw (void)
               ImGui::RadioButton ("禁用 ##AchievementPopup",   &mode, 0); ImGui::SameLine ();
             ImGui::BeginGroup    ( );
             changed |=
-              ImGui::RadioButton ("固定 ##AchievementPopup", &mode, 1); ImGui::SameLine ();
+              ImGui::RadioButton ("静态 ##AchievementPopup", &mode, 1); ImGui::SameLine ();
 
             //changed |=
             //  ImGui::RadioButton ("Animated ##AchievementPopup",   &mode, 2);
 
               ImGui::SameLine    ( );
               ImGui::Combo       ( "##PopupLoc",         &config.platform.achievements.popup.origin,
-                                           "Top-Left\0"
-                                           "Top-Right\0"
-                                           "Bottom-Left\0"
-                                           "Bottom-Right\0\0" );
+                                           "左上\0"
+                                           "右上\0"
+                                           "左下\0"
+                                           "右下\0\0" );
 
             if ( changed )
             {
@@ -239,12 +239,12 @@ SK::ControlPanel::Platform::Draw (void)
             {
               ImGui::BeginGroup ( );
               ImGui::TreePush   ("");
-              ImGui::Text       ("Duration:"); ImGui::SameLine ();
+              ImGui::Text       ("持续时长:"); ImGui::SameLine ();
 
               float duration =
                 std::max ( 1.0f, ( (float)config.platform.achievements.popup.duration / 1000.0f ) );
 
-              if ( ImGui::SliderFloat ( "##PopupDuration", &duration, 1.0f, 30.0f, "%.2f Seconds" ) )
+              if ( ImGui::SliderFloat ( "##PopupDuration", &duration, 1.0f, 30.0f, "%.2f 秒" ) )
               {
                 config.platform.achievements.popup.duration =
                   static_cast <LONG> ( duration * 1000.0f );
@@ -282,17 +282,17 @@ SK::ControlPanel::Platform::Draw (void)
         ImGui::TreePush  ("");
 
         if (ImGui::Combo ( " ", &config.platform.notify_corner,
-                                  "Top-Left\0"
-                                  "Top-Right\0"
-                                  "Bottom-Left\0"
-                                  "Bottom-Right\0"
-                                  "(Let Game Decide)\0\0" ))
+                                  "左上\0"
+                                  "右上\0"
+                                  "左下\0"
+                                  "右下\0"
+                                  "（让游戏决定）\0\0" ))
         {
           SK_Platform_SetNotifyCorner ();
         }
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("Applies Only to Traditional Overlay (not Big Picture)");
+          ImGui::SetTooltip ("仅适用于传统叠加层（不适用于大图片）");
 
         ImGui::TreePop ();
       }

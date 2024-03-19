@@ -177,7 +177,7 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
     total.reset ();
     input.reset ();
 
-    specialk.desc = "包括绘图 SK 的叠加和 FPS 速率限制";
+    specialk.desc = "包括绘制 SK 的叠加和 FPS 速率限制";
 
     int id = 0;
 
