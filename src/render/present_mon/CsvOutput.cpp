@@ -1,24 +1,4 @@
-/*
-Copyright 2017-2020 Intel Corporation
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+// 汉化相关
 
 #include <SpecialK/render/present_mon/PresentMon.hpp>
 
@@ -35,15 +15,15 @@ PresentModeToString (PresentMode mode)
 {
   switch (mode)
   {
-    case PresentMode::Hardware_Legacy_Flip:                 return "Hardware:  Legacy Flip";
-    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "Hardware:  Legacy Copy to Front Buffer";
-    case PresentMode::Hardware_Independent_Flip:            return "Hardware:  Independent Flip";
-    case PresentMode::Composed_Flip:                        return "Composed:  Flip";
-    case PresentMode::Composed_Copy_GPU_GDI:                return "Composed:  Copy with GPU GDI";
-    case PresentMode::Composed_Copy_CPU_GDI:                return "Composed:  Copy with CPU GDI";
-    case PresentMode::Composed_Composition_Atlas:           return "Composed:  Composition Atlas";
-    case PresentMode::Hardware_Composed_Independent_Flip:   return "Hardware Composed:  Independent Flip";
-    default:                                                return "Other";
+    case PresentMode::Hardware_Legacy_Flip:                 return "硬件:  传统跳帧";
+    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "硬件:  旧帧复制到前端缓冲区";
+    case PresentMode::Hardware_Independent_Flip:            return "硬件:  独立跳帧";
+    case PresentMode::Composed_Flip:                        return "合成:  复制";
+    case PresentMode::Composed_Copy_GPU_GDI:                return "合成:  使用 GPU GDI 复制";
+    case PresentMode::Composed_Copy_CPU_GDI:                return "合成:  使用 CPU GDI 复制";
+    case PresentMode::Composed_Composition_Atlas:           return "合成:  合成图集";
+    case PresentMode::Hardware_Composed_Independent_Flip:   return "硬件合成:  独立复制";
+    default:                                                return "其他";
   }
 }
 

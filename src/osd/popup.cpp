@@ -800,7 +800,7 @@ SK_ImGui_DrawNotifications (void)
           bool                                                  bDoNotShow =
             SK_IsTrue (toast_cfg.get_value (L"DoNotShow").c_str ()) ? true
                                                                     : false;
-          if (ImGui::Checkbox ("Never Show This Notification", &bDoNotShow))
+          if (ImGui::Checkbox ("从不显示此通知", &bDoNotShow))
           {
             toast_cfg.add_key_value (L"DoNotShow", bDoNotShow ? L"true"
                                                               : L"false");
@@ -813,7 +813,7 @@ SK_ImGui_DrawNotifications (void)
             bool                                                          bShowOnce =
             SK_IsTrue (toast_cfg.get_value (L"ShowOnce").c_str ()) ? true
                                                                    : false;
-            if (ImGui::Checkbox ("Show This Notification Once Per-Game", &bShowOnce))
+            if (ImGui::Checkbox ("每场游玩时显示一次此通知", &bShowOnce))
             {
               toast_cfg.add_key_value (L"ShowOnce", bShowOnce ? L"true"
                                                               : L"false");
@@ -824,7 +824,7 @@ SK_ImGui_DrawNotifications (void)
 
             float fSeconds = static_cast <float> (dwMilliseconds) / 1000.0f;
 
-            if (ImGui::SliderFloat ("Duration (seconds)", &fSeconds, 1.f, 60.f))
+            if (ImGui::SliderFloat ("持续时间（秒）", &fSeconds, 1.f, 60.f))
             {
               dwMilliseconds =
                 static_cast <DWORD> (fSeconds * 1000.0f);
@@ -836,7 +836,7 @@ SK_ImGui_DrawNotifications (void)
           ImGui::Separator ();
         }
 
-        if (ImGui::Button ("Save Settings"))
+        if (ImGui::Button ("保存设置"))
         {
           config.utility.save_async ();
 
@@ -886,7 +886,7 @@ SK_ImGui_DrawNotifications (void)
 
         if (ImGui::IsItemHovered ())
         {
-          ImGui::SetTooltip ("Right-click to configure this notification");
+          ImGui::SetTooltip ("右键单击以配置此通知");
         }
       }
     }

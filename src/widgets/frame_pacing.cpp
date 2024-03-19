@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -1169,9 +1150,9 @@ SK_ImGui_DrawGraph_FramePacing (void)
       snprintf
         ( szAvg,
             511, (const char *)
-            u8"Avg milliseconds per-frame: %6.3f  (Target: %6.3f)\n"
-            u8"         Render latency:           %lu Frame%s | %3.1f / %3.1f ms |  %lu Hz \n\n\n\n"
-            u8"Variation:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
+            u8"每 FPS 平均毫秒数: %6.3f  (目标: %6.3f)\n"
+            u8"         渲染延迟:           %lu Frame%s | %3.1f / %3.1f ms |  %lu Hz \n\n\n\n"
+            u8"变化:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
                 sum / frames,
                   target_frametime,
                       SK_RenderBackend_V2::latency.delays.PresentQueue,
@@ -1190,9 +1171,9 @@ SK_ImGui_DrawGraph_FramePacing (void)
       snprintf
         ( szAvg,
             511, (const char *)
-            u8"Avg milliseconds per-frame: %6.3f  (Target: %6.3f)\n"
-            u8"         Render latency:          %lu Frame%s | HW Flip Q |  %lu Hz \n\n\n\n"
-            u8"Variation:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
+            u8"每 FPS 平均毫秒数: %6.3f  (目标: %6.3f)\n"
+            u8"         渲染延迟:          %lu Frame%s | HW Flip Q |  %lu Hz \n\n\n\n"
+            u8"变化:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
                 sum / frames,
                   target_frametime,
                       SK_RenderBackend_V2::latency.delays.PresentQueue,
@@ -1210,9 +1191,9 @@ SK_ImGui_DrawGraph_FramePacing (void)
     snprintf
       ( szAvg,
           511, (const char *)
-          u8"Avg milliseconds per-frame: %6.3f  (Target: %6.3f)\n"
-          u8"    Extreme frame times:     %6.3f min, %6.3f max\n\n\n\n"
-          u8"Variation:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
+          u8"每 FPS 平均毫秒数: %6.3f  (目标: %6.3f)\n"
+          u8"    极端 FPS 时间:     %6.3f min, %6.3f max\n\n\n\n"
+          u8"变化:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
               sum / frames,
                 target_frametime,
                   min, max,
@@ -1295,7 +1276,7 @@ SK_ImGui_DrawGraph_FramePacing (void)
                                    0, &disk.counter );
 
               SK_LOGi1 (
-                L"Using Disk Activity Counter: %ws",
+                L"使用磁盘活动计数器: %ws",
                                       counter_path.c_str ()
               );
 
@@ -1617,9 +1598,9 @@ SK_ImGui_DrawFramePercentiles (void)
 
       ImGui::PushStyleColor  (ImGuiCol_Text, label_color);
 
-           if (data_timespan > 60.0 * 60.0)  ImGui::Text ("Hours");
-      else if (data_timespan > 60.0)         ImGui::Text ("Minutes");
-      else                                   ImGui::Text ("Seconds");
+           if (data_timespan > 60.0 * 60.0)  ImGui::Text ("时");
+      else if (data_timespan > 60.0)         ImGui::Text ("分");
+      else                                   ImGui::Text ("秒");
 
       ImGui::PopStyleColor (2);
     }
@@ -1629,7 +1610,7 @@ SK_ImGui_DrawFramePercentiles (void)
       ImGui::Spacing          ();
       ImGui::Spacing          ();
       ImGui::PushStyleColor  (ImGuiCol_Text, label_color);
-      ImGui::TextUnformatted ("AvgFPS: "); ImGui::SameLine ();
+      ImGui::TextUnformatted ("平均 FPS: "); ImGui::SameLine ();
       ImGui::PushStyleColor  (ImGuiCol_Text, white_color);
       ImGui::Text            ("%4.1f", mean.computed_fps);
       ImGui::PopStyleColor   (2);
@@ -1642,8 +1623,8 @@ SK_ImGui_DrawFramePercentiles (void)
       ImGui::BeginTooltip    ( );
       ImGui::BeginGroup      ( );
       ImGui::PushStyleColor  (ImGuiCol_Text, click_color);
-      ImGui::BulletText      ("Left-Click");
-      ImGui::BulletText      ("Ctrl+Click");
+      ImGui::BulletText      ("左键单击");
+      ImGui::BulletText      ("Ctrl+单击");
       ImGui::PopStyleColor   ( );
       ImGui::EndGroup        ( );
       ImGui::SameLine        ( ); ImGui::Spacing ();
@@ -1651,8 +1632,8 @@ SK_ImGui_DrawFramePercentiles (void)
       ImGui::SameLine        ( );
       ImGui::BeginGroup      ( );
       ImGui::PushStyleColor  (ImGuiCol_Text, white_color);
-      ImGui::TextUnformatted ("Change Datasets (Long / Short)");
-      ImGui::TextUnformatted ("Reset Long-term Statistics");
+      ImGui::TextUnformatted ("更改数据集（长/短）");
+      ImGui::TextUnformatted ("重置长期统计数据");
       ImGui::PopStyleColor   ( );
       ImGui::EndGroup        ( );
       ImGui::EndTooltip      ( );

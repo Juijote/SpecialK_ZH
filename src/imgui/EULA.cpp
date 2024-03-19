@@ -310,7 +310,7 @@ SK_ImGui_DrawEULA (LPVOID reserved)
 
     if (! pirate)
     {
-      ImGui::Checkbox ("I agree ... never show me this again!", &((show_eula_s *)reserved)->never_show_again);
+      ImGui::Checkbox ("我同意...永远不要再给我看这个！", &((show_eula_s *)reserved)->never_show_again);
       ImGui::SameLine ();
     }
 

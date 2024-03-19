@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -70,7 +51,7 @@ SK_ImGui_NV_DepthBoundsD3D11 (void)
 
   bool changed = false;
 
-  changed |= ImGui::Checkbox ("Enable Depth Bounds Test", &enable);
+  changed |= ImGui::Checkbox ("启用深度边界测试", &enable);
 
   if (enable)
   {
@@ -97,9 +78,9 @@ SK_ImGui_DrawTexCache_Chart (void)
     ImGui::Separator (   );
     ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::Columns   ( 3 );
-      ImGui::Text    ( "          Size" );                                                                 ImGui::NextColumn ();
-      ImGui::Text    ( "      Activity" );                                                                 ImGui::NextColumn ();
-      ImGui::Text    ( "       Savings" );
+      ImGui::Text    ( "          尺寸" );                                                                 ImGui::NextColumn ();
+      ImGui::Text    ( "      活动" );                                                                 ImGui::NextColumn ();
+      ImGui::Text    ( "       保存" );
     ImGui::Columns   ( 1 );
     ImGui::PopStyleColor
                      (   );
@@ -152,7 +133,7 @@ SK_ImGui_DrawTexCache_Chart (void)
 
     ImGui::TreePush  ( "" );
 
-    if (ImGui::SliderFloat ( "Maximum Cache Size", &size,
+    if (ImGui::SliderFloat ( "最大缓存大小", &size,
                                256.f, 8192.f, "%.0f MiB" ))
     {
       config.textures.cache.max_size =
@@ -262,13 +243,11 @@ SK_ImGui_DrawVRAMGauge (void)
       strncpy (szQuota, vQuota.data (), std::min (max_len, vQuota.size ()));
   
       ImGui::BeginTooltip ( );
-      ImGui::Text         ( "VRAM Quota (%hs) Exhausted",
+      ImGui::Text         ( "显存配额 (%hs) 已用完",
                              szQuota );
       ImGui::Separator    ( );
-      ImGui::BulletText   ( "Consider lowering in-game graphics settings or"
-                            " closing background applications." );
-      ImGui::BulletText   ( "Right-click the VRAM gauge to set VRAM quotas"
-                            " and/or reset quota warnings." );
+      ImGui::BulletText   ( "考虑降低游戏中的图形设置或关闭后台应用程序。" );
+      ImGui::BulletText   ( "右键单击显存仪表可设置显存配额或重置配额警告。" );
       ImGui::EndTooltip   ( );
     }
   
@@ -290,7 +269,7 @@ SK_ImGui_DrawVRAMGauge (void)
   std::string_view label_view (label_txt, max_len * 2);
        size_t      label_len         =
     SK_FormatStringView ( label_view,
-                            "%0.2f%% of Available VRAM Used\t(%hs / %hs)",
+                            "%0.2f%% 已使用的可用显存 \t(%hs / %hs)",
                               vram_used_percent * 100.0f, szUsed, szBudget );
   
   label_txt [ std::max ((size_t)0,
@@ -375,13 +354,13 @@ SK::ControlPanel::D3D11::Draw (void)
     if (d3d11 && (! indirect))
     {
       ImGui::SameLine ();
-      ImGui::TextUnformatted ("     State Tracking:  ");
+      ImGui::TextUnformatted ("     状态跟踪:  ");
 
       ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.173f, 0.428f, 0.96f));
       ImGui::SameLine ();
 
       if (SK_D3D11_EnableTracking)
-        ImGui::TextUnformatted ("( ALL State/Ops --> [Mod Tools Window Active] )");
+        ImGui::TextUnformatted ("( 所有状态/操作 --> [模组工具窗口处于活动状态] )");
 
       else
       {
@@ -397,27 +376,27 @@ SK::ControlPanel::D3D11::Draw (void)
           tracking = true;
 
           if (ReadAcquire (&SK_D3D11_DrawTrackingReqs) == 0)
-            lstrcatA (szThreadLocalStr,   "  Draw Calls  ( ReShade Trigger ) ");
+            lstrcatA (szThreadLocalStr,   "  绘制调用（ReShade 触发器）");
 
           else
           {
             if (SK_D3D11_Shaders->hasReShadeTriggers ())
-              lstrcatA (szThreadLocalStr, "  Draw Calls  ( Generic & ReShade Trigger ) ");
+              lstrcatA (szThreadLocalStr, "  绘制调用（通用和 ReShade 触发器） ");
             else
-              lstrcatA (szThreadLocalStr, "  Draw Calls  ( Generic ) ");
+              lstrcatA (szThreadLocalStr, "  绘制调用（通用）");
           }
         }
 
         if (ReadAcquire (&SK_D3D11_CBufferTrackingReqs) > 0)
         {
           tracking = true;
-          lstrcatA (szThreadLocalStr, "  Constant Buffers ");
+          lstrcatA (szThreadLocalStr, "  恒定缓冲区 ");
         }
 
         if (SK_D3D11_EnableMMIOTracking)
         {
           tracking = true;
-          lstrcatA (szThreadLocalStr, "  Memory-Mapped I/O ");
+          lstrcatA (szThreadLocalStr, "  内存映射 I/O ");
         }
 
         ImGui::TextUnformatted (tracking ? szThreadLocalStr : " ");
@@ -436,7 +415,7 @@ SK::ControlPanel::D3D11::Draw (void)
         ImGui::TreePush       ("");
 
         bool bUncollapsedDirectStorage =
-          ImGui::CollapsingHeader ("Direct Storage", ImGuiTreeNodeFlags_DefaultOpen);
+          ImGui::CollapsingHeader ("直接存储", ImGuiTreeNodeFlags_DefaultOpen);
 
         if (bUncollapsedDirectStorage)
         {
@@ -446,9 +425,9 @@ SK::ControlPanel::D3D11::Draw (void)
             {
               bUncollapsedDirectStorage = false;
 
-              ImGui::TextUnformatted ("These options will not work unless GlobalInjectDelay is set to 0.0 in SK's INI.");
+              ImGui::TextUnformatted ("除非在 SK 的 INI 中将 GlobalInjectDelay 设置为 0.0，否则这些选项将不起作用。");
               ImGui::Separator       ();
-              ImGui::BulletText      ("Setting GlobalInjectDelay to 0.0 will break the game's DLSS3 Frame Generation implementation.");
+              ImGui::BulletText      ("将 GlobalInjectDelay 设置为 0.0 将破坏游戏的 DLSS3 帧生成实现。");
             }
           }
         }
@@ -457,9 +436,9 @@ SK::ControlPanel::D3D11::Draw (void)
         {
           ImGui::BeginGroup ();
           ImGui::
-            TextUnformatted ("GDeflate Support: ");
+            TextUnformatted ("GDeflate 支持: ");
           ImGui::
-            TextUnformatted ("GDeflate Usage: ");
+            TextUnformatted ("GDeflate 用法: ");
           ImGui::EndGroup   ();
           ImGui::SameLine   ();
           ImGui::BeginGroup ();
@@ -2049,7 +2028,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
       ImGui::EndGroup        ();
 
       ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (0.95f, 0.95f, 0.45f, 1.0f));
-      ImGui::TextUnformatted ("Display Output Configuration");
+      ImGui::TextUnformatted ("显示输出配置");
       ImGui::PopStyleColor   ();
       ImGui::Separator       ();
 
@@ -2057,9 +2036,9 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
       ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (0.685f, 0.685f, 0.685f, 1.0f));
       //if (rb.isHDRCapable ())
       {
-        ImGui::Text ("Display Device: ");
-        ImGui::Text ("HDR Color Space: ");
-        ImGui::Text ("Output Bit Depth: ");
+        ImGui::Text ("显示设备: ");
+        ImGui::Text ("HDR 色彩空间: ");
+        ImGui::Text ("输出位深度: ");
       }
       ImGui::PopStyleColor   ();
       ImGui::EndGroup        ();

@@ -3028,9 +3028,9 @@ SK_NV_LatencyControlPanel (void)
 void
 SK_DXGI_FullscreenControlPanel (void)
 {
-  if (ImGui::BeginPopup ("DXGI Fullscreen Control Panel"))
+  if (ImGui::BeginPopup ("DXGI 全屏控制面板"))
   {
-    ImGui::TextUnformatted ("D3D11 / D3D12 Fullscreen Setup\t(Experimental)");
+    ImGui::TextUnformatted ("D3D11 / D3D12 全屏设置\t(Experimental)");
 
     ImGui::TreePush ("");
 
@@ -3074,9 +3074,9 @@ SK_NV_GSYNCControlPanel ()
 
     SK_RunOnce (rb.gsync_state.disabled.for_app = !SK_NvAPI_GetVRREnablement ());
 
-    if (ImGui::BeginPopup ("G-Sync Control Panel"))
+    if (ImGui::BeginPopup ("G-Sync 控制面板"))
     {
-      ImGui::TextUnformatted ("NVIDIA G-Sync Configuration");
+      ImGui::TextUnformatted ("NVIDIA G-Sync 配置");
 
       ImGui::TreePush ("");
 
@@ -3086,7 +3086,7 @@ SK_NV_GSYNCControlPanel ()
       bool bEnableGSync =
         (! rb.gsync_state.disabled.for_app);
 
-      if (ImGui::Checkbox ("Enable G-Sync in this Game", &bEnableGSync))
+      if (ImGui::Checkbox ("在此游戏中启用 G-Sync", &bEnableGSync))
       { SK_NvAPI_SetVRREnablement                        (bEnableGSync);
 
         rb.gsync_state.disabled.for_app =
@@ -3096,9 +3096,9 @@ SK_NV_GSYNCControlPanel ()
       }
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Requires a Game Restart");
+        ImGui::SetTooltip ("需要重启游戏");
 
-      if (ImGui::Checkbox ("Enable FastSync in this Game", &bEnableFastSync))
+      if (ImGui::Checkbox ("在此游戏中启用 FastSync", &bEnableFastSync))
       {
         SK_NvAPI_SetFastSync (bEnableFastSync);
 
@@ -3106,7 +3106,7 @@ SK_NV_GSYNCControlPanel ()
       }
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Requires a Game Restart");
+        ImGui::SetTooltip ("需要重启游戏");
 
       ImGui::TreePop    ();
       ImGui::EndPopup   ();
@@ -3132,7 +3132,7 @@ SK_ImGui_ControlPanel (void)
 
   if (ImGui::GetFont () == nullptr)
   {
-    SK_LOG0 ( ( L" Fatal Error:  No Font Loaded!" ),
+    SK_LOG0 ( ( L" 致命错误：未加载字体！" ),
                 L"   ImGui   " );
     return false;
   }
@@ -3442,17 +3442,16 @@ SK_ImGui_ControlPanel (void)
 
           ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
           ImGui::SameLine        ();
-          ImGui::Text            ("Right-click to match Windows SDR white level (%5.1f nits)",
+          ImGui::Text            ("右键单击以匹配 Windows SDR 白电平 (%5.1f nits)",
                                   rb.displays [rb.active_display].hdr.white_level);
 
-          ImGui::BulletText      ("Luminance levels above 50%% of slider range are "
-                                  "not recommended in HDR10");
+          ImGui::BulletText      ("在 HDR10 中不建议亮度级别高于滑块范围的 50%%");
 
           ImGui::Spacing         ( );
           ImGui::Spacing         ( );
 
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
-          ImGui::TextUnformatted ("Special K can apply Color Correction for Third-party SDR Overlays");
+          ImGui::TextUnformatted ("Special K 可以对第三方 SDR 叠加应用颜色校正");
 
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.75f, .75f, .75f, 1.f));
 
@@ -3460,18 +3459,15 @@ SK_ImGui_ControlPanel (void)
           ImGui::Spacing         ( );
 
           ImGui::TreePush        ("");
-          ImGui::BulletText      ("Third-party overlay sliders will only appear if SK's own "
-                                  "HDR is active and the current game is D3D11");
-          ImGui::BulletText      ("HDR Color Correction for third-party overlays -does- "
-                                  "apply in D3D12, but it uses the values set in D3D11");
+          ImGui::BulletText      ("仅当 SK 自己的 HDR 处于活动状态且当前游戏为 D3D11 时，第三方叠加滑块才会出现");
+          ImGui::BulletText      ("第三方叠加的 HDR 颜色校正 -确实 -适用于 D3D12，但它使用 D3D11 中设置的值");
 
           ImGui::Spacing         ( );
           ImGui::Spacing         ( );
 
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.933f, .933f, .933f, 1.f));
 
-          ImGui::TextUnformatted ("For overlay Color Correction in native HDR games, use SK's HDR10 or scRGB Mode + "
-                                  "HDR10 Native or scRGB Native Preset");
+          ImGui::TextUnformatted ("对于原生 HDR 游戏中的叠加色彩校正，请使用 SK 的 HDR10 或 scRGB 模式 + HDR10 Native 或 scRGB Native Preset");
           ImGui::TreePop         ( );
           ImGui::PopStyleColor   (4);
           ImGui::EndTooltip      ( );
@@ -3514,7 +3510,7 @@ SK_ImGui_ControlPanel (void)
       [&](void)
       {
         HDRLuminanceSlider (
-          "Special K Luminance###IMGUI_LUMINANCE", rb.ui_luminance
+          "Special K 亮度###IMGUI_LUMINANCE", rb.ui_luminance
         );
 
 #define STEAM_OVERLAY_VS_CRC32C  0xf48cf597
@@ -3540,7 +3536,7 @@ SK_ImGui_ControlPanel (void)
         if (steam_overlay)
         {
           HDRLuminanceSlider (
-            "Steam Overlay Luminance###STEAM_LUMINANCE", config.platform.overlay_hdr_luminance,
+            "Steam Overlay 亮度###STEAM_LUMINANCE", config.platform.overlay_hdr_luminance,
                                                                   rb.display_gamut.maxAverageY
           );
         }
@@ -3548,7 +3544,7 @@ SK_ImGui_ControlPanel (void)
         if (config.rtss.present)
         {
           HDRLuminanceSlider (
-            "RTSS Overlay Luminance###RTSS_LUMINANCE", config.rtss.overlay_luminance,
+            "RTSS Overlay 亮度###RTSS_LUMINANCE", config.rtss.overlay_luminance,
                                                         rb.display_gamut.maxAverageY
           );
         }
@@ -3556,7 +3552,7 @@ SK_ImGui_ControlPanel (void)
         if (config.epic.present)
         {
           HDRLuminanceSlider (
-            "Epic Overlay Luminance###EPIC_LUMINANCE", config.platform.overlay_hdr_luminance,
+            "Epic Overlay 亮度###EPIC_LUMINANCE", config.platform.overlay_hdr_luminance,
                                                                 rb.display_gamut.maxAverageY
           );
         }
@@ -3564,7 +3560,7 @@ SK_ImGui_ControlPanel (void)
         if (config.discord.present)
         {
           HDRLuminanceSlider (
-            "Discord Overlay Luminance###DISCORD_LUMINANCE", config.discord.overlay_luminance,
+            "Discord Overlay 亮度###DISCORD_LUMINANCE", config.discord.overlay_luminance,
                                                                  rb.display_gamut.maxAverageY
           );
         }
@@ -3581,7 +3577,7 @@ SK_ImGui_ControlPanel (void)
         if (uplay_overlay)
         {
           HDRLuminanceSlider (
-            "uPlay Overlay Luminance###UPLAY_LUMINANCE", config.uplay.overlay_luminance,
+            "uPlay Overlay 亮度###UPLAY_LUMINANCE", config.uplay.overlay_luminance,
                                                            rb.display_gamut.maxAverageY
           );
         }
@@ -3589,7 +3585,7 @@ SK_ImGui_ControlPanel (void)
         ImGui::Separator ();
 
         bool hdr_changed =
-            ImGui::Checkbox ( "Keep Full-Range HDR Screenshots",
+            ImGui::Checkbox ( "保留全范围 HDR 屏幕截图",
                                 &config.screenshots.png_compress );
 
         // Show AVIF options in 64-bit builds
@@ -3602,7 +3598,7 @@ SK_ImGui_ControlPanel (void)
                                         1 : 0 );
 
           if (
-            ImGui::Combo ( "HDR File Format", &selection,
+            ImGui::Combo ( "HDR 文件格式", &selection,
                            "JPEG-XR (.jxr)\0"
                            "AVIF\t\t(.avif)\0\0" )
              )
@@ -3655,7 +3651,7 @@ SK_ImGui_ControlPanel (void)
 
           if (bFetchingAVIF)
           {
-            ImGui::TextColored (ImVec4 (.1f,.9f,.1f,1.f), "Downloading AVIF Plug-In...");
+            ImGui::TextColored (ImVec4 (.1f,.9f,.1f,1.f), "下载 AVIF 插件...");
           }
         }
 
@@ -3670,7 +3666,7 @@ SK_ImGui_ControlPanel (void)
                                 config.screenshots.avif.yuv_subsampling == 422 ? 1 :
                                                                             0 );
 
-            if (ImGui::Combo ("YUV Subsampling", &subsampling, " 4:4:4\0 4:2:2\0 4:2:0\0 4:0:0 (Black & White)\0\0"))
+            if (ImGui::Combo ("YUV 子采样", &subsampling, " 4:4:4\0 4:2:2\0 4:2:0\0 4:0:0 (Black & White)\0\0"))
             {
               switch (subsampling)
               {
@@ -3695,8 +3691,8 @@ SK_ImGui_ControlPanel (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip ();
-              ImGui::BulletText   ("Windows natively supports 10-bit and 12-bit AVIF images at 4:2:0, or 8-bit at up to 4:4:4");
-              ImGui::BulletText   ("Higher quality chroma subsampled AVIF images will only render correctly in Chrome.");
+              ImGui::BulletText   ("Windows 本身支持 4:2:0 的 10 位和 12 位 AVIF 图像，或 4:4:4 的 8 位");
+              ImGui::BulletText   ("更高质量的色度子采样 AVIF 图像只能在 Chrome 中正确渲染。");
               ImGui::EndTooltip   ();
             }
 
@@ -3706,7 +3702,7 @@ SK_ImGui_ControlPanel (void)
 
             if (__SK_HDR_16BitSwap)
             {
-              if (ImGui::Combo ("scRGB->PQ Bit Depth", &scrgb_bits, " 8-bit\0 10-bit\0 12-bit\0\0"))
+              if (ImGui::Combo ("scRGB->PQ Bit 深度", &scrgb_bits, " 8-bit\0 10-bit\0 12-bit\0\0"))
               {
                 config.screenshots.avif.scrgb_bit_depth =
                   ( scrgb_bits == 0 ? 8  :
@@ -3725,23 +3721,23 @@ SK_ImGui_ControlPanel (void)
           bool changed = false;
 
           changed |=
-            ImGui::SliderInt ("Compression Quality", &config.screenshots.compression_quality, 80, 100, szCompressionQualityFormat);
+            ImGui::SliderInt ("压缩质量", &config.screenshots.compression_quality, 80, 100, szCompressionQualityFormat);
 
           if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("You can manually enter values < 80 using ctrl+click, but the results will be terrible.");
+            ImGui::SetTooltip ("可以使用 ctrl+click 手动输入 < 80 的值，但结果会很糟糕。");
 
           if (config.screenshots.use_avif)
           {
             changed |=
-              ImGui::SliderInt ("Compression Speed",   &config.screenshots.avif.compression_speed,   0, 10);
+              ImGui::SliderInt ("压缩速度",   &config.screenshots.avif.compression_speed,   0, 10);
 
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    ();
-              ImGui::TextUnformatted ("How long to dedicate to compressing the image for smallest file size");
-              ImGui::BulletText      ("Values < 7 are VERY slow, potentially taking minutes.");
-              ImGui::BulletText      ("The compression is done on a background thread, unlikely to consume excessive CPU.");
-              ImGui::BulletText      ("If you set the speed too low, HDR screenshots might not finish by the time you exit.");
+              ImGui::TextUnformatted ("专门压缩图像以实现最小文件大小需要多长时间");
+              ImGui::BulletText      ("< 7 的值非常慢，可能需要几分钟的时间。");
+              ImGui::BulletText      ("压缩是在后台线程上完成的，不太可能消耗过多的 CPU。");
+              ImGui::BulletText      ("如果将速度设置得太低，则在退出时 HDR 屏幕截图可能无法完成。");
               ImGui::EndTooltip      ();
             }
           }
@@ -3761,7 +3757,7 @@ SK_ImGui_ControlPanel (void)
 
           ImGui::BeginGroup (  );
           ImGui::TreePush   ("");
-          ImGui::Text ( "%u files using %ws",
+          ImGui::Text ( "%u 文件使用 %ws",
                           repo.files,
                             SK_File_SizeToString (repo.liSize.QuadPart, Auto, pTLS).data ()
                       );
@@ -3797,7 +3793,7 @@ SK_ImGui_ControlPanel (void)
                            rb.isHDRCapable ())              &&
              (rb.displays [rb.active_display].hdr.enabled) )
         {
-          if (ImGui::Button (ICON_FA_SUN " HDR Setup"))
+          if (ImGui::Button (ICON_FA_SUN " HDR 设置"))
           {
             hdr = (! hdr);
 
@@ -3810,7 +3806,7 @@ SK_ImGui_ControlPanel (void)
 
           if (ImGui::IsItemHovered ())
           {
-            ImGui::SetTooltip ("Right-click HDR Calibration to assign hotkeys");
+            ImGui::SetTooltip ("右键单击“HDR 校准”以分配快捷键");
           }
         }
 
@@ -3822,7 +3818,7 @@ SK_ImGui_ControlPanel (void)
             ImGui::SameLine ();
 
           ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-          ImGui::BulletText     ("Game Restart May Be Required");
+          ImGui::BulletText     ("可能需要重启游戏");
           ImGui::PopStyleColor  ();
         }
 
@@ -3836,7 +3832,7 @@ SK_ImGui_ControlPanel (void)
         {
           bool bEnabled = false;
 
-          if (ImGui::Checkbox ("Enable HDR###EnableHDRUsingCPL", &bEnabled))
+          if (ImGui::Checkbox ("启用 HDR###EnableHDRUsingCPL", &bEnabled))
           {
             extern void
             SK_Display_EnableHDR (SK_RenderBackend_V2::output_s *pDisplay);
@@ -3848,26 +3844,25 @@ SK_ImGui_ControlPanel (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::SetTooltip (
-              "Select scRGB from the HDR Calibration "
-              "tool after turning HDR on"
+              "打开 HDR 后，从 HDR 校准工具中选择 scRGB"
               "\r\n\r\n"
-              "\t\t( The Display menu has additional settings )"
+              "\t\t( 显示菜单有附加设置 )"
               "\r\n\r\n"
-              "\t\t\t >> Most Games Require a Restart <<"
+              "\t\t\t >> 大部分游戏都需要重启 <<"
             );
           }
 
           ImGui::SameLine       ();
 
           ImGui::PushStyleColor (ImGuiCol_Text, ImColor (1.0f, .7f, .3f).Value);
-          ImGui::BulletText     ("HDR Is Not Currently Enabled");
+          ImGui::BulletText     ("目前未启用 HDR");
           ImGui::PopStyleColor  ();
         }
 
         else if (rb.displays [rb.active_display].hdr.enabled)
         {
           if ( ImGui::Checkbox (
-                 "Enable / Disable HDR when this game Starts or Exits",
+                 "游戏启动或退出时启用/禁用 HDR",
                    &config.render.dxgi.temporary_dwm_hdr )
              )
           {
@@ -3878,11 +3873,10 @@ SK_ImGui_ControlPanel (void)
           {
             ImGui::BeginTooltip ();
             ImGui::Text (
-              "If SK's scRGB HDR mode is active, HDR is automatically enabled"
-              " -- regardless what you set here" );
+              "如果 SK 的 scRGB HDR 模式处于活动状态，则无论在此处设置什么，都会自动启用 HDR" );
 
             ImGui::BulletText (
-              "Automatic Enable / Disable will still turn HDR off when games exit"
+              "当游戏退出时，自动启用/禁用仍会关闭 HDR"
             );
             ImGui::EndTooltip ();
           }
@@ -3894,7 +3888,7 @@ SK_ImGui_ControlPanel (void)
 
         static bool bOriginal = bDisable;
 
-        if (ImGui::Checkbox ("Disable Game's Native HDR", &bDisable))
+        if (ImGui::Checkbox ("禁用游戏的原生 HDR", &bDisable))
         {
           config.apis.NvAPI.disable_hdr       = bDisable;
           config.render.dxgi.hide_hdr_support = bDisable;
@@ -3904,12 +3898,12 @@ SK_ImGui_ControlPanel (void)
 
         if (ImGui::IsItemHovered ())
         {
-          ImGui::SetTooltip ("Use if game does not have a user setting to turn HDR off...");
+          ImGui::SetTooltip ("如果游戏没有关闭 HDR 的用户设置，则使用...");
         }
 
         if (bOriginal != bDisable)
         {
-          ImGui::BulletText ("Game Restart Required");
+          ImGui::BulletText ("需要重启游戏");
         }
       };
 
@@ -3972,18 +3966,18 @@ SK_ImGui_ControlPanel (void)
         ( SK_GetPluginName ().find (L"Special K") == std::wstring::npos ||
           SK_IsInjected    () );
 
-      if (ImGui::BeginMenu ("Update"))
+      if (ImGui::BeginMenu ("更新"))
       {
         bool selected = false;
 
-        ImGui::MenuItem  ( "Current Version###Menu_CurrentVersion",
+        ImGui::MenuItem  ( "当前版本###Menu_CurrentVersion",
                              current_ver, &selected, false );
 
         if (updatable && branches.size () > 1)
         {
           static
             char    szCurrentBranchMenu [128] = { };
-          sprintf ( szCurrentBranchMenu, "Current Branch:  (%s)"
+          sprintf ( szCurrentBranchMenu, "当前分支:  (%s)"
                                          "###SelectBranchMenu",
                       current_branch_str );
 
@@ -4050,14 +4044,14 @@ SK_ImGui_ControlPanel (void)
 
         }
 
-        ImGui::MenuItem  ( "Current Branch###Menu_CurrentBranch",
+        ImGui::MenuItem  ( "当前分支###Menu_CurrentBranch",
                              current_branch_str, &selected, false );
 
         ImGui::Separator ();
 
         if (vinfo.build < vinfo_latest.build)
         {
-          if (ImGui::MenuItem  ("Update Now"))
+          if (ImGui::MenuItem  ("现在更新"))
             SK_UpdateSoftware (nullptr);
 
           ImGui::Separator ();
@@ -4070,9 +4064,9 @@ SK_ImGui_ControlPanel (void)
         snprintf        ( current_ver, 127, "%ws (%li)",
                             vinfo_latest.package.c_str (),
                             vinfo_latest.build );
-        ImGui::MenuItem ( "Latest Version###Menu_LatestVersion",
+        ImGui::MenuItem ( "最新版本###Menu_LatestVersion",
                             current_ver, &selected, false );
-        ImGui::MenuItem ( "Last Checked###Menu_LastUpdateCheck",
+        ImGui::MenuItem ( "最近检查###Menu_LastUpdateCheck",
                           utf8_time_checked.c_str (), &selected, false );
 
         enum {
@@ -4110,15 +4104,15 @@ SK_ImGui_ControlPanel (void)
 
         if (updatable)
         {
-          ImGui::Text     ("Check for Updates");
+          ImGui::Text     ("检查更新");
           ImGui::TreePush ("");
 
           if ( ImGui::Combo ( "###UpdateCheckFreq", &sel,
-                                "Once every 6 hours\0"
-                                "Once every 12 hours\0"
-                                "Once per-day\0"
-                                "Once per-week\0"
-                                "Never (disable)\0\0" ) )
+                                "每 6 小时一次\0"
+                                "每 12 小时一次\0"
+                                "每天一次\0"
+                                "每周一次\0"
+                                "从不（禁用）\0\0" ) )
           {
             switch (sel)
             {
@@ -4145,7 +4139,7 @@ SK_ImGui_ControlPanel (void)
 
           if (vinfo.build >= vinfo_latest.build)
           {
-            if (ImGui::MenuItem  (" >> Check Now"))
+            if (ImGui::MenuItem  (" >> 现在检查"))
             {
               SK_FetchVersionInfo1 (nullptr, true);
               branches       = SK_Version_GetAvailableBranches (nullptr);
@@ -4187,9 +4181,9 @@ SK_ImGui_ControlPanel (void)
 
         ImGui::Separator ();
 
-        if (ImGui::BeginMenu ("支持我们##Donate"))
+        if (ImGui::BeginMenu ("捐赠支持##Donate"))
         {
-          if (ImGui::MenuItem ( "Recurring Donation + Perks", "Become a Patron", &selected ))
+          if (ImGui::MenuItem ( "Recurring Donation + Perks", "成为赞助人", &selected ))
           {
             SK_SteamOverlay_GoToURL (
                 "https://www.patreon.com/bePatron?u=33423623", true
@@ -4231,7 +4225,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::EndMenu        ();
         }
 
-        if (ImGui::MenuItem ( "Documentation", "Official Wiki", &selected ))
+        if (ImGui::MenuItem ( "文档", "官方维基", &selected ))
         {
           SK_SteamOverlay_GoToURL (
               "https://wiki.special-k.info", true
@@ -4239,18 +4233,18 @@ SK_ImGui_ControlPanel (void)
         }
 
 
-        if ( ImGui::MenuItem ( "发布历史",
+        if ( ImGui::MenuItem ( "汉化更新",
                                  "下载",
                                    &selected
                              )
            )
         {
-          SK_SteamOverlay_GoToURL ("https://discord.gg/specialk",
+          SK_SteamOverlay_GoToURL ("https://juij.eu.org/#SpecialK",
               true
           );
         }
 
-        if (ImGui::MenuItem ("关于软件...", "Licensed Software", &selected))
+        if (ImGui::MenuItem ("关于软件", "软件许可", &selected))
           eula.show = true;
 
         ImGui::Separator ();
@@ -4279,7 +4273,7 @@ SK_ImGui_ControlPanel (void)
         if ( (0 < config.steam.appid && config.steam.appid <= INT32_MAX) ||
               *rb.windows.focus.title != L'\0')
         {
-          if (ImGui::MenuItem ( "Check PCGamingWiki for this Game", "Third-Party Site", &selected ))
+          if (ImGui::MenuItem ( "查看 PCGamingWiki 了解此游戏", "Third-Party Site", &selected ))
           {
             SK_SteamOverlay_GoToURL (
                 ((0 < config.steam.appid && config.steam.appid <= INT32_MAX)
@@ -4335,9 +4329,9 @@ SK_ImGui_ControlPanel (void)
 
         if (SK_IsInjected ())
         {
-          ImGui::MenuItem ( "Special K Bootstrapper",
+          ImGui::MenuItem ( "Special K 引导程序",
                             SK_FormatString (
-                              "Global Injector  %s",
+                              "全局注入器  %s",
                                   SK_GetVersionStrA ()
                               ).c_str (), ""
                           );
@@ -4559,9 +4553,8 @@ SK_ImGui_ControlPanel (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::SetTooltip (
-                "For best performance:\r\n\t"
-                "Set 'Remember this is a game' in Windows Game Bar settings,"
-                " ensure that Windows Game Mode is On, and restart the game."
+                "为了获得最佳性能:\r\n\t"
+                "确保 Windows 游戏模式已打开，然后重新启动游戏。"
               );
             }
           }
@@ -5110,7 +5103,7 @@ SK_ImGui_ControlPanel (void)
       ImGui::TreePush    ("");
 
       if ( ImGui::SliderFloat ( "###IMGUI_SCALE", &config.imgui.scale,
-                                  1.0f, 3.0f, "UI Scaling Factor %.2f" ) )
+                                  1.0f, 3.0f, "用户界面缩放比例 %.2f" ) )
       {
         // ImGui does not perform strict parameter validation,
         //   and values out of range for this can be catastrophic.
@@ -5120,19 +5113,18 @@ SK_ImGui_ControlPanel (void)
 
       if (ImGui::IsItemHovered ())
       {
-        ImGui::SetTooltip ( "Optimal UI layout requires 1.0; other scales "
-                            "may not display as intended." );
+        ImGui::SetTooltip ( "最佳UI布局需要 1.0 ；其他比例可能无法按预期显示。" );
       }
 
       ImGui::SameLine        ();
-      ImGui::Checkbox        ("Disable Transparency", &config.imgui.render.disable_alpha);
+      ImGui::Checkbox        ("禁用透明度", &config.imgui.render.disable_alpha);
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Resolves UI flicker in frame-doubled games");
+        ImGui::SetTooltip ("解决部分游戏中的 UI 闪烁问题");
 
-      ImGui::TextUnformatted ("Anti-Aliasing:  ");                                          ImGui::SameLine ();
-      ImGui::Checkbox        ("Lines",             &config.imgui.render.antialias_lines);   ImGui::SameLine ();
-      ImGui::Checkbox        ("Contours",          &config.imgui.render.antialias_contours);
+      ImGui::TextUnformatted ("抗锯齿:  ");                                          ImGui::SameLine ();
+      ImGui::Checkbox        ("线条",             &config.imgui.render.antialias_lines);   ImGui::SameLine ();
+      ImGui::Checkbox        ("轮廓",          &config.imgui.render.antialias_contours);
 
       ImGui::TreePop     ();
     }
@@ -5213,8 +5205,7 @@ SK_ImGui_ControlPanel (void)
           {
             ImGui::BeginTooltip ();
             ImGui::TextUnformatted (
-              "Graph color represents frame time variance, not proximity"
-              " to your target FPS."
+              "图表颜色代表帧时间差异，而不是与目标 FPS 的接近程度。"
             );
 
           //if ( ( rb.api == SK_RenderAPI::D3D11 ||
@@ -5231,7 +5222,7 @@ SK_ImGui_ControlPanel (void)
 
           if (advanced)
           {
-            if (ImGui::Checkbox ("Background", &bg_limit))
+            if (ImGui::Checkbox ("背景", &bg_limit))
             {
               if (bg_limit) __target_fps_bg = __target_fps;
               else          __target_fps_bg =         0.0f;
@@ -5246,24 +5237,22 @@ SK_ImGui_ControlPanel (void)
 
               ImGui::BeginTooltip ();
               ImGui::Text (
-                "Optional secondary limit applies when the game is running"
-                " in the background." );
+                "当游戏在后台运行时，可选的辅助限制适用。" );
 
               if (unity)
               {
                 ImGui::Separator   (    );
                 ImGui::Spacing     (    );
-                ImGui::BulletText  ( "This is a Unity engine game and "
-                                     "requires special attention." );
+                ImGui::BulletText  ( "这是 Unity 引擎的游戏，需要特别注意。" );
                 ImGui::Spacing     (    );
                 ImGui::TreePush    ( "" );
                 ImGui::TextColored ( ImColor (.62f, .62f, .62f),
-                                     "\tRefer to the Following Setting:" );
+                                     "\t参考以下设置:" );
                 ImGui::Spacing     (    );
                 ImGui::TreePush    ( "" );
                 ImGui::TextColored ( ImColor (1.f, 1.f, 1.f),
-                                       "\tWindow Management > Input/Output"
-                                       " Behavior > Continue Rendering" );
+                                       "\t窗口管理 > 输入/输出"
+                                       " 行为 > 继续渲染" );
                 ImGui::TreePop     (    );
                 ImGui::TreePop     (    );
               }
@@ -5334,14 +5323,14 @@ SK_ImGui_ControlPanel (void)
             ImGui::BeginTooltip    ( );
             ImGui::BeginGroup      ( );
             ImGui::TextColored     ( ImColor::HSV (0.18f, 0.88f, 0.94f),
-                                       "  Ctrl Click" );
+                                       "  按住 Ctrl 键单击" );
             ImGui::TextColored     ( ImColor::HSV (0.18f, 0.88f, 0.94f),
-                                       "Right Click" );
+                                       "右键点击" );
             ImGui::EndGroup        ( );
             ImGui::SameLine        ( );
             ImGui::BeginGroup      ( );
-            ImGui::TextUnformatted ( " Enter an Exact Framerate" );
-            ImGui::TextUnformatted ( " Select a Refresh Factor" );
+            ImGui::TextUnformatted ( " 输入准确的帧速率" );
+            ImGui::TextUnformatted ( " 选择刷新系数" );
             ImGui::EndGroup        ( );
             ImGui::EndTooltip      ( );
           }
@@ -5436,7 +5425,7 @@ SK_ImGui_ControlPanel (void)
              (config.render.framerate.target_fps        > 0.0f ||
                                            __target_fps > 0.0f);
 
-            if (ImGui::Checkbox ("Latent Sync", &bLatentSync))
+            if (ImGui::Checkbox ("潜在同步", &bLatentSync))
             {
               double dRefresh =
                 rb.getActiveRefreshRate ();
@@ -5471,7 +5460,7 @@ SK_ImGui_ControlPanel (void)
 
                   if (rb.gsync_state.capable)
                   {
-                    SK_RunOnce (SK_ImGui_Warning (L"Latent Sync may not work correctly while G-Sync is active"));
+                    SK_RunOnce (SK_ImGui_Warning (L"G-Sync 处于活动状态时，潜在同步可能无法正常工作"));
                   }
                 }
 
@@ -5549,7 +5538,7 @@ SK_ImGui_ControlPanel (void)
                 );
               }
 
-              if ( ImGui::Combo ( "Scan Mode",
+              if ( ImGui::Combo ( "扫描模式",
                                &iMode, strModeList.data () ) )
               {
                 float fTargetFPS =
@@ -5584,7 +5573,7 @@ SK_ImGui_ControlPanel (void)
             {
               ImGui::PushItemWidth (itemWidth);
 
-              if ( ImGui::Combo ( "Refresh Rate Factors",
+              if ( ImGui::Combo ( "刷新率系数",
                                &iFractSel, strFractList.data () ) )
               {
                 cp->ProcessCommandFormatted (
@@ -5594,7 +5583,7 @@ SK_ImGui_ControlPanel (void)
 
               ImGui::PopItemWidth ();
 
-              if (ImGui::Checkbox    ("VRR Bias", &bVRRBias))
+              if (ImGui::Checkbox    ("VRR 偏差", &bVRRBias))
               {
                 lastRefresh = 0.0f;
               }
@@ -5673,7 +5662,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::GetCursorPos ();
 
         advanced =
-          ImGui::TreeNode ("Advanced ###Advanced_FPS");
+          ImGui::TreeNode ("高级 ###Advanced_FPS");
 
         if (advanced)
         {
@@ -5698,7 +5687,7 @@ SK_ImGui_ControlPanel (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip    ();
-            ImGui::TextUnformatted ("Alternate frametime measure consistent with new PresentMon / RTSS methodology");
+            ImGui::TextUnformatted ("与新的 PresentMon /RTSS 方法一致的备用帧时间测量");
             ImGui::EndTooltip      ();
           }
 
@@ -5774,7 +5763,7 @@ SK_ImGui_ControlPanel (void)
                 szModeList = szDLSSGOnly;
             }
 
-            if (ImGui::Combo ("Mode", &mode, szModeList))
+            if (ImGui::Combo ("模式", &mode, szModeList))
             {
               struct vsync_prefs_s {
                 int present_interval = config.render.framerate.present_interval == 0 ? -1 :
@@ -5811,7 +5800,7 @@ SK_ImGui_ControlPanel (void)
 
                   if (config.render.framerate.present_interval > 1)
                   {
-                    SK_ImGui_Warning (L"VRR Does Not Work When Using 1/2, 1/3 or 1/4 rate VSYNC!");
+                    SK_ImGui_Warning (L"使用 1/2、1/3 或 1/4 速率 VSYNC 时，VRR 不起作用！");
                   }
                   break;
 
