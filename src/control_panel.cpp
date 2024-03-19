@@ -1990,7 +1990,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     ImGui::BeginTooltip ();
     ImGui::Text         ("在游戏窗口未覆盖的地方用背景填充游戏显示器");
     ImGui::Separator    ();
-    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全荧幕）");
+    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全屏）");
 
     if (display.mpo_planes <= 1)
     {
@@ -2224,7 +2224,7 @@ DisplayModeMenu (bool windowed)
   bool       force  = windowed ? config.display.force_windowed :
                                  config.display.force_fullscreen;
 
-  const char* modes = "窗口模式\0全荧幕模式\0\0";
+  const char* modes = "窗口模式\0全屏模式\0\0";
 
 
   // Engaging fullscreen mode in OpenGL is more complicated than I want to
@@ -2829,7 +2829,7 @@ DisplayModeMenu (bool windowed)
     }
 
     modes =
-      "有边框\0无边框\0无边框全荧幕\0\0";
+      "有边框\0无边框\0无边框全屏\0\0";
 
     static bool                     queued_changes = false;
     static std::stack <std::string> change_commands;
@@ -3024,13 +3024,13 @@ SK_NV_LatencyControlPanel (void)
 void
 SK_DXGI_FullscreenControlPanel (void)
 {
-  if (ImGui::BeginPopup ("DXGI 全荧幕控制面板"))
+  if (ImGui::BeginPopup ("DXGI 全屏控制面板"))
   {
-    ImGui::TextUnformatted ("D3D11 / D3D12 全荧幕设置\t(Experimental)");
+    ImGui::TextUnformatted ("D3D11 / D3D12 全屏设置\t(Experimental)");
 
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("启用假全荧幕模式", &config.render.dxgi.fake_fullscreen_mode))
+    if (ImGui::Checkbox ("启用假全屏模式", &config.render.dxgi.fake_fullscreen_mode))
     {
       // "Fake Fullscreen" requires background rendering
       if (config.render.dxgi.fake_fullscreen_mode)
@@ -3042,7 +3042,7 @@ SK_DXGI_FullscreenControlPanel (void)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全荧幕。");
+      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全屏。");
     }
 
     if (ImGui::Checkbox ("允许 FPS 更改", &config.display.allow_refresh_change))
@@ -4825,7 +4825,7 @@ SK_ImGui_ControlPanel (void)
       bool bFakeFullscreen =
         rb.isFakeFullscreen ();
 
-      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全荧幕\" 分辨率"
+      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全屏\" 分辨率"
                                             : " 窗口分辨率      ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
@@ -4840,7 +4840,7 @@ SK_ImGui_ControlPanel (void)
 
     else
     {
-      if (ImGui::MenuItem (" 全荧幕分辨率 ", szResolution))
+      if (ImGui::MenuItem (" 全屏分辨率 ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
         config.window.res.override.y = (int)((float)(client.bottom - client.top)  * g_fDPIScale);
@@ -4887,7 +4887,7 @@ SK_ImGui_ControlPanel (void)
     {
       if (SK_API_IsDXGIBased (rb.api))
       {
-        ImGui::OpenPopup         ("DXGI 全荧幕控制面板");
+        ImGui::OpenPopup         ("DXGI 全屏控制面板");
         ImGui::SetNextWindowSize (ImVec2 (-1.0f, -1.0f), ImGuiCond_Always);
       }
     }
@@ -7605,17 +7605,17 @@ SK_ImGui_StageNextFrame (void)
                                                      0.925f * io.DisplaySize.y )
                                         );
 
-    if (! ImGui::IsPopupOpen ("全荧幕 / 窗口显示模式切换失败"))
+    if (! ImGui::IsPopupOpen ("全屏 / 窗口显示模式切换失败"))
     {
       SK_ImGui_WantExit = false;
       orig_nav_state    = nav_usable;
 
-      ImGui::OpenPopup ("全荧幕 / 窗口显示模式切换失败");
+      ImGui::OpenPopup ("全屏 / 窗口显示模式切换失败");
     }
   }
 
   if ( ImGui::BeginPopupModal (
-         "全荧幕 / 窗口显示模式切换失败",
+         "全屏 / 窗口显示模式切换失败",
            nullptr,
              ImGuiWindowFlags_AlwaysAutoResize |
              ImGuiWindowFlags_NoScrollbar      |
