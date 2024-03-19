@@ -1,23 +1,4 @@
-/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -44,7 +25,7 @@ SK::ControlPanel::Platform::Draw (void)
            bool bEpic  = ((SK::EOS::GetTicksRetired () >  0) && (! bSteam));
 
     static const std::string header_label =
-      SK_FormatString ( "%s Enhancements###Platform_Enhancements",
+      SK_FormatString ( "%s 增强###Platform_Enhancements",
                         bSteam ? "Steam" :
                          bEpic ? "Epic"  :
                              "Platform" );
@@ -76,7 +57,7 @@ SK::ControlPanel::Platform::Draw (void)
         const size_t num_achievements = bEpic ? SK_EOS_GetNumPossibleAchievements           ()
                                               : SK_SteamAPI_GetNumPossibleAchievements      ();
 
-        snprintf ( szProgress, 127, "%.2f%% of Achievements Unlocked (%u/%u)",
+        snprintf ( szProgress, 127, "%.2f%% 已解锁的成就数量 (%u/%u)",
                      100.0 * ratio,  sk::narrow_cast <uint32_t> (unlock_count),
                                      sk::narrow_cast <uint32_t> (num_achievements) );
 
@@ -141,21 +122,21 @@ SK::ControlPanel::Platform::Draw (void)
           ImGui::EndTooltip     ( );
         }
 
-        if (ImGui::CollapsingHeader ("Achievements") )
+        if (ImGui::CollapsingHeader ("成就") )
         {
           ImGui::TreePush ("");
           ImGui::BeginGroup ();
 
-          if (ImGui::Button (" Test Unlock "))
+          if (ImGui::Button (" 测试解锁 "))
             bEpic ? SK_EOS_UnlockAchievement   (0)
                   : SK_Steam_UnlockAchievement (0);
 
           if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("Perform a FAKE unlock so that you can tune your preferences.");
+            ImGui::SetTooltip ("执行假解锁，以便你可以调整偏好。");
 
           ImGui::SameLine ();
 
-          ImGui::Checkbox ("Play Sound ", &config.platform.achievements.play_sound);
+          ImGui::Checkbox ("播放声音 ", &config.platform.achievements.play_sound);
 
           if (config.platform.achievements.play_sound)
           {
@@ -197,7 +178,7 @@ SK::ControlPanel::Platform::Draw (void)
           ImGui::EndGroup ();
           ImGui::SameLine ();
 
-          ImGui::Checkbox ("Take Screenshot", &config.platform.achievements.take_screenshot);
+          ImGui::Checkbox ("截图", &config.platform.achievements.take_screenshot);
 
           ImGui::PushStyleColor (ImGuiCol_Header,        ImVec4 (0.90f, 0.68f, 0.02f, 0.45f));
           ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.72f, 0.07f, 0.80f));
@@ -205,11 +186,11 @@ SK::ControlPanel::Platform::Draw (void)
 
           // TODO: Implement popup for non-Steam
           const bool uncollapsed =
-            bSteam ? ImGui::CollapsingHeader ("Enhanced Popup", ImGuiTreeNodeFlags_AllowOverlap)
+            bSteam ? ImGui::CollapsingHeader ("增强弹出窗口", ImGuiTreeNodeFlags_AllowOverlap)
                    : false;
 
           if (bSteam) {
-            ImGui::SameLine (); ImGui::Checkbox        ("   Fetch Friend Unlock Stats", &config.platform.achievements.pull_friend_stats);
+            ImGui::SameLine (); ImGui::Checkbox        ("   获取好友解锁统计数据", &config.platform.achievements.pull_friend_stats);
           }
 
           if (uncollapsed)
@@ -219,17 +200,17 @@ SK::ControlPanel::Platform::Draw (void)
             int  mode    = (config.platform.achievements.popup.show + config.platform.achievements.popup.animate);
             bool changed = false;
 
-            ImGui::Text          ("Draw Mode:");                              ImGui::SameLine ();
+            ImGui::Text          ("绘图模式:");                              ImGui::SameLine ();
 
             // Animated popups are not supported in ImGui
             //
             if (mode > 1) mode = 1;
 
             changed |=
-              ImGui::RadioButton ("Disabled ##AchievementPopup",   &mode, 0); ImGui::SameLine ();
+              ImGui::RadioButton ("禁用 ##AchievementPopup",   &mode, 0); ImGui::SameLine ();
             ImGui::BeginGroup    ( );
             changed |=
-              ImGui::RadioButton ("Stationary ##AchievementPopup", &mode, 1); ImGui::SameLine ();
+              ImGui::RadioButton ("固定 ##AchievementPopup", &mode, 1); ImGui::SameLine ();
 
             //changed |=
             //  ImGui::RadioButton ("Animated ##AchievementPopup",   &mode, 2);
@@ -296,7 +277,7 @@ SK::ControlPanel::Platform::Draw (void)
       bool bOverlayEnabled =
         ( bSteamOverlayEnabled || SK::EOS::GetTicksRetired () > 0 );
 
-      if (bOverlayEnabled && ImGui::CollapsingHeader ("Overlay Notifications"))
+      if (bOverlayEnabled && ImGui::CollapsingHeader ("叠加层通知"))
       {
         ImGui::TreePush  ("");
 

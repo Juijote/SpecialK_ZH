@@ -39,7 +39,7 @@ SK::ControlPanel::Notifications::Draw (void)
     ImGui::SameLine ();
   }
 
-  if (ImGui::CollapsingHeader ("Notifications"/*, ImGuiTreeNodeFlags_DefaultOpen)*/))
+  if (ImGui::CollapsingHeader ("通知"/*, ImGuiTreeNodeFlags_DefaultOpen)*/))
   {
     ImGui::TreePush ("");
 
@@ -57,7 +57,7 @@ SK::ControlPanel::Notifications::Draw (void)
       ImGui::SameLine ();
       ImGui::Text     ("%d unseen", SK_ImGui_SilencedNotifications);
       ImGui::SameLine ();
-      if (ImGui::Button ("Show Notifications"))
+      if (ImGui::Button ("显示通知"))
       {
         SK_ImGui_UnsilenceNotifications ();
       }
