@@ -1055,7 +1055,7 @@ SK_ImGui_DrawGraph_FramePacing (void)
       else
       {
         ImGui::TextUnformatted (
-          "SteamOS  (Presentation Model Undefined)"
+          "SteamOS  (Presentation 模型未定义)"
         );
       }
     }

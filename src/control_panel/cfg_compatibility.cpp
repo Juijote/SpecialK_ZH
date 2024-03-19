@@ -578,7 +578,7 @@ SK::ControlPanel::Compatibility::Draw (void)
                             SK_ImGui_Cursor.idle ? "闲置" :
                                                    "无闲置",
                               SK_ImGui_Cursor.last_move);
-      ImGui::Text        ("鼠标是否在窗口中=%s, 追踪=%s%s 最后 WM_MOUSEMOVE=%d",
+      ImGui::Text        ("鼠标是否在窗口中 = %s, 追踪 = %s%s 最后 WM_MOUSEMOVE = %d",
                                game_window.mouse.inside ? "是"       : "否",
                              game_window.mouse.tracking ? "是"       : "否",
                             game_window.mouse.can_track ? "," : " (不支持),",

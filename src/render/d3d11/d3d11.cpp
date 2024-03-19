@@ -6625,9 +6625,9 @@ D3D11Dev_CreateTexture2D_Impl (
   //
   SK_ImGui_CreateNotification (
     "WARNING.DXVK.CreateTexture2D1", SK_ImGui_Toast::Warning,
-    "DXVK does not correctly implement ID3D11Device3::CreateTexture2D1 (...)\r\n\r\n"
-    "\tSpecial K will use a fallback code path that is unmaintained and likely to break!",
-    "DXVK Incompatibility", 10000UL, SK_ImGui_Toast::UseDuration |
+    "DXVK 未正确实现 ID3D11Device3::CreateTexture2D1 (...)\r\n\r\n"
+    "\tSpecial K 将使用未维护且可能损坏的后备代码路径！",
+    "DXVK 不兼容", 10000UL, SK_ImGui_Toast::UseDuration |
                                      SK_ImGui_Toast::ShowOnce    |
                                      SK_ImGui_Toast::ShowTitle   |
                                      SK_ImGui_Toast::ShowCaption );

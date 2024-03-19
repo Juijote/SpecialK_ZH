@@ -326,23 +326,23 @@ namespace SK_ImGui
           static char szBatteryLevel [128] = { };
 
           if (sps.BatteryLifeTime != -1)
-            snprintf (szBatteryLevel, 127, sbs.Rate != 0 ? "%hhu%% Battery Remaining\t\t[%lu Minutes, %5.1f W]" 
-                                                         : "%hhu%% Battery Remaining\t\t[%lu Minutes]",
+            snprintf (szBatteryLevel, 127, sbs.Rate != 0 ? "%hhu%% 电池剩余电量\t\t[%lu 分, %5.1f 瓦]" 
+                                                         : "%hhu%% 电池剩余电量\t\t[%lu 分]",
                                                                                battery_level,
                                                                     sps.BatteryLifeTime / 60,
                                                         static_cast <double> (
                                                       sk::narrow_cast <LONG> (sbs.Rate)
                                                                              )         / 1000.0);
           else if (charging)
-            snprintf (szBatteryLevel, 127, sbs.Rate != 0 ? "%hhu%% Battery Charged, %5.1f W" :
+            snprintf (szBatteryLevel, 127, sbs.Rate != 0 ? "%hhu%% Battery Charged, %5.1f 瓦" :
                                                            "%hhu%% Battery Charged",
                                                                                battery_level,
                                                         static_cast <double> (
                                                       sk::narrow_cast <LONG> (sbs.Rate)
                                                                              )         / 1000.0);
           else
-            snprintf (szBatteryLevel, 127, sbs.Rate != 0 ? "%hhu%% Battery Remaining, %5.1f W" :
-                                                           "%hhu%% Battery Remaining",
+            snprintf (szBatteryLevel, 127, sbs.Rate != 0 ? "%hhu%% 电池剩余电量, %5.1f 瓦" :
+                                                           "%hhu%% 电池剩余电量",
                                                                                battery_level,
                                                         static_cast <double> (
                                                       sk::narrow_cast <LONG> (sbs.Rate)
@@ -524,7 +524,7 @@ SK_ImGui_ProcessWarnings (void)
     ImGui::Spacing     ();
     ImGui::SameLine    ();
 
-    if (ImGui::Button ("Okay"))
+    if (ImGui::Button ("好的"))
     {
       SK_ImGuiEx_Visible = false;
       SK_ReShadeAddOn_ActivateOverlay (false);
@@ -1905,7 +1905,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   ImGui::Separator   ();
   ImGui::BeginGroup  ();
-  ImGui::Text        ("MPO 平面: ");
+  ImGui::Text        ("多平面叠加: ");
   ImGui::Text        ("硬件调度: ");
   ImGui::Text        ("硬件绘制队列: ");
   ImGui::EndGroup    ();
@@ -1914,7 +1914,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   if (display.mpo_planes <= 1)
   {
-    ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f), "Unsupported " ICON_FA_EXCLAMATION_TRIANGLE );
+    ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f), "不支持 " ICON_FA_EXCLAMATION_TRIANGLE );
   }
 
   else
@@ -1925,19 +1925,19 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   auto _PrintEnabled      = [](UINT enabled)
   {
     if (enabled != 0)
-      ImGui::TextColored ( ImVec4 (0.f, 1.f, 0.f, 1.f), "On " );
+      ImGui::TextColored ( ImVec4 (0.f, 1.f, 0.f, 1.f), "开启 " );
     else
-      ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f), "Off " );
+      ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f), "关闭 " );
   };
   auto _PrintSupportState = [](UINT state)
   {
     switch (state)
     {
       default:
-      case DXGK_FEATURE_SUPPORT_ALWAYS_OFF:   ImGui::Text ("(Always Off)");   break;
-      case DXGK_FEATURE_SUPPORT_EXPERIMENTAL: ImGui::Text ("(Experimental)"); break;
-      case DXGK_FEATURE_SUPPORT_STABLE:       ImGui::Text ("(Stable)");       break;
-      case DXGK_FEATURE_SUPPORT_ALWAYS_ON:    ImGui::Text ("(Always On)");    break;
+      case DXGK_FEATURE_SUPPORT_ALWAYS_OFF:   ImGui::Text ("(一直关闭)");   break;
+      case DXGK_FEATURE_SUPPORT_EXPERIMENTAL: ImGui::Text ("(实验性)"); break;
+      case DXGK_FEATURE_SUPPORT_STABLE:       ImGui::Text ("(稳定)");       break;
+      case DXGK_FEATURE_SUPPORT_ALWAYS_ON:    ImGui::Text ("(一直启用)");    break;
     };
   };
 
@@ -6390,7 +6390,7 @@ SK_ImGui_ControlPanel (void)
 
     if (bHasPlatformIntegration)
     {
-      ImGui::Checkbox ("将昵称添加到元数据", &config.screenshots.embed_nickname);
+      ImGui::Checkbox ("将名称添加到元数据", &config.screenshots.embed_nickname);
 
       if (ImGui::IsItemHovered ())
       {
@@ -7659,15 +7659,15 @@ SK_ImGui_StageNextFrame (void)
       } if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Safest Option");
+          ImGui::Text         ("最安全选择");
           ImGui::Spacing      ();
           ImGui::SameLine     ();
-          ImGui::Text         ("Prefer SK's Window Mode Optimizations except for...");
+          ImGui::Text         ("更喜欢 SK 的窗口模式优化，除了...");
           ImGui::Separator    ();
-          ImGui::Text         ("Scenarios not to Force Windowed Mode:");
-          ImGui::BulletText   ("Desktop and Game run at different Resolutions");
-          ImGui::BulletText   ("Desktop and Game run at different Refresh Rates");
-          ImGui::BulletText   ("Game is not giving you Hardware: Independent Flip");
+          ImGui::Text         ("不强制窗口模式的场景:");
+          ImGui::BulletText   ("桌面和游戏以不同的分辨率运行");
+          ImGui::BulletText   ("桌面和游戏以不同的刷新率运行");
+          ImGui::BulletText   ("游戏不允许 硬件：独立绘制");
           ImGui::EndTooltip   ();
         }
 

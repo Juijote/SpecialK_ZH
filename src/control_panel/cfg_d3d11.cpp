@@ -1804,10 +1804,10 @@ SK::ControlPanel::D3D11::Draw (void)
       ImGui::TextUnformatted ("右键单击以设置显存配额或重置警告");
       ImGui::Separator       ();
       ImGui::TreePush        ("");
-      ImGui::TextUnformatted ("显示的统计数据是游戏主动使用的图形内存（占用显存）与驱动程序可专用于游戏的显存（显存配额）。\r\n\r\n");
+      ImGui::TextUnformatted ("显示的统计数据是游戏主动使用的显存（占用显存）与驱动程序可专用于游戏的显存（显存配额）。\r\n\r\n");
       ImGui::BulletText      ("这与所有当前的监控工具有很大不同......\r\n\r\n");
       ImGui::TreePush        ("");
-      ImGui::TextUnformatted ("例如，MSI Afterburner 可以测量系统范围的图形内存分配或每个进程的分配，具体取决于其设置方式，");
+      ImGui::TextUnformatted ("例如，MSI Afterburner 可以测量系统范围的显存分配或每个进程的分配，具体取决于其设置方式，");
       ImGui::TextUnformatted ("但无法测量占用显存，也不了解每个进程对显存的限制（配额）。\r\n\r\n");
       ImGui::TreePop         ();
       ImGui::TextUnformatted ("正确测量游戏的显存要求需要了解显存占用和每个进程的显存配额！\r\n");
