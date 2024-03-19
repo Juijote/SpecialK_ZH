@@ -311,22 +311,22 @@ SK::ControlPanel::Compatibility::Draw (void)
         ImGui::EndTooltip   ();
       }
 
-      ImGui::Checkbox ("Log File Reads", &config.file_io.trace_reads);
+      ImGui::Checkbox ("日志文件读取", &config.file_io.trace_reads);
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Traces file read activity and reports it in logs/file_read.log");
+        ImGui::SetTooltip ("跟踪文件读取活动并在 logs/file_read.log 中报告它");
 
-      ImGui::SliderInt ("Log Level",                      &config.system.log_level, 0, 5);
-
-      if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Controls Debug Log Verbosity; Higher = Bigger/Slower Logs");
-
-      ImGui::Checkbox  ("Log Game Output",                &config.system.game_output);
+      ImGui::SliderInt ("日志级别",                      &config.system.log_level, 0, 5);
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Log any Game Text Output to logs/game_output.log");
+        ImGui::SetTooltip ("控制调试日志详细程度; 更高 = 日志更大/更慢");
 
-      if (ImGui::Checkbox  ("Print Debug Output to Console",  &config.system.display_debug_out))
+      ImGui::Checkbox  ("记录游戏输出",                &config.system.game_output);
+
+      if (ImGui::IsItemHovered ())
+        ImGui::SetTooltip ("将任何游戏文本输出记录到 logs/game_output.log");
+
+      if (ImGui::Checkbox  ("将调试输出打印到控制台",  &config.system.display_debug_out))
       {
         if (config.system.display_debug_out)
         {
@@ -340,37 +340,37 @@ SK::ControlPanel::Compatibility::Draw (void)
       }
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Spawns Debug Console at Startup for Debug Text from Third-Party Software");
+        ImGui::SetTooltip ("启动时生成调试控制台，用于调试来自第三方软件的文本");
 
-      ImGui::Checkbox  ("Trace LoadLibrary",              &config.system.trace_load_library);
+      ImGui::Checkbox  ("跟踪加载库",              &config.system.trace_load_library);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
-        ImGui::Text         ("Monitor DLL Load Activity");
+        ImGui::Text         ("监控 DLL 加载活动");
         ImGui::Separator    ();
-        ImGui::BulletText   ("Required for Render API Auto-Detection in Global Injector");
+        ImGui::BulletText   ("全局注入器中绘制 API 自动检测所需");
         ImGui::EndTooltip   ();
       }
 
-      ImGui::Checkbox  ("Strict DLL Loader Compliance",   &config.system.strict_compliance);
+      ImGui::Checkbox  ("严格遵守 DLL 加载器规范",   &config.system.strict_compliance);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    (  );
-        ImGui::TextUnformatted ("Prevent Loading DLLs Simultaneously Across Multiple Threads");
+        ImGui::TextUnformatted ("防止跨多个线程同时加载 DLL");
         ImGui::Separator       (  );
-        ImGui::BulletText      ("Eliminates Race Conditions During DLL Startup");
-        ImGui::BulletText      ("Unsafe for a LOT of Improperly Designed Third-Party Software\n");
+        ImGui::BulletText      ("消除 DLL 启动期间的竞争条件");
+        ImGui::BulletText      ("许多设计不当的第三方软件不安全\n");
         ImGui::TreePush        ("");
         ImGui::TextUnformatted ("");
         ImGui::BeginGroup      (  );
-        ImGui::TextUnformatted ("PROPER DLL DESIGN:  ");
+        ImGui::TextUnformatted ("正确的 DLL 设计:  ");
         ImGui::EndGroup        (  );
         ImGui::SameLine        (  );
         ImGui::BeginGroup      (  );
-        ImGui::TextUnformatted ("Never Call LoadLibrary (...) from DllMain (...)'s Thread !!!");
-        ImGui::TextUnformatted ("Never Wait on a Synchronization Object from DllMain (...) !!");
+        ImGui::TextUnformatted ("切勿从 DllMain (...) 的线程调用 LoadLibrary (...) !!!");
+        ImGui::TextUnformatted ("切勿等待来自 DllMain 的同步对象 (...) !!");
         ImGui::EndGroup        (  );
         ImGui::TreePop         (  );
         ImGui::EndTooltip      (  );
@@ -387,8 +387,8 @@ SK::ControlPanel::Compatibility::Draw (void)
       RECT client = { };
 
       ImGui::TextColored (ImColor (1.f,1.f,1.f), "窗口管理:  "); ImGui::SameLine ();
-      ImGui::RadioButton ("Dimensions", &window_pane, 0);                 ImGui::SameLine ();
-      ImGui::RadioButton ("Details",    &window_pane, 1);
+      ImGui::RadioButton ("概览", &window_pane, 0);                 ImGui::SameLine ();
+      ImGui::RadioButton ("细节",    &window_pane, 1);
       ImGui::Separator   (                             );
 
       auto DescribeRect = [](LPRECT rect, const char* szType, const char* szName)
@@ -412,15 +412,15 @@ SK::ControlPanel::Compatibility::Draw (void)
       case 0:
         ImGui::Columns   (3);
 
-        DescribeRect (&game_window.actual.window, "Window", "Actual" );
-        DescribeRect (&game_window.actual.client, "Client", "Actual" );
+        DescribeRect (&game_window.actual.window, "窗口", "实际" );
+        DescribeRect (&game_window.actual.client, "客户端", "实际" );
 
         ImGui::Columns   (1);
         ImGui::Separator ( );
         ImGui::Columns   (3);
 
-        DescribeRect (&game_window.game.window,   "Window", "Game"   );
-        DescribeRect (&game_window.game.client,   "Client", "Game"   );
+        DescribeRect (&game_window.game.window,   "窗口", "游戏"   );
+        DescribeRect (&game_window.game.client,   "客户端", "游戏"   );
 
         ImGui::Columns   (1);
         ImGui::Separator ( );
@@ -429,8 +429,8 @@ SK::ControlPanel::Compatibility::Draw (void)
         GetClientRect (game_window.hWnd, &client);
         GetWindowRect (game_window.hWnd, &window);
 
-        DescribeRect  (&window,   "Window", "GetWindowRect"   );
-        DescribeRect  (&client,   "Client", "GetClientRect"   );
+        DescribeRect  (&window,   "窗口", "获取窗口区域"   );
+        DescribeRect  (&client,   "客户端", "获取客户端区域"   );
 
         ImGui::Columns   (1);
         break;
@@ -441,8 +441,8 @@ SK::ControlPanel::Compatibility::Draw (void)
         {
           std::string summary;
 
-          if ((dwStyle & WS_OVERLAPPED)   == WS_OVERLAPPED)   summary += "Overlapped, ";
-          if ((dwStyle & WS_POPUP)        == WS_POPUP)        summary += "Popup, ";
+          if ((dwStyle & WS_OVERLAPPED)   == WS_OVERLAPPED)   summary += "重叠, ";
+          if ((dwStyle & WS_POPUP)        == WS_POPUP)        summary += "弹出窗口, ";
           if ((dwStyle & WS_CHILD)        == WS_CHILD)        summary += "Child, ";
           if ((dwStyle & WS_MINIMIZE)     == WS_MINIMIZE)     summary += "Minimize, ";
           if ((dwStyle & WS_VISIBLE)      == WS_VISIBLE)      summary += "Visible, ";
@@ -569,19 +569,19 @@ SK::ControlPanel::Compatibility::Draw (void)
       fixed_font.Detach  ( );
       ImGui::Separator   ( );
 
-      ImGui::Text        ( "ImGui Cursor State: %lu (%lu,%lu) { %lu, %lu }",
+      ImGui::Text        ( "ImGui 光标状态: %lu (%lu,%lu) { %lu, %lu }",
               (unsigned long)SK_ImGui_Cursor.visible, SK_ImGui_Cursor.pos.x,
                                                       SK_ImGui_Cursor.pos.y,
                                SK_ImGui_Cursor.orig_pos.x, SK_ImGui_Cursor.orig_pos.y );
       ImGui::SameLine    ( );
-      ImGui::Text        (" {%s :: Last Update: %lu}",
-                            SK_ImGui_Cursor.idle ? "Idle" :
-                                                   "Not Idle",
+      ImGui::Text        (" {%s :: 最后更新: %lu}",
+                            SK_ImGui_Cursor.idle ? "闲置" :
+                                                   "无闲置",
                               SK_ImGui_Cursor.last_move);
-      ImGui::Text        (" Mouse: In Window=%s, Tracking=%s%s Last WM_MOUSEMOVE=%d",
-                               game_window.mouse.inside ? "Yes"       : "No",
-                             game_window.mouse.tracking ? "Yes"       : "No",
-                            game_window.mouse.can_track ? "," : " (Unsupported),",
+      ImGui::Text        (" 鼠标：在窗口中=%s, 追踪=%s%s 最后 WM_MOUSEMOVE=%d",
+                               game_window.mouse.inside ? "是"       : "否",
+                             game_window.mouse.tracking ? "是"       : "否",
+                            game_window.mouse.can_track ? "," : " (不支持),",
                             game_window.mouse.last_move_msg);
       ImGui::EndGroup    ( );
       ImGui::TreePop     ( );

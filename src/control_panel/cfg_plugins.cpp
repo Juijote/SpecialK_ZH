@@ -285,7 +285,7 @@ SK::ControlPanel::PlugIns::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::SetTooltip (
-            "如果使用 ReShade 6.0 或更高版本，你可以热加载 ReShade，而无需重新启动游戏。"
+            "如果使用 ReShade 6.0 或更高版本，你可以热加载 ReShade，而无需重启游戏。"
           );
         }
       }

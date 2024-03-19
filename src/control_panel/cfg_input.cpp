@@ -563,7 +563,7 @@ SK::ControlPanel::Input::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
     ImGui::TreePush       ("");
 
-    if (ImGui::CollapsingHeader ("鼠标光标"))
+    if (ImGui::CollapsingHeader ("鼠标指针"))
     {
       auto _CursorBoundaryWidget = [&]()
       {
@@ -588,16 +588,15 @@ SK::ControlPanel::Input::Draw (void)
 
       if (config.input.cursor.manage) {
         ImGui::TreePush ("");
-        ImGui::Checkbox ( "Keyboard Activates",
+        ImGui::Checkbox ( "键盘激活",
                                           &config.input.cursor.keys_activate );
 #if 1
-        ImGui::Checkbox ( "Gamepad Deactivates",
+        ImGui::Checkbox ( "游戏手柄停用",
                                     &config.input.cursor.gamepad_deactivates );
         if (ImGui::IsItemHovered ())
         {
           ImGui::SetTooltip (
-            "Uses XInput or HID (PlayStation) to auto-hide the cursor "
-            "on gamepad input."
+            "使用 XInput 或 HID (PlayStation) 自动隐藏游戏手柄输入上的指针。"
           );
         }
 #endif
@@ -626,7 +625,7 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::PushStyleColor (ImGuiCol_FrameBgActive,  ImVec4 ( 0.9f,  0.9f,  0.9f,  val));
         ImGui::PushStyleColor (ImGuiCol_SliderGrab,     ImVec4 ( 1.0f,  1.0f,  1.0f, 1.0f));
 
-        if ( ImGui::SliderFloat ( "Seconds Before Hiding",
+        if ( ImGui::SliderFloat ( "隐藏前几秒",
                                     &seconds, 0.0f, 10.0f ) )
         {
           config.input.cursor.timeout =
@@ -646,7 +645,7 @@ SK::ControlPanel::Input::Draw (void)
         {
           if (! SK_InputUtil_IsHWCursorVisible ())
           {
-            if (ImGui::Button (" Force Mouse Cursor Visible "))
+            if (ImGui::Button (" 强制鼠标指针可见 "))
             {
               SK_ImGui_Cursor.force = sk_cursor_state::Visible;
             }
@@ -654,7 +653,7 @@ SK::ControlPanel::Input::Draw (void)
 
           else
           {
-            if (ImGui::Button (" Force Mouse Cursor Hidden "))
+            if (ImGui::Button (" 强制隐藏鼠标指针 "))
             {
               SK_ImGui_Cursor.force = sk_cursor_state::Hidden;
             }
@@ -662,7 +661,7 @@ SK::ControlPanel::Input::Draw (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::SetTooltip (
-                "May not work in some games, auto-hide (0.0 seconds) may help..."
+                "在某些游戏中可能不起作用，自动隐藏（0.0 秒）可能会有所帮助..."
               );
             }
           }
@@ -670,8 +669,8 @@ SK::ControlPanel::Input::Draw (void)
 
         else
         {
-          constexpr auto stop_hiding_label  = " Stop Forcing Cursor Hidden ";
-          constexpr auto stop_showing_label = " Stop Forcing Cursor Visible ";
+          constexpr auto stop_hiding_label  = " 停止强制隐藏指针 ";
+          constexpr auto stop_showing_label = " 停止强制指针可见 ";
 
           if ( ImGui::Button ( SK_ImGui_Cursor.force ==
                                      sk_cursor_state::Hidden ?
@@ -699,7 +698,7 @@ SK::ControlPanel::Input::Draw (void)
       ImGui::SetNextItemOpen (true, ImGuiCond_Once);
 
     bool uncollapsed_gamepads =
-      ImGui::CollapsingHeader ("Gamepad", ImGuiTreeNodeFlags_AllowOverlap);
+      ImGui::CollapsingHeader ("游戏手柄", ImGuiTreeNodeFlags_AllowOverlap);
 
   //SK_ImGui_ProcessGamepadStatusBar (true);
 
@@ -710,28 +709,28 @@ SK::ControlPanel::Input::Draw (void)
       ImGui::Columns        (2);
       if (config.input.gamepad.hook_xinput)
       {
-        ImGui::Checkbox       ("Haptic UI Feedback", &config.input.gamepad.haptic_ui);
+        ImGui::Checkbox       ("触觉 UI 反馈", &config.input.gamepad.haptic_ui);
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("Rumble when interacting with SK's control panel using a gamepad");
+          ImGui::TextUnformatted ("使用游戏手柄与 SK 控制面板交互时发出声音反馈");
           ImGui::Separator       ();
-          ImGui::BulletText      ("Quickly identifies when games are not receiving gamepad input because of the control panel.");
+          ImGui::BulletText      ("快速识别游戏何时因控制面板而无法接收游戏手柄输入。");
           ImGui::EndTooltip      ();
         }
 
         ImGui::SameLine       ();
 
         if (config.input.gamepad.hook_xinput && config.input.gamepad.xinput.hook_setstate)
-          ImGui::Checkbox     ("Disable ALL Rumble", &config.input.gamepad.disable_rumble);
+          ImGui::Checkbox     ("禁用所有声音反馈", &config.input.gamepad.disable_rumble);
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("Prevent the GAME from making use of controller vibration");
+          ImGui::TextUnformatted ("防止游戏利用手柄振动");
           ImGui::Separator       ();
-          ImGui::BulletText      ("In some games, there is a performance penalty for rumble and it cannot be turned off in-game...");
+          ImGui::BulletText      ("在某些游戏中，声音反馈可能会降低性能，并且无法在游戏中关闭...");
           ImGui::EndTooltip      ();
         }
       }
@@ -740,15 +739,15 @@ SK::ControlPanel::Input::Draw (void)
 
       if (config.input.gamepad.hook_xinput)
       {
-        ImGui::Checkbox ("Rehook XInput", &config.input.gamepad.rehook_xinput); ImGui::SameLine ();
+        ImGui::Checkbox ("重新挂钩 XInput", &config.input.gamepad.rehook_xinput); ImGui::SameLine ();
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
           ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f),
-                              "Re-installs input hooks if third-party hooks are detected.");
+                              "如果检测到第三方挂钩，则重新安装输入挂钩。");
           ImGui::Separator ();
-          ImGui::BulletText ("This may improve compatibility with x360ce, but will require a game restart.");
+          ImGui::BulletText ("这可能会提高与 x360ce 的兼容性，但需要重启游戏。");
           ImGui::EndTooltip ();
         }
       }
@@ -760,7 +759,7 @@ SK::ControlPanel::Input::Draw (void)
       ImGui::TextColored   (ImVec4 (1.f, 0.f, 0.f, 1.f), ICON_FA_BAN);
       ImGui::SameLine      ();
 
-      if (ImGui::BeginMenu ("Block Gamepad Input APIs###Input_API_Select"))
+      if (ImGui::BeginMenu ("阻止游戏手柄输入 API###Input_API_Select"))
       {
         static bool _need_restart = false;
 
@@ -774,12 +773,12 @@ SK::ControlPanel::Input::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("Consider blocking XInput in games that natively support non-Xbox controllers.");
+          ImGui::TextUnformatted ("考虑在本机支持非 Xbox 控制器的游戏中阻止 XInput。");
           ImGui::Separator       ();
-          ImGui::BulletText      ("Blocking XInput may prevent double-inputs if using something like DS4Windows.");
-          ImGui::BulletText      ("Blocking XInput may cause the game to use native button prompts for your device.");
+          ImGui::BulletText      ("如果使用 DS4Windows 之类的工具，阻止 XInput 可能会阻止双重输入。");
+          ImGui::BulletText      ("阻止 XInput 可能会导致游戏使用设备的本机按键提示。");
           ImGui::Separator       ();
-          ImGui::TextUnformatted ("A game restart -may- be required after blocking XInput.");
+          ImGui::TextUnformatted ("阻止 XInput 后​​可能需要重启游戏。");
           ImGui::EndTooltip      ();
         }
 
@@ -792,12 +791,12 @@ SK::ControlPanel::Input::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("Sometimes a game supports both HID and XInput, but XInput has more features...");
+          ImGui::TextUnformatted ("有时游戏同时支持 HID 和 XInput，但 XInput 有更多功能...");
           ImGui::Separator       ();
-          ImGui::BulletText      ("Blocking HID may prevent double-inputs.");
-          ImGui::BulletText      ("Blocking HID usually causes games to display Xbox buttons.");
+          ImGui::BulletText      ("阻止 HID 可以防止双输入。");
+          ImGui::BulletText      ("阻止 HID 通常会导致游戏显示 Xbox 按键。");
           ImGui::Separator       ();
-          ImGui::TextUnformatted ("A game restart -may- be required after blocking HID.");
+          ImGui::TextUnformatted ("阻止 HID 后可能需要重启游戏。");
           ImGui::EndTooltip      ();
         }
 
@@ -835,8 +834,8 @@ SK::ControlPanel::Input::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::SetTooltip (
-            "Work In Progress:   "
-            "You probably will not get gamepad input at all if Steam Input is active and blocked."
+            "正在运行进行中:   "
+            "如果 Steam 输入处于活动状态并被阻止，可能根本无法获得游戏手柄输入。"
           );
         }
         ImGui::EndGroup   ();
@@ -844,7 +843,7 @@ SK::ControlPanel::Input::Draw (void)
         if (_need_restart)
         {
           ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
-          ImGui::BulletText     ("Game Restart May Be Required");
+          ImGui::BulletText     ("可能需要重启游戏");
           ImGui::PopStyleColor  ();
         }
         ImGui::EndMenu    ();
@@ -864,33 +863,33 @@ SK::ControlPanel::Input::Draw (void)
       {
         ImGui::Columns (2);
 
-        ImGui::Text ("UI Controller:\t"); ImGui::SameLine ();
+        ImGui::Text ("用户界面控制器:\t"); ImGui::SameLine ();
 
         int *ui_slot =
           (int *)&config.input.gamepad.xinput.ui_slot;
 
         if (config.input.gamepad.xinput.ui_slot != 4)
           ImGui::RadioButton (
-            SK_FormatString ("Auto (XInput " ICON_FA_GAMEPAD " %d)##XInputSlot",
+            SK_FormatString ("自动 (XInput " ICON_FA_GAMEPAD " %d)##XInputSlot",
                               config.input.gamepad.xinput.ui_slot).c_str (), ui_slot, *ui_slot);
         else
-          ImGui::RadioButton (R"(Auto##XInputSlot)",                         ui_slot, 0);
+          ImGui::RadioButton (R"(自动##XInputSlot)",                         ui_slot, 0);
 
         ImGui::SameLine    ();
-        ImGui::RadioButton ("Nothing##XInputSlot", (int *)&config.input.gamepad.xinput.ui_slot, 4);
+        ImGui::RadioButton ("无##XInputSlot", (int *)&config.input.gamepad.xinput.ui_slot, 4);
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("Config menu will only respond to keyboard/mouse input");
+          ImGui::SetTooltip ("配置菜单仅响应键盘/鼠标输入");
 
         ImGui::NextColumn ( );
 
 #if 0
         if (config.input.gamepad.xinput.ui_slot >= 0 && config.input.gamepad.xinput.ui_slot < 4)
         {
-          ImGui::Checkbox ("Dynamic XInput " ICON_FA_GAMEPAD " 0", &config.input.gamepad.xinput.auto_slot_assign);
+          ImGui::Checkbox ("动态 XInput " ICON_FA_GAMEPAD " 0", &config.input.gamepad.xinput.auto_slot_assign);
 
           if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("Automatically reassign slot 0 in response to gamepad input");
+            ImGui::SetTooltip ("自动重新分配串口 0 以响应游戏手柄输入");
         }
 
         else
@@ -905,17 +904,17 @@ SK::ControlPanel::Input::Draw (void)
           SK_ImGui_HasXboxController ();
 
         const char* szChordLabel =
-          ( bHasPlayStation && bHasXbox ) ? "Enable Gamepad Chords using  (" ICON_FA_XBOX " / " ICON_FA_PLAYSTATION ")" :
-          ( bHasPlayStation             ) ? "Enable Gamepad Chords using  ("                    ICON_FA_PLAYSTATION ")" :
-          ( bHasXbox                    ) ? "Enable Gamepad Chords using  (" ICON_FA_XBOX ")"                           :
-                                            "Enable Gamepad Chords using Imaginary Buttons";
+          ( bHasPlayStation && bHasXbox ) ? "启用游戏手柄和弦  (" ICON_FA_XBOX " / " ICON_FA_PLAYSTATION ")" :
+          ( bHasPlayStation             ) ? "启用游戏手柄和弦  ("                    ICON_FA_PLAYSTATION ")" :
+          ( bHasXbox                    ) ? "启用游戏手柄和弦  (" ICON_FA_XBOX ")"                           :
+                                            "使用虚拟按键启用游戏手柄和弦";
 
         ImGui::Checkbox (szChordLabel, &config.input.gamepad.scepad.enhanced_ps_button);
 
         if (ImGui::IsItemHovered ())
         {
           if (config.input.gamepad.xinput.ui_slot > 3)
-            ImGui::SetTooltip ("Will not work while \"UI Controller\" is set to 'Nothing'");
+            ImGui::SetTooltip ("当“用户界面控制器”设置为“无”时将无法工作");
           else
           {
             ImGui::BeginTooltip ();
@@ -929,14 +928,14 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::BeginGroup ();
               ImGui::TextUnformatted (ICON_FA_PLAYSTATION);
               ImGui::Separator  ();
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Triangle");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Square");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Circle");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Up");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Down");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Left");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Right");
-              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + Share");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 三角");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 方形");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 圆圈");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 上");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 下");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 左");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 右");
+              ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + 功能");
               ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + L3");
               ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + L1");
               ImGui::TextUnformatted (ICON_FA_PLAYSTATION " + R1");
@@ -956,10 +955,10 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::TextUnformatted (ICON_FA_XBOX " + Y");
               ImGui::TextUnformatted (ICON_FA_XBOX " + X");
               ImGui::TextUnformatted (ICON_FA_XBOX " + B");
-              ImGui::TextUnformatted (ICON_FA_XBOX " + Up");
-              ImGui::TextUnformatted (ICON_FA_XBOX " + Down");
-              ImGui::TextUnformatted (ICON_FA_XBOX " + Left");
-              ImGui::TextUnformatted (ICON_FA_XBOX " + Right");
+              ImGui::TextUnformatted (ICON_FA_XBOX " + 上");
+              ImGui::TextUnformatted (ICON_FA_XBOX " + 下");
+              ImGui::TextUnformatted (ICON_FA_XBOX " + 左");
+              ImGui::TextUnformatted (ICON_FA_XBOX " + 右");
               ImGui::TextUnformatted (ICON_FA_XBOX " + Back");
               ImGui::TextUnformatted (ICON_FA_XBOX " + LS");
               ImGui::TextUnformatted (ICON_FA_XBOX " + LB");
@@ -972,19 +971,19 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
               ImGui::SameLine    ();
               ImGui::BeginGroup  ();
-              ImGui::TextUnformatted ("Open / Close Control Panel");
+              ImGui::TextUnformatted ("打开 / 关闭控制面板");
               ImGui::Separator   ();
-              ImGui::TextUnformatted ("Power-Off Wireless Gamepad");
-              ImGui::TextUnformatted ("Alt + Tab App1  (App set when pressed)");
-              ImGui::TextUnformatted ("Alt + Tab App2  (App set when pressed)");
-              ImGui::TextUnformatted ("Game Volume Up 10%");
-              ImGui::TextUnformatted ("Game Volume Down 10%");
-              ImGui::TextUnformatted ("HDR Brightness -10 nits");
-              ImGui::TextUnformatted ("HDR Brightness +10 nits");
-              ImGui::TextUnformatted ("Capture Screenshot");
-              ImGui::TextUnformatted ("Media Play / Pause");
-              ImGui::TextUnformatted ("Media Prev Track");
-              ImGui::TextUnformatted ("Media Next Track");
+              ImGui::TextUnformatted ("关闭无线游戏手柄");
+              ImGui::TextUnformatted ("Alt + Tab App1（按下时设置应用程序）");
+              ImGui::TextUnformatted ("Alt + Tab App2（按下时设置应用程序）");
+              ImGui::TextUnformatted ("游戏音量调高 10%");
+              ImGui::TextUnformatted ("游戏音量降低 10%");
+              ImGui::TextUnformatted ("HDR 亮度 -10 nits");
+              ImGui::TextUnformatted ("HDR 亮度 +10 nits");
+              ImGui::TextUnformatted ("捕获截图");
+              ImGui::TextUnformatted ("播放 / 暂停");
+              ImGui::TextUnformatted ("上一曲目");
+              ImGui::TextUnformatted ("下一曲目");
               ImGui::EndGroup    ();
             }
             ImGui::EndTooltip ();
@@ -996,19 +995,19 @@ SK::ControlPanel::Input::Draw (void)
 
         if (! config.input.gamepad.xinput.blackout_api)
         {
-          ImGui::Text     ("XInput Slots:\t");
+          ImGui::Text     ("XInput 串口:\t");
           ImGui::SameLine ();
 
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip ();
             ImGui::TextColored  (ImVec4 (1.f, 1.f, 1.f, 1.f),
-                                 "Substitute (or Disable) XInput Controllers With Virtual Ones Until A Real One Is Connected");
+                                 "用虚拟控制器替换（或禁用）XInput 控制器，直至连接真实控制器");
             ImGui::Separator    ();
-            ImGui::BulletText   ("Placeholding (checked) a slot is useful for games that do not normally support hot-plugging");
-            ImGui::BulletText   ("Disabling (red button) a slot is useful if Steam Input and DS4Windows are both emulating XInput");
+            ImGui::BulletText   ("占位（选中）串口对于通常不支持热插拔的游戏很有用");
+            ImGui::BulletText   ("如果 Steam 输入和 DS4Windows 都模拟 XInput，则禁用（红色按钮）串口非常有用");
             ImGui::Separator    ();
-            ImGui::BulletText   ("Both may improve performance in games that poll disconnected controllers");
+            ImGui::BulletText   ("两者都可以提高轮询断开连接控制器的游戏性能");
             ImGui::EndTooltip   ();
           }
 
@@ -1081,26 +1080,26 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::BeginTooltip  ( );
 
               ImGui::BeginGroup    ( );
-              ImGui::TextUnformatted ("Device State: ");
-              ImGui::TextUnformatted ("Placeholding: ");
+              ImGui::TextUnformatted ("设备状态: ");
+              ImGui::TextUnformatted ("占位: ");
               ImGui::EndGroup      ( );
 
               ImGui::SameLine      ( );
 
               ImGui::BeginGroup    ( );
               if (config.input.gamepad.xinput.disable [dwIndex] || config.input.gamepad.xinput.blackout_api)
-                ImGui::TextColored (ImVec4 (1.0f, 0.1f, 0.1f, 1.0f), "Disabled");
+                ImGui::TextColored (ImVec4 (1.0f, 0.1f, 0.1f, 1.0f), "禁用");
               else if (SK_ImGui_WantGamepadCapture ())
-                ImGui::TextColored (ImVec4 (1.0f, 1.0f, 0.1f, 1.0f), "Blocked");
+                ImGui::TextColored (ImVec4 (1.0f, 1.0f, 0.1f, 1.0f), "阻止");
               else
-                ImGui::TextColored (ImVec4 (0.1f, 1.0f, 0.1f, 1.0f), "Enabled");
+                ImGui::TextColored (ImVec4 (0.1f, 1.0f, 0.1f, 1.0f), "启用");
 
               if (config.input.gamepad.xinput.placehold [dwIndex])
               {
                 if (SK_XInput_Holding (dwIndex))
-                  ImGui::TextColored (ImVec4 ( 0.1f,  1.0f,  0.1f, 1.0f), "Enabled and Active");
+                  ImGui::TextColored (ImVec4 ( 0.1f,  1.0f,  0.1f, 1.0f), "已启用并处于活动状态");
                 else
-                  ImGui::TextColored (ImVec4 (0.75f, 0.75f, 0.75f, 1.0f), "Enabled");
+                  ImGui::TextColored (ImVec4 (0.75f, 0.75f, 0.75f, 1.0f), "启用");
               }
 
               else
@@ -1111,21 +1110,21 @@ SK::ControlPanel::Input::Draw (void)
 
               if (config.input.gamepad.xinput.placehold [dwIndex] && journal.packet_count.virt > 0)
               {
-                ImGui::TextColored (ImColor (255, 255, 255), "Hardware Packet Sequencing");
-                ImGui::TextColored (ImColor (160, 160, 160), "(Last: %lu | Now: %lu)",
+                ImGui::TextColored (ImColor (255, 255, 255), "硬件数据包排序");
+                ImGui::TextColored (ImColor (160, 160, 160), "(最后: %lu | 现在: %lu)",
                                     journal.sequence.last, journal.sequence.current);
                 ImGui::Separator   ( );
                 ImGui::Columns     (2, nullptr, false);
-                ImGui::TextColored (ImColor (255, 165, 0), "Virtual Packets..."); ImGui::NextColumn ();
+                ImGui::TextColored (ImColor (255, 165, 0), "虚拟数据包..."); ImGui::NextColumn ();
                 ImGui::Text        ("%+07li", journal.packet_count.virt);         ImGui::NextColumn ();
-                ImGui::TextColored (ImColor (127, 255, 0), "Real Packets...");    ImGui::NextColumn ();
+                ImGui::TextColored (ImColor (127, 255, 0), "真实数据包...");    ImGui::NextColumn ();
                 ImGui::Text        ("%+07li", journal.packet_count.real);
                 ImGui::Columns     (1);
               }
 
               else
               {
-                ImGui::BulletText ("Inputs Processed:\t%d", journal.packet_count.real);
+                ImGui::BulletText ("已处理输入:\t%d", journal.packet_count.real);
               }
 
               ImGui::EndTooltip  ( );
@@ -1176,18 +1175,18 @@ SK::ControlPanel::Input::Draw (void)
 
           if (hModScePad)
           {
-            ImGui::Checkbox ("Hook libScePad", &config.input.gamepad.hook_scepad);
+            ImGui::Checkbox ("挂钩 libScePad", &config.input.gamepad.hook_scepad);
 
             if (ImGui::IsItemHovered ())
-                ImGui::SetTooltip ("SONY's native input API; unlocks additional settings in games that use it");
+                ImGui::SetTooltip ("SONY 原生输入API，解锁使用它游戏中的附加设置");
 
             if (config.input.gamepad.hook_scepad && last_scepad != 0)
             {
               ImGui::SameLine   (0.0f, 30);
 
               ImGui::BeginGroup ();
-              ImGui::Checkbox   ("Disable Touchpad",             &config.input.gamepad.scepad.disable_touch);
-              ImGui::Checkbox   ("Use Share as Touchpad Click",  &config.input.gamepad.scepad.share_clicks_touch);
+              ImGui::Checkbox   ("禁用触摸板",             &config.input.gamepad.scepad.disable_touch);
+              ImGui::Checkbox   ("使用功能键作为触摸板点击",  &config.input.gamepad.scepad.share_clicks_touch);
               ImGui::EndGroup   ();
 
               ImGui::SameLine   ();
@@ -1255,19 +1254,19 @@ SK::ControlPanel::Input::Draw (void)
             switch (ps_controller.pid)
             {
               case SK_HID_PID_DUALSHOCK3:
-                ImGui::TextUnformatted ("SONY DUALSHOCK®3 Controller ");
+                ImGui::TextUnformatted ("SONY DUALSHOCK®3 控制器 ");
                 break;
               case SK_HID_PID_DUALSHOCK4:
-                ImGui::TextUnformatted ("SONY DUALSHOCK®4 Controller ");
+                ImGui::TextUnformatted ("SONY DUALSHOCK®4 控制器 ");
                 break;
               case SK_HID_PID_DUALSHOCK4_REV2:
-                ImGui::TextUnformatted ("SONY DUALSHOCK®4 Rev. 2 Controller ");
+                ImGui::TextUnformatted ("SONY DUALSHOCK®4 Rev. 2 控制器 ");
                 break;
               case SK_HID_PID_DUALSENSE:
-                ImGui::TextUnformatted ("SONY DualSense® Controller ");
+                ImGui::TextUnformatted ("SONY DualSense® 控制器 ");
                 break;
               case SK_HID_PID_DUALSENSE_EDGE:
-                ImGui::TextUnformatted ("SONY DualSense Edge™ Controller ");
+                ImGui::TextUnformatted ("SONY DualSense Edge™ 控制器 ");
                 break;
               default:
                 ImGui::Text ("%ws ", ps_controller.wszProduct);
@@ -1298,7 +1297,7 @@ SK::ControlPanel::Input::Draw (void)
               continue;
 
             if (ps_controller.latency.ping > 0 && ps_controller.latency.ping < 500 * SK_QpcTicksPerMs)
-              ImGui::Text   (" Latency: %3.0f ms ", static_cast <double> (ps_controller.latency.ping) /
+              ImGui::Text   (" 延迟: %3.0f ms ", static_cast <double> (ps_controller.latency.ping) /
                                                     static_cast <double> (SK_QpcTicksPerMs));
             else
               ImGui::TextUnformatted
@@ -1314,7 +1313,7 @@ SK::ControlPanel::Input::Draw (void)
 
             if (ps_controller.latency.pollrate != nullptr)
             {
-              ImGui::Text   ( " Report Rate: %6.0f Hz",
+              ImGui::Text   ( " 报告率: %6.0f Hz",
                                 1000.0 / ((SK::Framerate::Stats *)ps_controller.latency.pollrate)->calcMean () );
             }
             else
@@ -1417,14 +1416,14 @@ SK::ControlPanel::Input::Draw (void)
                     ImGui::BeginTooltip    ( );
                     ImGui::BeginGroup      ( );
                     ImGui::TextColored     ( ImColor::HSV (0.18f, 0.88f, 0.94f),
-                                               " Left-Click" );
+                                               " 左键单击" );
                     ImGui::TextColored     ( ImColor::HSV (0.18f, 0.88f, 0.94f),
-                                               "Right-Click" );
+                                               "右键点击" );
                     ImGui::EndGroup        ( );
                     ImGui::SameLine        ( );
                     ImGui::BeginGroup      ( );
-                    ImGui::TextUnformatted ( " Power-off Gamepad" );
-                    ImGui::TextUnformatted ( " Bluetooth Config" );
+                    ImGui::TextUnformatted ( " 关闭游戏手柄电源" );
+                    ImGui::TextUnformatted ( " 蓝牙配置" );
                     ImGui::EndGroup        ( );
                     ImGui::EndTooltip      ( );
                   }
@@ -1438,13 +1437,13 @@ SK::ControlPanel::Input::Draw (void)
                       //ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
                       //ImGui::SameLine    ();
 
-                      if (ImGui::Checkbox ("Power Saving Mode", &config.input.gamepad.scepad.power_save_mode))
+                      if (ImGui::Checkbox ("省电模式", &config.input.gamepad.scepad.power_save_mode))
                       {
                         config.utility.save_async ();
                       }
                     }
 
-                    if (ImGui::Checkbox ("Bluetooth Compatibility Mode",
+                    if (ImGui::Checkbox ("蓝牙兼容模式",
                          &config.input.gamepad.bt_input_only))
                     { if (config.input.gamepad.bt_input_only)
                       {
@@ -1461,13 +1460,11 @@ SK::ControlPanel::Input::Draw (void)
                     {
                       if (! config.input.gamepad.bt_input_only)
                         ImGui::SetTooltip (
-                          "Power-off Bluetooth Controllers and use DualShock 3 Compatibility Mode when "
-                          "Powered-on"
+                          "关闭蓝牙控制器电源并在开机时使用 DualShock 3 兼容模式"
                         );
                       else
                         ImGui::SetTooltip (
-                          "Enable Enhanced DualShock 4 / DualSense Features in Bluetooth Mode "
-                          "(may break input in native DirectInput/HID games)"
+                          "在蓝牙模式下启用增强型 DualShock 4 /DualSense 功能（可能会中断本机 DirectInput/HID 游戏中的输入）"
                         );
                     }
                     ImGui::EndPopup     ();
@@ -1484,7 +1481,7 @@ SK::ControlPanel::Input::Draw (void)
           ImGui::BeginGroup (  );
 
           if (bDualSense)
-            ImGui::Checkbox ("Apply Mute Button to -Game-", &config.input.gamepad.scepad.mute_applies_to_game);
+            ImGui::Checkbox ("将静音按钮应用于游戏", &config.input.gamepad.scepad.mute_applies_to_game);
 
           ImGui::EndGroup   ();
 
@@ -1495,7 +1492,7 @@ SK::ControlPanel::Input::Draw (void)
             ImGui::SameLine    ();
 
             ImGui::BeginGroup  ();
-            if (ImGui::Checkbox("XInput Mode", &config.input.gamepad.xinput.emulate))
+            if (ImGui::Checkbox("XInput 模式", &config.input.gamepad.xinput.emulate))
             {
               if (config.input.gamepad.xinput.emulate)
               {
@@ -1504,10 +1501,10 @@ SK::ControlPanel::Input::Draw (void)
                 if (config.input.gamepad.xinput.blackout_api)
                 {
                   SK_ImGui_WarningWithTitle (
-                    L"XInput was being blocked to the game; it must be unblocked"
-                    L" for XInput mode to work.\r\n\r\n\t"
-                    L"* A game restart may be required",
-                      L"XInput Has Been Unblocked"
+                    L"XInput 被阻止进入游戏，它必须被解锁。"
+                    L" 使 XInput 模式正常工作。\r\n\r\n\t"
+                    L"*可能需要重启游戏",
+                      L"XInput 已解锁"
                   );
 
                   config.input.gamepad.xinput.blackout_api = false;
@@ -1528,13 +1525,13 @@ SK::ControlPanel::Input::Draw (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    ();
-              ImGui::TextUnformatted ("Translates HID to XInput for PlayStation controllers");
+              ImGui::TextUnformatted ("将 HID 转换为 PlayStation 控制器的 XInput");
               ImGui::Separator       ();
-              ImGui::BulletText      ("Fully supports DualSense and DualShock 4 (USB and Bluetooth).");
-              ImGui::BulletText      ("Limited support for DualShock 3.");
+              ImGui::BulletText      ("完全支持 DualSense 和 DualShock 4（USB 和蓝牙）。");
+              ImGui::BulletText      ("对 DualShock 3 的支持有限。");
               ImGui::Separator       ();
-              ImGui::BulletText      ("All PlayStation controllers map to Xbox controller slot 0.");
-              ImGui::BulletText      ("May require a game restart.");
+              ImGui::BulletText      ("所有 PlayStation 控制器都映射到 Xbox 控制器串口 0。");
+              ImGui::BulletText      ("可能需要重启游戏。");
               ImGui::EndTooltip      ();
             }
 
@@ -1543,18 +1540,18 @@ SK::ControlPanel::Input::Draw (void)
               static bool show_debug_option = false;
               //ImGui::TreePush ("");
               ImGui::SameLine ();
-              ImGui::Checkbox ("Use Deadzone", &config.input.gamepad.xinput.standard_deadzone);
+              ImGui::Checkbox ("使用死区", &config.input.gamepad.xinput.standard_deadzone);
 
               if (ImGui::IsItemClicked (ImGuiMouseButton_Right))
                 show_debug_option = true;
 
               else if (ImGui::IsItemHovered ())
-                       ImGui::SetTooltip ("Apply deadzone according to XInput's standard values");
+                       ImGui::SetTooltip ("根据 XInput 的标准值应用死区");
 
               if (show_debug_option)
               {
                 ImGui::SameLine ();
-                ImGui::Checkbox ("Debug Mode",   &config.input.gamepad.xinput.debug);
+                ImGui::Checkbox ("调试模式",   &config.input.gamepad.xinput.debug);
               }
               //ImGui::TreePop  (  );
             }
@@ -1574,7 +1571,7 @@ SK::ControlPanel::Input::Draw (void)
               config.input.gamepad.scepad.led_color_b    >= 0 ||
               config.input.gamepad.scepad.led_brightness >= 0;
 
-            if (ImGui::Checkbox ("Override RGB", &bOverrideRGB))
+            if (ImGui::Checkbox ("覆盖 RGB", &bOverrideRGB))
             {
               if (! bOverrideRGB)
               {
@@ -1614,12 +1611,12 @@ SK::ControlPanel::Input::Draw (void)
 
               int brightness = 3 - config.input.gamepad.scepad.led_brightness;
 
-              const char* szLabel = brightness == 0 ? "Very Dim" :
-                                    brightness == 1 ? "Dim"      :
-                                    brightness == 2 ? "Mid"      :
-                                                      "Bright";
+              const char* szLabel = brightness == 0 ? "微弱" :
+                                    brightness == 1 ? "暗淡"      :
+                                    brightness == 2 ? "正常"      :
+                                                      "明亮";
 
-              if (ImGui::SliderInt ("Brightness", &brightness, 0, 3, szLabel))
+              if (ImGui::SliderInt ("亮度", &brightness, 0, 3, szLabel))
               {
                 config.input.gamepad.scepad.led_brightness = 3 - brightness;
                 config.utility.save_async ();
@@ -1631,20 +1628,20 @@ SK::ControlPanel::Input::Draw (void)
 
 #if 0
             bool changed =
-              ImGui::SliderInt ( "HID Input Buffers",
-                &config.input.gamepad.hid.max_allowed_buffers, 2, 128, "%d-Buffer Circular Queue" );
+              ImGui::SliderInt ( "HID 输入缓冲器",
+                &config.input.gamepad.hid.max_allowed_buffers, 2, 128, "%d-缓冲循环队列" );
 
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    ();
-              ImGui::TextUnformatted ("Reduce Input Buffer Queue (Latency) on Gamepads");
+              ImGui::TextUnformatted ("减少游戏手柄上的输入缓冲区队列（延迟）");
               ImGui::Separator       ();
               ImGui::BulletText      (
-                "Applies to DualSense/Shock4 native games and SK's XInput Mode");
+                "适用于 DualSense/Shock4 原生游戏和 SK 的 XInput 模式");
               ImGui::BulletText      (
-                "Lowering this (default=32) may theoretically cause dropped inputs");
+                "降低此值（默认=32）理论上可能会导致输入丢失");
               ImGui::BulletText      (
-                "Does not affect Steam Input or DS4Windows");
+                "不影响 Steam 输入或 DS4Windows");
               ImGui::EndTooltip      ();
             }
 
@@ -1681,7 +1678,7 @@ SK::ControlPanel::Input::Draw (void)
 
 #if 0
           if ( bDualSense &&
-               ImGui::SliderFloat ( "Rumble Motor Power Level",
+               ImGui::SliderFloat ( "振动电机功率水平",
                                       &config.input.gamepad.scepad.rumble_power_level,
                                         12.5f, 100.0f ) )
           {
@@ -1808,16 +1805,16 @@ extern float SK_ImGui_PulseNav_Strength;
 
         bool expanded = ImGui::CollapsingHeader (SK_FormatString ("%ws##JOYSTICK_DEBUG", joy_caps.szPname).c_str ());
 
-        ImGui::Combo    ("Gamepad Type", &config.input.gamepad.predefined_layout, "PlayStation 4\0Steam\0\0", 2);
+        ImGui::Combo    ("游戏手柄类型", &config.input.gamepad.predefined_layout, "PlayStation 4\0Steam\0\0", 2);
 
         if (ImGui::IsItemHovered ())
         {
-          ImGui::SetTooltip ("This setting is only used if XInput or DirectInput are not working.");
+          ImGui::SetTooltip ("仅当 XInput 或 DirectInput 不起作用时才使用此设置。");
         }
 
         ImGui::SameLine ();
 
-        ImGui::Checkbox     ("Use DirectInput instead of XInput", &config.input.gamepad.native_ps4);
+        ImGui::Checkbox     ("使用 DirectInput 代替 XInput", &config.input.gamepad.native_ps4);
 
         if (expanded)
         {
@@ -1831,7 +1828,7 @@ extern float SK_ImGui_PulseNav_Strength;
           if (joy_ex.dwPOV != JOY_POVCENTERED)
             ImGui::Text ((const char *)u8" D-Pad:  %4.1f°", angle);
           else
-            ImGui::Text (                " D-Pad:  Centered");
+            ImGui::Text (                " D-Pad:  居中");
 
           struct axis_s {
             const char* label;
@@ -1920,8 +1917,8 @@ extern float SK_ImGui_PulseNav_Strength;
         static HANDLE hStartStop =
           SK_CreateEvent (nullptr, TRUE, FALSE, nullptr);
 
-        if (ImGui::Button (started ? "Stop XInput Latency Test" :
-                                     "Start XInput Latency Test"))
+        if (ImGui::Button (started ? "停止 XInput 延迟测试" :
+                                     "启动 XInput 延迟测试"))
         {
           if (! started) { started = true;  SetEvent   (hStartStop); }
           else           { started = false; ResetEvent (hStartStop); }
@@ -1977,17 +1974,17 @@ extern float SK_ImGui_PulseNav_Strength;
               SK_Thread_CloseSelf ();
 
               return 0;
-            }, L"[SK] XInput Latency Tester", (LPVOID)hStartStop);
+            }, L"[SK] XInput 延迟测试仪", (LPVOID)hStartStop);
           }
         }
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("Tests the latency of DS4Windows, Steam Input or a native Xbox controller");
+          ImGui::TextUnformatted ("测试 DS4Windows、Steam 输入或本机 Xbox 控制器的延迟");
           ImGui::Separator       ();
-          ImGui::BulletText      ("If you have no Xbox controllers or third-party utilities emulating XInput, this does nothing");
-          ImGui::BulletText      ("SK cannot test its own XInput emulation latency; all readings would come back zero...");
+          ImGui::BulletText      ("如果没有 Xbox 控制器或模拟 XInput 的第三方实用程序，则这不会执行任何操作");
+          ImGui::BulletText      ("SK 无法测试自己的 XInput 仿真延迟；所有读数都会变为零...");
           ImGui::EndTooltip      ();
         }
 
@@ -2005,13 +2002,13 @@ extern float SK_ImGui_PulseNav_Strength;
         if (started)
         {
           ImGui::BeginGroup( );
-          ImGui::Text      ( "%lu Raw Samples - (Min | Max | Mean) - %4.2f ms | %4.2f ms | %4.2f ms",
+          ImGui::Text      ( "%lu 原始样例 - (最小 | 最大 | 平均) - %4.2f ms | %4.2f ms | %4.2f ms",
                                gamepad_stats->calcNumSamples (),
                                gamepad_stats->calcMin        (),
                                gamepad_stats->calcMax        (),
                                gamepad_stats->calcMean       () );
 
-          ImGui::Text      ( "%lu Validated Samples - (Min | Max | Mean) - %4.2f ms | %4.2f ms | %4.2f ms",
+          ImGui::Text      ( "%lu 验证样例 - (最小 | 最大 | 平均) - %4.2f ms | %4.2f ms | %4.2f ms",
                                gamepad_stats_filtered->calcNumSamples (),
                                gamepad_stats_filtered->calcMin        (),
                                gamepad_stats_filtered->calcMax        (),
@@ -2024,16 +2021,16 @@ extern float SK_ImGui_PulseNav_Strength;
 
         ImGui::BeginGroup  ( );
         if (high_min   < 250.0)
-          ImGui::Text      ( "Minimum Latency: %4.2f ms", high_min );
+          ImGui::Text      ( "最小延迟: %4.2f ms", high_min );
         if (high_min_f < 250.0)
-          ImGui::Text      ( "Minimum Latency: %4.2f ms (Validation Applied)", high_min_f );
+          ImGui::Text      ( "最小延迟: %4.2f ms (已应用验证)", high_min_f );
         ImGui::EndGroup    ( );
         ImGui::EndGroup    ( );
       }
       ImGui::TreePop       ( );
     }
 
-    if (ImGui::CollapsingHeader ("Low-Level Mouse Settings"))//, ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("鼠标回报设置"))//, ImGuiTreeNodeFlags_DefaultOpen))
     {
       static bool  deadzone_hovered = false;
              float float_thresh     = std::max (1.0f, std::min (100.0f, config.input.mouse.antiwarp_deadzone));
@@ -2070,7 +2067,7 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::TreePush      ("");
 
       ImGui::BeginGroup    (  );
-      ImGui::Text          ("Mouse Problems?");
+      ImGui::Text          ("鼠标问题?");
       ImGui::TreePush      ("");
 
 #if 0
@@ -2080,38 +2077,38 @@ extern float SK_ImGui_PulseNav_Strength;
       changed |=
         ImGui::RadioButton ("Win32",     &input_backend, 0); ImGui::SameLine ();
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Temporarily Disabled (intended for compatibility only)");
+        ImGui::SetTooltip ("暂时禁用（仅用于兼容性）");
       changed |=
         ImGui::RadioButton ("Raw Input", &input_backend, 1);
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("More Reliable (currently the only supported input API)");
+        ImGui::SetTooltip ("更可靠（目前唯一支持的输入 API）");
 #endif
 #if 0
       bool non_relative = (! config.input.mouse.add_relative_motion);
 
-      ImGui::Checkbox ("Fix Jittery Mouse (in menus)", &non_relative);
+      ImGui::Checkbox ("修复鼠标抖动（在菜单中）", &non_relative);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
-        ImGui::Text         ("Disable RawInput Mouse Delta Processing");
+        ImGui::Text         ("禁用 RawInput 鼠标增量处理");
         ImGui::Separator    ();
-        ImGui::BulletText   ("In games that ONLY use DirectInput / RawInput for mouse, this may make the config menu unusable.");
+        ImGui::BulletText   ("在仅使用 DirectInput / RawInput 鼠标的游戏中，这可能会导致配置菜单无法使用。");
         ImGui::EndTooltip   ();
       }
 
       config.input.mouse.add_relative_motion = (! non_relative);
 #endif
 
-      ImGui::Checkbox ("Fix Synaptics Scroll", &config.input.mouse.fix_synaptics);
+      ImGui::Checkbox ("修复 新突思（Synaptics） 滚动", &config.input.mouse.fix_synaptics);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
-        ImGui::Text         ("Generate Missing DirectInput / RawInput / HID Events for Touchpad Scroll");
+        ImGui::Text         ("为触摸板滚动生成缺失的 DirectInput /RawInput /HID 事件");
         ImGui::Separator    ();
-        ImGui::BulletText   ("Synaptics touchpads only generate Win32 API messages and scroll events go unnoticed by most games.");
-        ImGui::BulletText   ("Enabling this will attempt to fix missing input APIs for the Synaptics driver.");
+        ImGui::BulletText   ("新突思（Synaptics）  触摸板仅生成 Win32 API 消息，大多数游戏都不会注意到滚动事件。");
+        ImGui::BulletText   ("启用此功能将尝试修复 新突思（Synaptics）  驱动程序缺少的输入 API。");
         ImGui::EndTooltip   ();
       }
 
@@ -2123,12 +2120,12 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::SameLine      ();
 
       ImGui::BeginGroup    ();
-      ImGui::Text          ("Mouse Input Capture");
+      ImGui::Text          ("鼠标输入捕获");
       ImGui::TreePush      ("");
 
       ImGui::BeginGroup    (  );
 
-      if (ImGui::Checkbox ("Block Mouse", &config.input.ui.capture_mouse))
+      if (ImGui::Checkbox ("阻止鼠标", &config.input.ui.capture_mouse))
       {
         SK_ImGui_UpdateCursor ();
         //SK_ImGui_AdjustCursor ();
@@ -2137,16 +2134,16 @@ extern float SK_ImGui_PulseNav_Strength;
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip  ();
-          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "Prevent Game from Detecting Mouse Input while this UI is Visible");
+          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "当此 UI 可见时防止游戏检测鼠标输入");
           ImGui::Separator   ();
-          ImGui::BulletText  ("May help with mouselook in some games");
+          ImGui::BulletText  ("可能有助于某些游戏中的鼠标操作");
           //ImGui::BulletText  ("Implicitly enabled if running at a non-native Fullscreen resolution");
         ImGui::EndTooltip    ();
       }
 
       ImGui::SameLine ();
 
-      if (ImGui::Checkbox ("Use Hardware Cursor", &config.input.ui.use_hw_cursor))
+      if (ImGui::Checkbox ("使用硬件指针", &config.input.ui.use_hw_cursor))
       {
         SK_ImGui_UpdateCursor ();
       }
@@ -2154,18 +2151,18 @@ extern float SK_ImGui_PulseNav_Strength;
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip  ();
-          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "Reduce Input Latency -- (Trade Cursor Lag for UI Lag)");
+          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "减少输入延迟 --（用指针延迟换取 UI 延迟）");
           ImGui::Separator   ();
-          ImGui::BulletText  ("You will experience several frames of lag while dragging UI windows around.");
-          ImGui::BulletText  ("Most Games use Hardware Cursors; turning this on will reduce visible cursor trails.");
-          ImGui::BulletText  ("Automatically switches to Software when the game is not using Hardware.");
+          ImGui::BulletText  ("拖动 UI 窗口时，会遇到几帧延迟。");
+          ImGui::BulletText  ("大多数游戏都使用硬件指针；打开此选项将减少可见的指针轨迹。");
+          ImGui::BulletText  ("当游戏不使用硬件时自动切换到软件。");
         ImGui::EndTooltip    ();
       }
 
-      ImGui::Checkbox ("Block Input When No Cursor is Visible", &config.input.ui.capture_hidden);  ImGui::SameLine ();
+      ImGui::Checkbox ("当没有指针可见时阻止输入", &config.input.ui.capture_hidden);  ImGui::SameLine ();
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Generally prevents mouselook if you move your cursor away from the config UI");
+        ImGui::SetTooltip ("如果将指针移离配置 UI，通常会阻止鼠标操作");
 
       ImGui::EndGroup   (  );
 
@@ -2174,15 +2171,15 @@ extern float SK_ImGui_PulseNav_Strength;
 
       ImGui::BeginGroup (  );
 
-      ImGui::Checkbox ("No Warp (cursor visible)",              &SK_ImGui_Cursor.prefs.no_warp.visible);
+      ImGui::Checkbox ("无变形（指针可见）",              &SK_ImGui_Cursor.prefs.no_warp.visible);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip  ();
-          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "Do Not Alllow Game to Move Cursor to Center of Screen");
+          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "不允许游戏将指针移动到屏幕中心");
           ImGui::Separator   ();
-          ImGui::BulletText  ("Any time the cursor is visible");
-          ImGui::BulletText  ("Fixes buggy games like Mass Effect Andromeda");
+          ImGui::BulletText  ("任何时候指针可见");
+          ImGui::BulletText  ("修复了质量效应仙女座等有缺陷的游戏");
         ImGui::EndTooltip    ();
       }
 
@@ -2191,10 +2188,10 @@ extern float SK_ImGui_PulseNav_Strength;
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip  ();
-          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "Do Not Alllow Game to Move Cursor to Center of Screen");
+          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "不允许游戏将指针移动到屏幕中心");
           ImGui::Separator   ();
-          ImGui::BulletText  ("Any time the UI is visible");
-          ImGui::BulletText  ("May be needed if Mouselook is fighting you tooth and nail.");
+          ImGui::BulletText  ("任何时候 UI 可见");
+          ImGui::BulletText  ("如果鼠标操作困难，可能需要使用它。");
         ImGui::EndTooltip    ();
       }
 
@@ -2235,7 +2232,7 @@ extern float SK_ImGui_PulseNav_Strength;
 
       if (SK_DInput8_HasKeyboard ())
       {
-        if (ImGui::Checkbox ("Block Windows Key", &config.input.keyboard.block_windows_key))
+        if (ImGui::Checkbox ("阻止 Windows 键", &config.input.keyboard.block_windows_key))
         {
           config.input.keyboard.block_windows_key = SK_DInput8_BlockWindowsKey (config.input.keyboard.block_windows_key);
         }
@@ -2246,20 +2243,20 @@ extern float SK_ImGui_PulseNav_Strength;
     }
 
     const bool devices =
-      ImGui::CollapsingHeader ("Enable / Disable Devices", ImGuiTreeNodeFlags_DefaultOpen);
+      ImGui::CollapsingHeader ("启用 / 禁用设备", ImGuiTreeNodeFlags_DefaultOpen);
 
     if (devices)
     {
       ImGui::TreePush     ("");
       ImGui::BeginGroup   (  );
       ImGui::BeginGroup   (  );
-      ImGui::Combo        ("Mouse Input", &config.input.mouse.disabled_to_game,
-                           "Enabled\0Disabled (Always)\0Disabled (in Background)\0\0");
+      ImGui::Combo        ("鼠标输入", &config.input.mouse.disabled_to_game,
+                           "启用\0禁用（始终）\0已禁用（后台）\0\0");
       ImGui::Combo        ("Keyboard Input", &config.input.keyboard.disabled_to_game,
-                           "Enabled\0Disabled (Always)\0Disabled (in Background)\0\0");
+                           "启用\0禁用（始终）\0已禁用（后台）\0\0");
 
       if (ImGui::IsItemHovered () && config.input.keyboard.disabled_to_game == SK_InputEnablement::DisabledInBackground)
-        ImGui::SetTooltip ("Most games block keyboard input in the background to begin with...");
+        ImGui::SetTooltip ("大多数游戏一开始就会后台阻止键盘输入...");
 
       if (/*config.input.gamepad.hook_dinput7        ||*/ config.input.gamepad.hook_dinput8   ||
             config.input.gamepad.hook_hid            ||   config.input.gamepad.hook_xinput    ||
@@ -2267,8 +2264,8 @@ extern float SK_ImGui_PulseNav_Strength;
             config.input.gamepad.hook_windows_gaming ||   config.input.gamepad.hook_winmm )
       {
         bool changed =
-          ImGui::Combo ("Gamepad Input", &config.input.gamepad.disabled_to_game,
-                        "Enabled\0Disabled (Always)\0Disabled (in Background)\0\0");
+          ImGui::Combo ("游戏手柄输入", &config.input.gamepad.disabled_to_game,
+                        "启用\0禁用（始终）\0已禁用（后台）\0\0");
 
         if (changed)
         {
@@ -2284,12 +2281,11 @@ extern float SK_ImGui_PulseNav_Strength;
                           (ImGuiCol_Text, ImVec4 (0.75f, 0.75f, 0.75f, 1.f));
       ImGui::PushItemWidth(
         ImGui::GetFont ()->CalcTextSizeA (
-          1.0f, FLT_MAX, 0.0f, "If \"Continue Rendering\" and Gamepad Input are Enabled, TTT"
+          1.0f, FLT_MAX, 0.0f, "如果启用“继续绘制”和游戏手柄输入, "
         ).x
       );
-      ImGui::TextWrapped  ("If \"Continue Rendering\" and Gamepad Input are Enabled, "
-                           "you can continue playing this game using your Gamepad(s) "
-                           "while other applications use your Keyboard & Mouse.");
+      ImGui::TextWrapped  ("如果启用“继续绘制”和游戏手柄输入， "
+                           "当其他应用程序使用键盘和鼠标时，您可以继续使用游戏手柄玩此游戏。");
       ImGui::PopItemWidth (  );
       ImGui::PopStyleColor(  );
       ImGui::EndGroup     (  );
@@ -2301,8 +2297,8 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::PushStyleColor
                           (ImGuiCol_Text, ImVec4 (0.825f, 0.825f, 0.825f, 1.f));
       ImGui::TextUnformatted
-                          ("These settings work best in conjunction with "
-                           "\"Continue Rendering\" (refer to Window Management)");
+                          ("这些设置结合使用效果最佳 "
+                           "“继续绘制”（请参阅​​窗口管理）");
       ImGui::PopStyleColor(  );
       ImGui::EndGroup     (  );
 #if 0
@@ -2351,7 +2347,7 @@ extern float SK_ImGui_PulseNav_Strength;
           if (dwFlags & RIDEV_REMOVE)
           {
             flags.emplace_back ("RIDEV_REMOVE");
-            descs.emplace_back ("Ignoring Device Class");
+            descs.emplace_back ("忽略设备类别");
           }
           if (dwFlags & RIDEV_EXCLUDE)
           {
@@ -2366,37 +2362,37 @@ extern float SK_ImGui_PulseNav_Strength;
           if (dwFlags & RIDEV_NOLEGACY)
           {
             flags.emplace_back ("RIDEV_NOLEGACY");
-            descs.emplace_back ("Disabling Win32 Device Messages");
+            descs.emplace_back ("禁用 Win32 设备消息");
           }
           if (dwFlags & RIDEV_INPUTSINK)
           {
             flags.emplace_back ("RIDEV_INPUTSINK");
-            descs.emplace_back ("RawInput Delivers Data to non-Foreground Windows");
+            descs.emplace_back ("RawInput 将数据传送到非前台窗口");
           }
           if (dwFlags & RIDEV_CAPTUREMOUSE)
           {
             flags.emplace_back ("RIDEV_CAPTUREMOUSE");
-            descs.emplace_back ("Click-to-Activate Disabled");
+            descs.emplace_back ("单击激活已禁用");
           }
           if (dwFlags & RIDEV_NOHOTKEYS)
           {
             flags.emplace_back ("RIDEV_NOHOTKEYS");
-            descs.emplace_back ("Ignoring Most System-defined Alt+... Hotkeys");
+            descs.emplace_back ("忽略大多数系统定义的 Alt+...热键");
           }
           if (dwFlags & RIDEV_APPKEYS)
           {
             flags.emplace_back ("RIDEV_APPKEYS");
-            descs.emplace_back ("Application-key Shortcuts are Enabled");
+            descs.emplace_back ("应用程序键快捷键已启用");
           }
           if (dwFlags & RIDEV_EXINPUTSINK)
           {
             flags.emplace_back ("RIDEV_EXINPUTSINK");
-            descs.emplace_back ("Receive RawInput Data if Foreground App is Not using RawInput");
+            descs.emplace_back ("如果前台应用程序不使用 RawInput，则接收 RawInput 数据");
           }
           if (dwFlags & RIDEV_DEVNOTIFY)
           {
             flags.emplace_back ("RIDEV_DEVNOTIFY");
-            descs.emplace_back ("Receive RawInput Data if Foreground App is Not using RawInput");
+            descs.emplace_back ("如果前台应用程序不使用 RawInput，则接收 RawInput 数据");
           }
         };
 
@@ -2412,13 +2408,13 @@ extern float SK_ImGui_PulseNav_Strength;
       std::vector <std::vector <std::string>> keyboard_descs;
                                               keyboard_descs.reserve (keyboards.size ());
 
-      ImGui::Text     ("Raw Input Setup");
+      ImGui::Text     ("Raw Input 设置");
       ImGui::TreePush ("");
 
       ImGui::BeginGroup (           );
       if (mice.size ())
       {
-        ImGui::Text       ("Mice"     );
+        ImGui::Text       ("鼠标"     );
         ImGui::Separator  (           );
 
         int idx = 0;
@@ -2444,7 +2440,7 @@ extern float SK_ImGui_PulseNav_Strength;
       {
         ImGui::SameLine     (                    );
         ImGui::BeginGroup   (                    );
-        ImGui::Text         ("Keyboards"         );
+        ImGui::Text         ("键盘"         );
         ImGui::Separator    (                    );
 
         int idx = 0;
@@ -2550,10 +2546,10 @@ SK_ImGui_KeybindDialog (SK_Keybind* keybind)
     keybind->update ();
 
     ImGui::TextColored (ImVec4 (0.6f, 0.6f, 0.6f,1.f),
-                        "Press ESC To Clear Keybind");
+                        "按 ESC 清除按键绑定");
     ImGui::Separator   (                            );
 
-    ImGui::Text        ("Binding:  %hs", SK_WideCharToUTF8 (keybind->human_readable).c_str ());
+    ImGui::Text        ("绑定:  %hs", SK_WideCharToUTF8 (keybind->human_readable).c_str ());
 
     ImGui::EndPopup ();
   }
@@ -2697,7 +2693,7 @@ SK_ImGui_GamepadComboDialog0 (SK_GamepadCombo_V0* combo)
 void
 SK_ImGui_CursorBoundaryConfig (void)
 {
-  ImGui::Text     ("Cursor Boundaries");
+  ImGui::Text     ("鼠标指针边界");
   ImGui::TreePush ("");
   
   int  ovr     = 0;
@@ -2708,22 +2704,22 @@ SK_ImGui_CursorBoundaryConfig (void)
   if (config.window.unconfine_cursor)
     ovr = 2;
   
-  changed |= ImGui::RadioButton ("Normal Game Behavior", &ovr, 0); ImGui::SameLine ();
-  changed |= ImGui::RadioButton ("Keep Inside Window",   &ovr, 1); ImGui::SameLine ();
+  changed |= ImGui::RadioButton ("正常游戏行为", &ovr, 0); ImGui::SameLine ();
+  changed |= ImGui::RadioButton ("保持在窗口内",   &ovr, 1); ImGui::SameLine ();
   
   if (ImGui::IsItemHovered ())
   {
     ImGui::BeginTooltip ();
-    ImGui::Text         ("Prevents Mouse Cursor from Leaving the Game Window");
+    ImGui::Text         ("防止鼠标指针离开游戏窗口");
     ImGui::Separator    ();
-    ImGui::BulletText   ("This window-lock will be disengaged when you press Alt + Tab");
+    ImGui::BulletText   ("当按 Alt + Tab 时，此窗口锁定将解除");
     ImGui::EndTooltip   ();
   }
   
-  changed |= ImGui::RadioButton ("Unrestrict Cursor",    &ovr, 2);
+  changed |= ImGui::RadioButton ("取消限制鼠标指针",    &ovr, 2);
   
   if (ImGui::IsItemHovered ())
-    ImGui::SetTooltip ("Prevent Game from Restricting Cursor to Window");
+    ImGui::SetTooltip ("防止游戏将鼠标指针限制到窗口");
   
   if (changed)
   {

@@ -314,7 +314,7 @@ protected:
   SK_ConfigSerializedKeybind
     toggle_cursor = {
       SK_Keybind {
-        "切换注视光标", L"",
+        "切换注视指针", L"",
           false, false, false, 255
       }, L"ToggleCursor"
     };
@@ -636,7 +636,7 @@ public:
 
       ImGui::Columns    (2, nullptr, false);
       ImGui::BeginGroup ( );
-      changed |= ImGui::MenuItem ("绘制注视光标", nullptr, &gaze_cursor.draw);
+      changed |= ImGui::MenuItem ("绘制注视指针", nullptr, &gaze_cursor.draw);
       changed |= ImGui::MenuItem ("注视小组件",    nullptr, &widget_gazing);
       ImGui::EndGroup   ();
       ImGui::SameLine   (); ImGui::Spacing  ();

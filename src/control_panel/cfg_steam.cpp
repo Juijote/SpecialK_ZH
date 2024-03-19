@@ -469,7 +469,7 @@ SK::ControlPanel::Steam::Draw (void)
           ImGui::Text         ("修复了成就数据泛滥时出现报错的游戏");
           ImGui::Separator    ();
           ImGui::BulletText   ("当 Special K 获取好友成就时，这些游戏可能会关闭 SteamAPI");
-          ImGui::BulletText   ("如果 SteamAPI FPS 显示卡住，请打开此选项并重新启动游戏");
+          ImGui::BulletText   ("如果 SteamAPI FPS 显示卡住，请打开此选项并重启游戏");
           ImGui::EndTooltip   ();
         }
       }
