@@ -343,7 +343,7 @@ SK_FF7R_PlugInCfg (void)
 
     if (bChanged)
     {
-      ImGui::BulletText ("Game Restart Required");
+      ImGui::BulletText ("需要重启游戏");
       ImGui::SameLine   ();
       ImGui::Text       ("\tOriginal Settings:  [ BackupEngine.ini ]");
     }

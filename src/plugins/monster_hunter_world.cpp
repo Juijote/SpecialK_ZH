@@ -226,7 +226,7 @@ SK_MHW_PlugInCfg (void)
          rule_orig   != __SK_MHW_JobParityPhysical )
     {
       ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-      ImGui::BulletText ("Game Restart Required");
+      ImGui::BulletText ("需要重启游戏");
       ImGui::PopStyleColor ();
     }
 

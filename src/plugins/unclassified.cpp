@@ -789,7 +789,7 @@ SK_POE2_PlugInCfg (void)
     if (config.render.framerate.override_num_cpus != orig)
     {
       ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-      ImGui::BulletText     ("Game Restart Required");
+      ImGui::BulletText     ("需要重启游戏");
       ImGui::PopStyleColor  ();
     }
 

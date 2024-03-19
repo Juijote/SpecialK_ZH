@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -813,7 +794,7 @@ SK_ImGui_DrawNotifications (void)
             bool                                                          bShowOnce =
             SK_IsTrue (toast_cfg.get_value (L"ShowOnce").c_str ()) ? true
                                                                    : false;
-            if (ImGui::Checkbox ("每场游玩时显示一次此通知", &bShowOnce))
+            if (ImGui::Checkbox ("每次游玩时显示一次通知", &bShowOnce))
             {
               toast_cfg.add_key_value (L"ShowOnce", bShowOnce ? L"true"
                                                               : L"false");

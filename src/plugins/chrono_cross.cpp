@@ -388,7 +388,7 @@ SK_CC_PlugInCfg (void)
       }
 
       if (need_restart)
-        ImGui::BulletText ("Game Restart Required");
+        ImGui::BulletText ("需要重启游戏");
       ImGui::TreePop      (  );
     }
 

@@ -484,14 +484,14 @@ SK_TVFix_PlugInCfg (void)
       if (orig_samples != config.render.dxgi.msaa_samples)
       {
         ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-        ImGui::BulletText     ("Game Restart Required");
+        ImGui::BulletText     ("需要重启游戏");
         ImGui::PopStyleColor  ();
       }
     }
     ImGui::EndGroup ();
 #if 0
     ImGui::SameLine        (             );
-    ImGui::TextUnformatted ("Gamepad:   ");
+    ImGui::TextUnformatted ("游戏手柄:   ");
     ImGui::SameLine        (             );
 
     static int buttons = 0;
@@ -513,7 +513,7 @@ SK_TVFix_PlugInCfg (void)
 
       bool enable = (! plugin_ctx.__SK_TVFix_DisableDepthOfField);
 
-      if ( ImGui::Checkbox ("Enable Depth of Field", &enable) )
+      if ( ImGui::Checkbox ("启用景深", &enable) )
       {
         //instn__depth_of_field.enabled = !instn__depth_of_field.enabled;
         //instn__depth_of_field.toggle ();

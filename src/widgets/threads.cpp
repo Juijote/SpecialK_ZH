@@ -1919,7 +1919,7 @@ public:
       if (ImGui::Checkbox ("Enable File I/O Analytics", &config.threads.enable_file_io_trace))
       {   SK_SaveConfig (); }
       if (analytics != config.threads.enable_file_io_trace)
-      {   ImGui::BulletText ("Game Restart Required");    }
+      {   ImGui::BulletText ("需要重启游戏");    }
       ImGui::EndGroup   ();
       ImGui::Separator  ();
       ImGui::EndGroup   ();

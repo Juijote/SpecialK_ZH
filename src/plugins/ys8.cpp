@@ -878,7 +878,7 @@ SK_YS8_ControlPanel (void)
       if (orig_sel != sel)
       {
         ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-        ImGui::BulletText     ("Game Restart Required");
+        ImGui::BulletText     ("需要重启游戏");
         ImGui::PopStyleColor  ();
       }
 

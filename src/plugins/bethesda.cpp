@@ -580,7 +580,7 @@ bool SK_SF_PlugInCfg (void)
       if (restart_needed)
       {
         ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-        ImGui::BulletText     ("Game Restart Required");
+        ImGui::BulletText     ("需要重启游戏");
         ImGui::PopStyleColor  ();
       }
     }
@@ -619,7 +619,7 @@ bool SK_SF_PlugInCfg (void)
         if (game_restart_required)
         {
           ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-          ImGui::BulletText     ("Game Restart Required");
+          ImGui::BulletText     ("需要重启游戏");
           ImGui::PopStyleColor  ();
         }
 
@@ -837,7 +837,7 @@ bool SK_SF_PlugInCfg (void)
         ImGui::EndGroup   ();
 
         if (restart_required)
-          ImGui::BulletText ("Game Restart Required");
+          ImGui::BulletText ("需要重启游戏");
 
         if (changed)
         {

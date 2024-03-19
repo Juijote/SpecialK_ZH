@@ -3097,7 +3097,7 @@ SK_RenderBackend_V2::routeAudioForDisplay (SK_RenderBackend_V2::output_s *pDispl
   if (! pDisplay)
     return routed;
 
-  if (_wcsicmp (pDisplay->audio.paired_device, L"System Default"))
+  if (_wcsicmp (pDisplay->audio.paired_device, L"系统默认值"))
   {
     if (_wcsicmp (pDisplay->audio.paired_device, L"无优先级"))
     {

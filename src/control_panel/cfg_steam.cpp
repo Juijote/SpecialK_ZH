@@ -457,7 +457,7 @@ SK::ControlPanel::Steam::Draw (void)
       }
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Game Restart Required");
+        ImGui::SetTooltip ("需要重启游戏");
 
       if (! config.platform.silent)
       {

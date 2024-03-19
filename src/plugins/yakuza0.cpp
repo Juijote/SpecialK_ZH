@@ -1049,7 +1049,7 @@ SK_Yakuza0_PlugInCfg (void)
           restart_required = true;
 
       if (restart_required)
-        ImGui::BulletText ("Game Restart Required");
+        ImGui::BulletText ("需要重启游戏");
     }
 
     bool changed = false;

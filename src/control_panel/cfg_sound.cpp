@@ -1113,7 +1113,7 @@ SK_ImGui_VolumeManager (void)
 bool
 SK::ControlPanel::Sound::Draw (void)
 {
-  if (ImGui::CollapsingHeader ("音频管理"))
+  if (ImGui::CollapsingHeader ("音效管理"))
   {
     SK_ImGui_VolumeManager ();
 

@@ -1229,7 +1229,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   int active_display = rb.active_display;
 
   // If list is empty, don't show the menu, stupid :)
-  if (display_list [0] != '\0' && ImGui::Combo ("活动监测", &active_display, display_list.data ()))
+  if (display_list [0] != '\0' && ImGui::Combo ("显示监测", &active_display, display_list.data ()))
   {
     config.display.monitor_handle  = rb.displays [active_display].monitor;
 
@@ -1291,7 +1291,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   }
 
   if (ImGui::IsItemHovered () && (_maxAvailablePixels < _maxPixels))
-      ImGui::SetTooltip ("Higher Resolutions are Available by selecting a Different Refresh Rate");
+      ImGui::SetTooltip ("通过选择不同的刷新率可以获得更高的分辨率");
 
 
   if (ImGui::Combo ( "刷新率",  &refresh.idx,
@@ -1330,7 +1330,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   }
 
   if (ImGui::IsItemHovered () && (_maxAvailableRefresh < _maxRefresh))
-      ImGui::SetTooltip ("Higher Refresh Rates are Available at a Different Resolution");
+      ImGui::SetTooltip ("不同分辨率下可获得更高的刷新率");
 
   if ( SK_API_IsDXGIBased (rb.api) || SK_API_IsGDIBased (rb.api) ||
       (SK_API_IsDirect3D9 (rb.api) && rb.fullscreen_exclusive) )
@@ -1377,8 +1377,8 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
       static constexpr char* no_override_label = "  No Override\0";
       static constexpr char  override_list []  =
-        "  Forced ON\0  Forced 1/2 (No VRR)\0  Forced 1/3 (No VRR)\0"
-        "  Forced 1/4 (No VRR)\0  Forced OFF\0\0";
+        "  强制开启\0  强制 1/2 (无 VRR)\0  强制 1/3 (无 VRR)\0"
+        "  强制 1/4 (No VRR)\0  强制关闭\0\0";
 
       auto first_option =
         ( config.render.framerate.present_interval ==
@@ -1432,8 +1432,8 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       if ( bNeedUnclamp && std::exchange (bWarnOnce, true) == false )
       {
         SK_ImGui_Warning (
-          L"Fractional VSYNC Rates Will Prevent VRR From Working\r\n\r\n\t>>"
-          L" SyncIntervalClamp Has Been Disabled (required to use 1/n Refresh VSYNC)"
+          L"局部 VSYNC 速率将阻止 VRR 工作\r\n\r\n\t>>"
+          L" SyncIntervalClamp 已被禁用（需要使用 1/n 刷新 VSYNC）"
         );
       }
 
@@ -1464,9 +1464,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (ImGui::IsItemHovered () && idx != VSYNC_NoOverride)
     {
-      ImGui::SetTooltip ( "NOTE: Some games perform additional limiting based"
-                          " on their VSYNC setting; consider turning in-game"
-                          " VSYNC -OFF-" );
+      ImGui::SetTooltip ( "注意：某些游戏会根据其 VSYNC 设置执行额外的限制；考虑关闭游戏中的 VSYNC -OFF-" );
     }
 
     if (SK_API_IsGDIBased (rb.api) && config.render.framerate.present_interval == SK_NoPreference)
@@ -1479,7 +1477,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (SK_API_IsDirect3D9 (rb.api) && changed)
     {
-      ImGui::BulletText ("Game Restart Required");
+      ImGui::BulletText ("需要重启游戏");
     }
   }
 
@@ -1492,7 +1490,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     std::string output_list = "  无优先级";
     
     output_list += '\0';
-    output_list += "  System Default";
+    output_list += "  系统默认值";
     output_list += '\0';
 
     for (UINT i = 0 ; i < SK_WASAPI_EndPointMgr->getNumRenderEndpoints () ; ++i)
@@ -1519,7 +1517,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     {
       if (_wcsicmp (display.audio.paired_device, L"无优先级"))
       {
-        if (! _wcsicmp (display.audio.paired_device, L"System Default"))
+        if (! _wcsicmp (display.audio.paired_device, L"系统默认值"))
         {
           selection = 1;
         }
@@ -1528,7 +1526,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     output_list += '\0';
 
-    if (ImGui::Combo ("音频设备", &selection, output_list.c_str ()))
+    if (ImGui::Combo ("音效设备", &selection, output_list.c_str ()))
     {
       if (selection > 1)
       {
@@ -1537,7 +1535,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
       else
       {
-        if (selection == 1) wcsncpy (display.audio.paired_device, L"System Default", 127);
+        if (selection == 1) wcsncpy (display.audio.paired_device, L"系统默认值", 127);
         else                wcsncpy (display.audio.paired_device, L"无优先级",  127);
 
         SK_WASAPI_EndPointMgr->setPersistedDefaultAudioEndpoint (GetCurrentProcessId (), eRender, L"");
@@ -1557,7 +1555,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("While the game is running on this monitor, it will use this audio device.");
+      ImGui::SetTooltip ("当游戏在此显示器上运行时，它将使用该音效设备。");
     }
   }
 
@@ -1828,12 +1826,11 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   if (ImGui::IsItemHovered ())
   {
     ImGui::BeginTooltip    ();
-    ImGui::TextUnformatted ( "Fixes missing in-game resolution options and "
-                             "over-sized game windows");
+    ImGui::TextUnformatted ( "修复了缺少的游戏分辨率选项和过大的游戏窗口");
     ImGui::TextColored     ( ImVec4 (1.f, 1.f, 0.f, 1.f),
                              "  " ICON_FA_EXCLAMATION_TRIANGLE );
     ImGui::SameLine        (                                   );
-    ImGui::Text            ( " Restoring DPI scaling requires a game restart" );
+    ImGui::Text            ( " 恢复 DPI 缩放需要重启游戏" );
     ImGui::EndTooltip      ();
   }
 
@@ -1841,7 +1838,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   {
     ImGui::SameLine       ();
     ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
-    ImGui::BulletText     ("Game Restart Required");
+    ImGui::BulletText     ("需要重启游戏");
     ImGui::PopStyleColor  ();
   }
 
@@ -1895,8 +1892,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   }
 
   if (ImGui::IsItemHovered ())
-      ImGui::SetTooltip ("Changes to Resolution or Refresh on 'Active Monitor'"
-                         " will apply to future launches of this game");
+      ImGui::SetTooltip ("对 “设备监测”上的分辨率或刷新率的更改将适用于今后运行的游戏");
 
   ImGui::EndGroup    ();
   ImGui::SameLine    ();
@@ -1909,9 +1905,9 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   ImGui::Separator   ();
   ImGui::BeginGroup  ();
-  ImGui::Text        ("MPO Planes: ");
-  ImGui::Text        ("HW Scheduling: ");
-  ImGui::Text        ("HW Flip Queue: ");
+  ImGui::Text        ("MPO 平面: ");
+  ImGui::Text        ("硬件调度: ");
+  ImGui::Text        ("硬件复制队列: ");
   ImGui::EndGroup    ();
   ImGui::SameLine    ();
   ImGui::BeginGroup  ();
@@ -2151,7 +2147,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     }
 
     if (ImGui::IsItemHovered ())
-      ImGui::SetTooltip ("Some engines may require a game restart to adjust to new aspect ratio.");
+      ImGui::SetTooltip ("某些引擎可能需要重启游戏才能应用新的宽高比。");
   }
 
   static std::set <SK_ConfigSerializedKeybind *>
@@ -2162,7 +2158,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       &config.monitors.monitor_toggle_hdr
     };
 
-  if (ImGui::BeginMenu ("Display Management Keybinds###MonitorMenu"))
+  if (ImGui::BeginMenu ("显示管理绑定快捷键###MonitorMenu"))
   {
     ImGui::BeginGroup ();
     for ( auto& keybind : keybinds )
@@ -2193,7 +2189,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     ImGui::TextUnformatted ("\t");
     ImGui::SameLine        (    );
 
-    if (ImGui::Button (ICON_FA_SUN " HDR Setup"))
+    if (ImGui::Button (ICON_FA_SUN " HDR 设置"))
     {
       hdr = (! hdr);
 
@@ -2204,7 +2200,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("Right-click HDR Calibration to assign hotkeys");
+      ImGui::SetTooltip ("右键单击“HDR 校准”以配置快捷键");
     }
   }
 
@@ -2996,7 +2992,7 @@ SK_NV_LatencyControlPanel (void)
       ImGui::SeparatorEx    (ImGuiSeparatorFlags_Vertical);
       ImGui::SameLine       ();
       ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
-      ImGui::BulletText     ("需要重新启动游戏");
+      ImGui::BulletText     ("需要重启游戏");
       ImGui::PopStyleColor  ();
     }
   }
@@ -3386,7 +3382,7 @@ SK_ImGui_ControlPanel (void)
         {
           extern bool
               SK_CanRestartGame (void);
-          if (SK_CanRestartGame () && ImGui::MenuItem ("重新游戏"))
+          if (SK_CanRestartGame () && ImGui::MenuItem ("重启游戏"))
           {
             SK_ImGui_WantRestart = true;
             SK_ImGui_WantExit    = true;
@@ -4448,9 +4444,9 @@ SK_ImGui_ControlPanel (void)
 
        else
        {
-         ImGui::MenuItem ( "Special K Bootstrapper",
+         ImGui::MenuItem ( "Special K 引导程序",
                              SK_FormatString (
-                               "%ws API Wrapper  %s",
+                               "%ws API 封装  %s",
                                  SK_GetBackend   (),
                                SK_GetVersionStrA ()
                              ).c_str (), ""
@@ -4462,7 +4458,7 @@ SK_ImGui_ControlPanel (void)
 
        if (host_executable.product_desc.length () > 4)
        {
-         ImGui::MenuItem ( "Current Game",
+         ImGui::MenuItem ( "当前游戏",
                              SK_WideCharToUTF8 (
                                host_executable.product_desc
                              ).c_str ()
@@ -4554,7 +4550,7 @@ SK_ImGui_ControlPanel (void)
             {
               ImGui::SetTooltip (
                 "为了获得最佳性能:\r\n\t"
-                "确保 Windows 游戏模式已打开，然后重新启动游戏。"
+                "确保 Windows 游戏模式已打开，然后重启游戏。"
               );
             }
           }
@@ -4979,7 +4975,7 @@ SK_ImGui_ControlPanel (void)
         if (rb.gsync_state.disabled.for_app)
           strcat (szGSyncStatus, "   在此游戏中禁用");
         else
-          strcat (szGSyncStatus, "   Unsupported");
+          strcat (szGSyncStatus, "   不支持");
       }
 
       if (rb.gsync_state.capable && (! rb.gsync_state.maybe_active) && (rb.api == SK_RenderAPI::D3D12))
@@ -5205,7 +5201,7 @@ SK_ImGui_ControlPanel (void)
           {
             ImGui::BeginTooltip ();
             ImGui::TextUnformatted (
-              "图表颜色代表帧时间差异，而不是与目标 FPS 的接近程度。"
+              "图表颜色代表 FPS 时间差异，而不是与目标 FPS 的接近程度。"
             );
 
           //if ( ( rb.api == SK_RenderAPI::D3D11 ||
@@ -5329,7 +5325,7 @@ SK_ImGui_ControlPanel (void)
             ImGui::EndGroup        ( );
             ImGui::SameLine        ( );
             ImGui::BeginGroup      ( );
-            ImGui::TextUnformatted ( " 输入准确的帧速率" );
+            ImGui::TextUnformatted ( " 输入准确的 FPS 速率" );
             ImGui::TextUnformatted ( " 选择刷新系数" );
             ImGui::EndGroup        ( );
             ImGui::EndTooltip      ( );
@@ -5679,7 +5675,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::SetCursorPos (ImVec2 (vPos.x, yPos));
 
           if (ImGui::Checkbox (limit ? "Start-to-Start" :
-                               "Measure Start-to-Start Frametime", &config.render.framerate.frame_start_to_start))
+                               "测量开始到开始 FPS时间", &config.render.framerate.frame_start_to_start))
           {
             config.utility.save_async ();
           }
@@ -5687,7 +5683,7 @@ SK_ImGui_ControlPanel (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip    ();
-            ImGui::TextUnformatted ("与新的 PresentMon /RTSS 方法一致的备用帧时间测量");
+            ImGui::TextUnformatted ("与新的 PresentMon /RTSS 方法一致的备用 FPS 时间测量");
             ImGui::EndTooltip      ();
           }
 
@@ -5989,7 +5985,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::BeginGroup ();
 
           changed |=
-            ImGui::Checkbox ( "Sleepless Render Thread(s)",
+            ImGui::Checkbox ( "不闲置渲染线程(s)",
                                 &config.render.framerate.sleepless_render );
 
           if (ImGui::IsItemHovered ())
@@ -5998,14 +5994,14 @@ SK_ImGui_ControlPanel (void)
               SK::Framerate::GetEvents ()->getRenderThreadStats ();
 
             ImGui::SetTooltip
-                           ( "(%li ms asleep, %li ms awake)",
+                           ( "(%li ms 闲置, %li ms 活动)",
                                /*(stats.attempts - stats.rejections), stats.attempts,*/
                                  ReadAcquire (&stats.time.allowed),
                                  ReadAcquire (&stats.time.deprived) );
           }
 
           changed |=
-            ImGui::Checkbox ( "Sleepless Window Thread",
+            ImGui::Checkbox ( "不闲置窗口线程",
                                 &config.render.framerate.sleepless_window );
 
           if (ImGui::IsItemHovered ())
@@ -6014,7 +6010,7 @@ SK_ImGui_ControlPanel (void)
               SK::Framerate::GetEvents ()->getMessagePumpStats ();
 
             ImGui::SetTooltip
-                           ( "(%li ms asleep, %li ms awake)",
+                           ( "(%li ms 闲置, %li ms 活动)",
                                /*(stats.attempts - stats.rejections), stats.attempts,*/
                                  ReadAcquire (&stats.time.allowed),
                                  ReadAcquire (&stats.time.deprived) );
@@ -6040,13 +6036,13 @@ SK_ImGui_ControlPanel (void)
           ImGui::PushItemWidth (ImGui::GetContentRegionAvail ().x);
 
           if (ImGui::Combo ( "###Render Thread Priority", &min_render_prio,
-                                "Render Priority:\tIdle\0"
-                                "Render Priority:\tLowest\0"
-                                "Render Priority:\tBelow Normal\0"
-                                "Render Priority:\tNormal\0"
-                                "Render Priority:\tAbove Normal\0"
-                                "Render Priority:\tHighest\0"
-                                "Render Priority:\tTime Critical\0\0" ))
+                                "渲染优先级:\t闲置\0"
+                                "渲染优先级:\t低\0"
+                                "渲染优先级:\t低于正常\0"
+                                "渲染优先级:\t正常\0"
+                                "渲染优先级:\t高于正常\0"
+                                "渲染优先级:\t高\0"
+                                "渲染优先级:\t实时\0\0" ))
           {
             switch (min_render_prio)
             {
@@ -6085,14 +6081,14 @@ SK_ImGui_ControlPanel (void)
           static SYSTEM_INFO             si = { };
           SK_RunOnce (SK_GetSystemInfo (&si));
 
-          if ( ImGui::Checkbox ("Spoof CPU Core Count", &spoof) )
+          if ( ImGui::Checkbox ("欺骗 CPU 核心数", &spoof) )
           {
             config.render.framerate.override_num_cpus =
               ( spoof ? si.dwNumberOfProcessors : -1 );
           }
 
           if (ImGui::IsItemHovered ())
-              ImGui::SetTooltip ("Useful in Unity games -- set lower than actual to fix negative performance scaling.");
+              ImGui::SetTooltip ("在 Unity 游戏中非常有用 -- 设置为低于实际值可修复负性能缩放。");
 
           ImGui::EndGroup ();
 
@@ -6102,7 +6098,7 @@ SK_ImGui_ControlPanel (void)
             ImGui::SliderInt  ( "###SPOOF_CPU_COUNT",
                                 &config.render.framerate.override_num_cpus,
                                   1, si.dwNumberOfProcessors,
-                                    "Number of CPUs: %d" );
+                                    "CPU 核心数量: %d" );
             ImGui::EndGroup   ();
           }
 

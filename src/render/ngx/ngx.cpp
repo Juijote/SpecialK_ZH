@@ -1394,7 +1394,7 @@ SK_NGX_DLSS_ControlPanel (void)
         if (bRestartNeeded)
         {
           ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.1f, .8f, .9f));
-          ImGui::BulletText     ("Game Restart Required");
+          ImGui::BulletText     ("需要重启游戏");
           ImGui::PopStyleColor  ();
         }
         ImGui::EndGroup   ();

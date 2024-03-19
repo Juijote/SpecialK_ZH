@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file is part of Special K.
  *
  * Special K is free software : you can redistribute it
@@ -843,16 +843,16 @@ SK_NV_AdaptiveSyncControl (void)
           toggle_sync =
             ImGui::Button (
               getAdaptiveSync.bDisableAdaptiveSync == 0x0 ?
-                            "Disable Adaptive Sync"       :
-                             "Enable Adaptive Sync" );
+                            "禁用自适应同步"       :
+                             "启用自适应同步" );
 
           if (! getAdaptiveSync.bDisableAdaptiveSync)
           {
             toggle_split =
               ImGui::Button (
                 getAdaptiveSync.bDisableFrameSplitting == 0x0 ?
-                              "Disable Frame Splitting"       :
-                               "Enable Frame Splitting" );
+                              "禁用 FPS 分割"       :
+                               "启用 FPS 分割" );
           }
         }
 
@@ -870,7 +870,7 @@ SK_NV_AdaptiveSyncControl (void)
         ImGui::EndGroup   ();
 #ifdef _PRINT_EFFECTIVE_FPS
         ImGui::SameLine   ();
-        ImGui::Text       ("Effective Refresh:\t%#6.2f Hz", dFlipPrint);
+        ImGui::Text       ("有效刷新:\t%#6.2f Hz", dFlipPrint);
 #endif
 
         if (toggle_sync || toggle_split)

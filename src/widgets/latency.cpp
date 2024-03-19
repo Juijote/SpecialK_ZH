@@ -96,12 +96,12 @@ struct frame_timing_s {
   NvU32 gpuFrameTimeUs        = 0;
 } static gpu_frame_times [64];
 
-static stage_timing_s sim      { "Simulation"       }; static stage_timing_s render   { "Render Submit"   };
+static stage_timing_s sim      { "模拟"       }; static stage_timing_s render   { "Render Submit"   };
 static stage_timing_s specialk { "Special K"        }; static stage_timing_s present  { "Present"         };
-static stage_timing_s driver   { "Driver"           }; static stage_timing_s os       { "OS Render Queue" };
-static stage_timing_s gpu      { "GPU Render"       }; static stage_timing_s gpu_busy { "GPU Busy"        };
-static stage_timing_s total    { "Total Frame Time" };
-static stage_timing_s input    { "Input Age"        };
+static stage_timing_s driver   { "驱动"           }; static stage_timing_s os       { "OS Render Queue" };
+static stage_timing_s gpu      { "GPU 绘制"       }; static stage_timing_s gpu_busy { "GPU Busy"        };
+static stage_timing_s total    { "总 FPS 时间" };
+static stage_timing_s input    { "输入时长"        };
 
 NvU64
 SK_Reflex_GetFrameEndTime (const _NV_LATENCY_RESULT_PARAMS::FrameReport& report)
@@ -177,7 +177,7 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
     total.reset ();
     input.reset ();
 
-    specialk.desc = "Includes drawing SK's overlay and framerate limiting";
+    specialk.desc = "包括绘图 SK 的叠加和 FPS 速率限制";
 
     int id = 0;
 
@@ -540,11 +540,11 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
         (tail - head + 1) +
          (wraparound ? 1  :  0);
 
-       ImPlot::PlotLine ("Simulation",    &history.sample_age [head], &history.simulation    [head], elements);
-       ImPlot::PlotLine ("Render Submit", &history.sample_age [head], &history.render_submit [head], elements);
-       ImPlot::PlotLine ("Composite",     &history.sample_age [head], &history.frame_total   [head], elements);
-       ImPlot::PlotLine ("GPU Busy",      &history.sample_age [head], &history.gpu_active    [head], elements);
-       ImPlot::PlotLine ("CPU Busy",      &history.sample_age [head], &history.gpu_start     [head], elements);
+       ImPlot::PlotLine ("模拟",    &history.sample_age [head], &history.simulation    [head], elements);
+       ImPlot::PlotLine ("渲染提交", &history.sample_age [head], &history.render_submit [head], elements);
+       ImPlot::PlotLine ("合成",     &history.sample_age [head], &history.frame_total   [head], elements);
+       ImPlot::PlotLine ("GPU 使用",      &history.sample_age [head], &history.gpu_active    [head], elements);
+       ImPlot::PlotLine ("CPU 使用",      &history.sample_age [head], &history.gpu_start     [head], elements);
      };
 
     auto _PlotShadedData =
@@ -554,9 +554,9 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
         (tail - head + 1) +
          (wraparound ? 1  :  0);
        
-       ImPlot::PlotShaded   ("GPU Busy", &history.sample_age [head], &history.fill_gpu0 [head],
+       ImPlot::PlotShaded   ("GPU 使用", &history.sample_age [head], &history.fill_gpu0 [head],
                                                                      &history.fill_gpu1 [head], elements, flags);
-       ImPlot::PlotShaded   ("CPU Busy", &history.sample_age [head], &history.fill_cpu0 [head],
+       ImPlot::PlotShaded   ("CPU 使用", &history.sample_age [head], &history.fill_cpu0 [head],
                                                                      &history.fill_cpu1 [head], elements, flags);
      };
 
@@ -957,7 +957,7 @@ SK_ImGui_DrawConfig_Latency ()
 
     ImGui::BeginGroup      ();
     ImGui::Spacing         ();
-    ImGui::TextUnformatted ("Reflex Mode");
+    ImGui::TextUnformatted ("Reflex 模式");
     ImGui::EndGroup        ();
     ImGui::SameLine        ();
 
@@ -966,12 +966,12 @@ SK_ImGui_DrawConfig_Latency ()
     bool selected =
       rb.isReflexSupported () ?
         ImGui::Combo ( "###Reflex Mode", &reflex_mode,
-                          "Off\0Low Latency\0"
-                               "Low Latency + Boost\0"
-                                 "Nothing But Boost\0\0" )
+                          "关闭\0低延迟\0"
+                               "低延迟 + 提升\0"
+                                 "只提升\0\0" )
                               :
         ImGui::Combo ( "###Reflex Mode", &reflex_mode,
-                          "Off\0Nothing But Boost\0\0" );
+                          "关闭\0只提升\0\0" );
 
     if (selected)
     {

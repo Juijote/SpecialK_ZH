@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关 快捷键
 
 #include <SpecialK/stdafx.h>
 
@@ -1517,10 +1498,10 @@ auto DeclKeybind =
     Keybind ( &config.screenshots.no_3rd_party_keybind,  L"Take a screenshot before third-party overlays",             osd_ini,         L"Screenshot.System"),
     Keybind ( &config.screenshots.clipboard_only_keybind,L"Take a screenshot and copy it to the clipboard only",       osd_ini,         L"Screenshot.System"),
 
-    Keybind ( &config.monitors.monitor_primary_keybind,  L"Move Game to Primary Monitor",                              osd_ini,         L"Display.Monitor"),
-    Keybind ( &config.monitors.monitor_next_keybind,     L"Move Game to Next Monitor",                                 osd_ini,         L"Display.Monitor"),
-    Keybind ( &config.monitors.monitor_prev_keybind,     L"Move Game to Previous Monitor",                             osd_ini,         L"Display.Monitor"),
-    Keybind ( &config.monitors.monitor_toggle_hdr,       L"Toggle HDR on Selected Monitor",                            osd_ini,         L"Display.Monitor"),
+    Keybind ( &config.monitors.monitor_primary_keybind,  L"将游戏移至主显示器",                              osd_ini,         L"Display.Monitor"),
+    Keybind ( &config.monitors.monitor_next_keybind,     L"将游戏移至下一个显示器",                                 osd_ini,         L"Display.Monitor"),
+    Keybind ( &config.monitors.monitor_prev_keybind,     L"将游戏移至上一个显示器",                             osd_ini,         L"Display.Monitor"),
+    Keybind ( &config.monitors.monitor_toggle_hdr,       L"在选定的显示器上切换 HDR",                            osd_ini,         L"Display.Monitor"),
 
     Keybind ( &config.render.framerate.latent_sync.
                              tearline_move_down_keybind, L"Move Tear Location Down 1 Scanline",                        osd_ini,         L"LatentSync.Control"),

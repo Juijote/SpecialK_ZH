@@ -772,13 +772,13 @@ SK::ControlPanel::D3D11::Draw (void)
     ImGui::TreePush       ("");
 
     const bool swapchain =
-      ImGui::CollapsingHeader ("SwapChain Management");
+      ImGui::CollapsingHeader ("交换链管理");
 
     if (ImGui::IsItemHovered ())
     {
       ImGui::BeginTooltip   ();
       ImGui::TextColored    ( ImColor (235, 235, 235),
-                              "Latency and Framepacing Tweaks" );
+                              "延迟和 FPS 调整" );
       ImGui::EndTooltip     ();
     }
 
@@ -805,10 +805,10 @@ SK::ControlPanel::D3D11::Draw (void)
       if (! indirect)
       {
         if (d3d12)
-          ImGui::Checkbox   ("Force Flip Discard in D3D12", &config.render.framerate.flip_discard);
+          ImGui::Checkbox   ("D3D12 中的强制复制丢弃", &config.render.framerate.flip_discard);
         else
         {
-          ImGui::Checkbox   ("Use Flip Model Presentation", &config.render.framerate.flip_discard);
+          ImGui::Checkbox   ("使用复制模型演示", &config.render.framerate.flip_discard);
 
           if (ImGui::IsItemHovered ())
           {
@@ -1039,7 +1039,7 @@ SK::ControlPanel::D3D11::Draw (void)
       if (changed)
       {
         ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.3f, .8f, .9f));
-        ImGui::BulletText     ("Game Restart Required");
+        ImGui::BulletText     ("需要重启游戏");
         ImGui::PopStyleColor  ();
       }
       ImGui::TreePop  ();
@@ -1787,7 +1787,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
         else
         {
-          ImGui::BulletText ("Game Restart Required");
+          ImGui::BulletText ("需要重启游戏");
         }
       }
     }
