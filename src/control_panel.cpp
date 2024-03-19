@@ -798,9 +798,9 @@ SK_ImGui_ControlPanelTitle (void)
     title += SK_WideCharToUTF8 (SK_GetPluginName ());
   else
   {
-    title += "Special K  (v ";
+    title += "Special K [v ";
     title += SK_GetVersionStrA ();
-    title += ")[Juij 汉化] [2024-03-20]";
+    title += "] [Juij 汉化] [2024-03-20]";
   }
 
   title += "  控制面板";
