@@ -1013,11 +1013,11 @@ SK_WASAPI_Init (void)
   auto min_lat = SK_WASAPI_GetMinimumLatency ();
 
   SK_LOGi0 (
-    L"当前音频混合延迟: %.1f ms @ %d kHz", cur_lat.milliseconds,
+    L"当前音效混合延迟: %.1f ms @ %d kHz", cur_lat.milliseconds,
                                                        cur_lat.samples_per_sec / 1000UL
   );
   SK_LOGi0 (
-    L"最小音频混合延迟: %.1f ms @ %d kHz", min_lat.milliseconds,
+    L"最小音效混合延迟: %.1f ms @ %d kHz", min_lat.milliseconds,
                                                        min_lat.samples_per_sec / 1000UL
   );
 

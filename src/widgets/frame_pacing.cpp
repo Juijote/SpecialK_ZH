@@ -1151,7 +1151,7 @@ SK_ImGui_DrawGraph_FramePacing (void)
         ( szAvg,
             511, (const char *)
             u8"每 FPS 平均毫秒数: %6.3f  (目标: %6.3f)\n"
-            u8"         渲染延迟:           %lu Frame%s | %3.1f / %3.1f ms |  %lu Hz \n\n\n\n"
+            u8"         绘制延迟:           %lu Frame%s | %3.1f / %3.1f ms |  %lu Hz \n\n\n\n"
             u8"变化:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
                 sum / frames,
                   target_frametime,
@@ -1172,7 +1172,7 @@ SK_ImGui_DrawGraph_FramePacing (void)
         ( szAvg,
             511, (const char *)
             u8"每 FPS 平均毫秒数: %6.3f  (目标: %6.3f)\n"
-            u8"         渲染延迟:          %lu Frame%s | HW Flip Q |  %lu Hz \n\n\n\n"
+            u8"         绘制延迟:          %lu Frame%s | HW Flip Q |  %lu Hz \n\n\n\n"
             u8"变化:  %9.5f ms    %5.1f FPS  ±  %3.1f frames",
                 sum / frames,
                   target_frametime,

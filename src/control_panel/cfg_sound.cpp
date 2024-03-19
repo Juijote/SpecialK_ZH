@@ -56,10 +56,10 @@ SK_ImGui_SelectAudioSessionDlg (void)
 
   SK_WASAPI_AudioSession **pSessions = nullptr;
 
-  if (ImGui::IsPopupOpen ("音频会话选择器"))
+  if (ImGui::IsPopupOpen ("音效会话选择器"))
   {
     max_width =
-      ImGui::CalcTextSize ("音频会话选择器").x;
+      ImGui::CalcTextSize ("音效会话选择器").x;
 
     pSessions =
       sessions.getActive (&count);
@@ -92,7 +92,7 @@ SK_ImGui_SelectAudioSessionDlg (void)
                                                   std::max (io.DisplaySize.y * 0.666f,fMinY)) );
   }
 
-  if (ImGui::BeginPopupModal ("音频会话选择器", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+  if (ImGui::BeginPopupModal ("音效会话选择器", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
                                                                  ImGuiWindowFlags_NoScrollbar      | ImGuiWindowFlags_NoScrollWithMouse))
   {
     ImGui::PushItemWidth (max_width * io.FontGlobalScale);
@@ -259,7 +259,7 @@ SK_ImGui_SelectAudioDeviceDlg (void)
   size_t count =
     SK_WASAPI_EndPointMgr->getNumRenderEndpoints ();
 
-  if (ImGui::IsPopupOpen ("音频设备选择器"))
+  if (ImGui::IsPopupOpen ("音效设备选择器"))
   {
     ImGui::SetNextWindowSizeConstraints ( ImVec2 (fMinX * io.FontGlobalScale,
                                         std::max (fMinY * io.FontGlobalScale,
@@ -268,7 +268,7 @@ SK_ImGui_SelectAudioDeviceDlg (void)
                                                   std::max (io.DisplaySize.y * 0.666f,fMinY)) );
   }
 
-  if (ImGui::BeginPopupModal ("音频设备选择器", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+  if (ImGui::BeginPopupModal ("音效设备选择器", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
                                                                 ImGuiWindowFlags_NoScrollbar      | ImGuiWindowFlags_NoScrollWithMouse))
   {
     std::wstring endpoint_id =
@@ -473,7 +473,7 @@ SK_ImGui_VolumeManager (void)
 
   bool selected = true;
   if (ImGui::Selectable (app_name.c_str (), &selected))
-    ImGui::OpenPopup ("音频会话选择器");
+    ImGui::OpenPopup ("音效会话选择器");
 
   if (ImGui::IsItemHovered ())
     ImGui::SetTooltip ("单击此处管理另一个程序");
@@ -737,7 +737,7 @@ SK_ImGui_VolumeManager (void)
       pVolume->GetMasterVolume (&master_vol);
       pVolume->GetMute         (&master_mute);
 
-      static std::string label = "切换音频设备";
+      static std::string label = "切换音效设备";
 
       SK_ImGui_SelectAudioDeviceDlg ();
 
@@ -745,7 +745,7 @@ SK_ImGui_VolumeManager (void)
       {
         if (ImGui::Button (label.c_str ()))
         {
-          ImGui::OpenPopup ("音频设备选择器");
+          ImGui::OpenPopup ("音效设备选择器");
         }
 
         ImGui::SameLine ();
@@ -824,7 +824,7 @@ SK_ImGui_VolumeManager (void)
                 SK_FormatStringW (
                   L"延迟时间更改为 %.1f ms to %.1f ms",
                     cur_lat.milliseconds, latency.milliseconds).c_str (),
-                  L"音频延迟已更改"
+                  L"音效延迟已更改"
               );
 
               config.sound.minimize_latency = true;
@@ -964,7 +964,7 @@ SK_ImGui_VolumeManager (void)
           {
             session_changed = true;
 
-            snprintf (channel_volumes [i].mute_button, 13, "  静音  ##%u", i);
+            snprintf (channel_volumes [i].mute_button, 13, "静音##%u", i);
             snprintf (channel_volumes [i].slider_label, 7, "##vol%u",      i);
           }
 

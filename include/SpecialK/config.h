@@ -472,7 +472,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          game_hud_free_keybind = {
       SK_Keybind {
-        "在没有游戏 HUD 的情况下截取屏幕截图", L"Num -",
+        "在没有游戏 HUD 的情况下截取截图", L"Num -",
          false, false, false, VK_OEM_MINUS
       }, L"HUDFree"
     };
@@ -480,7 +480,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          sk_osd_free_keybind = {
       SK_Keybind {
-        "在没有 Special K 的 OSD 的情况下截取屏幕截图", L"F9",
+        "在没有 Special K 的 OSD 的情况下截取截图", L"F9",
          false, false, false, VK_F9
       }, L"WithoutOSD"
     };
@@ -488,7 +488,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          no_3rd_party_keybind = {
       SK_Keybind {
-        "在没有第三方叠加层的情况下截取屏幕截图", L"",
+        "在没有第三方叠加层的情况下截取截图", L"",
          false, false, false, 0
       }, L"Without3rdParty"
     };
@@ -504,7 +504,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          clipboard_only_keybind = {
       SK_Keybind {
-        "仅将普通屏幕截图复制到剪贴板", L"",
+        "仅将普通截图复制到剪贴板", L"",
          false, false, false, VK_PRINT
       }, L"ClipboardOnly"
     };

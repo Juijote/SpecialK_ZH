@@ -255,7 +255,7 @@ SK::ControlPanel::Compatibility::Draw (void)
             ImGui::SetTooltip ("目前正在使用 OpenGL-IK，但 Direct3D 11 已在未来发布时禁用！\n"
                                 "这可能会导致 Special K 在下次启动时退回到 OpenGL。");
           else
-            ImGui::SetTooltip ("游戏当前使用的渲染 API 已被禁用！\n"
+            ImGui::SetTooltip ("游戏当前使用的绘制 API 已被禁用！\n"
                                 "这可能会导致 Special K 在下次启动时无法正常工作。");
         }
       }

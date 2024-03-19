@@ -522,7 +522,7 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
          (wraparound ? 1  :  0);
 
        ImPlot::PlotLine ("模拟",    &history.sample_age [head], &history.simulation    [head], elements);
-       ImPlot::PlotLine ("渲染提交", &history.sample_age [head], &history.render_submit [head], elements);
+       ImPlot::PlotLine ("绘制提交", &history.sample_age [head], &history.render_submit [head], elements);
        ImPlot::PlotLine ("合成",     &history.sample_age [head], &history.frame_total   [head], elements);
        ImPlot::PlotLine ("GPU 使用",      &history.sample_age [head], &history.gpu_active    [head], elements);
        ImPlot::PlotLine ("CPU 使用",      &history.sample_age [head], &history.gpu_start     [head], elements);

@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -37,7 +18,7 @@ SK::ControlPanel::Window::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.14f, 0.78f, 0.87f, 0.80f));
     ImGui::TreePush       ("");
 
-    if ((! rb.fullscreen_exclusive) && ImGui::CollapsingHeader ("Style and Position", ImGuiTreeNodeFlags_DefaultOpen))
+    if ((! rb.fullscreen_exclusive) && ImGui::CollapsingHeader ("样式与位置", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
@@ -50,7 +31,7 @@ SK::ControlPanel::Window::Draw (void)
       if (fullscreen && (! borderless))
         SK_GetCommandProcessor ()->ProcessCommandLine ("Window.Borderless true");
 
-      if ( ImGui::Checkbox ( "Borderless  ", &borderless ) )
+      if ( ImGui::Checkbox ( "无边框  ", &borderless ) )
       {
           //config.window.fullscreen = false;
 
@@ -64,23 +45,23 @@ SK::ControlPanel::Window::Draw (void)
         {
           ImGui::BeginTooltip ();
           if (borderless)
-            ImGui::TextUnformatted ("Add/Restore Window Borders");
+            ImGui::TextUnformatted ("添加/恢复窗口边框");
           else
-            ImGui::TextUnformatted ("Remove Window Borders");
+            ImGui::TextUnformatted ("移除窗口边框");
           ImGui::Separator  ();
-          ImGui::BulletText ("Game needs to be set to its Regular Windowed mode for these overrides to work correctly.");
+          ImGui::BulletText ("游戏需要设置为常规窗口模式才能使这些叠加层正常工作。");
           ImGui::EndTooltip ();
         }
 
         else
-          ImGui::SetTooltip ("Cannot be Changed while Fullscreen is Checked");
+          ImGui::SetTooltip ("选中全屏时无法更改");
       }
 
       if (borderless)
       {
         ImGui::SameLine ();
 
-        if ( ImGui::Checkbox ( "Fullscreen Borderless", &fullscreen ) )
+        if ( ImGui::Checkbox ( "全屏无边框", &fullscreen ) )
         {
           config.window.fullscreen = fullscreen;
           SK_ImGui_AdjustCursor ();
@@ -89,7 +70,7 @@ SK::ControlPanel::Window::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Stretch Borderless Window to Fill Monitor");
+          ImGui::Text         ("拉伸无边框窗口以填充显示器");
           //ImGui::Separator    ();
           //ImGui::BulletText   ("Framebuffer Resolution Unchanged (GPU-Side Upscaling)");
           //ImGui::BulletText   ("Upscaling to Match Desktop Resolution Adds AT LEAST 1 Frame of Input Latency!");
@@ -99,22 +80,22 @@ SK::ControlPanel::Window::Draw (void)
 
       if (! config.window.fullscreen)
       {
-        ImGui::InputInt2 ("Override Resolution", (int *)&config.window.res.override.x);
+        ImGui::InputInt2 ("覆盖分辨率", (int *)&config.window.res.override.x);
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Set if Game's Window Resolution is Reported Wrong");
+          ImGui::Text         ("游戏窗口分辨率设置报错");
           ImGui::Separator    ();
-          ImGui::BulletText   ("0x0 = Disable");
-          ImGui::BulletText   ("Applied the next time a Style/Position setting is changed");
+          ImGui::BulletText   ("0x0 = 禁用");
+          ImGui::BulletText   ("下次更改样式/位置设置时应用");
           ImGui::EndTooltip   ();
         }
       }
 
       if (! (config.window.borderless && config.window.fullscreen))
       {
-        if ( ImGui::Checkbox ( "Center", &center ) ) {
+        if ( ImGui::Checkbox ( "居中", &center ) ) {
           config.window.center = center;
           SK_ImGui_AdjustCursor ();
           //SK_DeferCommand ("Window.Center toggle");
@@ -122,16 +103,15 @@ SK::ControlPanel::Window::Draw (void)
 
         if (ImGui::IsItemHovered ()) {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Keep the Render Window Centered at All Times");
+          ImGui::Text         ("始终保持绘制窗口居中");
           ImGui::Separator    ();
-          ImGui::BulletText   ( "The Drag-Lock feature cannot be used while Window "
-                                "Centering is turned on." );
+          ImGui::BulletText   ( "当窗口居中打开时，无法使用拖动锁定功能。" );
           ImGui::EndTooltip   ();
         }
 
         ImGui::SameLine ();
 
-        if (ImGui::Checkbox ("Multi-Monitor Mode", &config.window.multi_monitor_mode))
+        if (ImGui::Checkbox ("多显示器模式", &config.window.multi_monitor_mode))
         {
           config.window.center = false;
           SK_ImGui_AdjustCursor ();
@@ -139,18 +119,18 @@ SK::ControlPanel::Window::Draw (void)
 
         if (ImGui::IsItemHovered ()) {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Allows Resolution Overrides that Span Multiple Monitors");
+          ImGui::Text         ("允许覆盖多个显示器的分辨率覆盖");
           ImGui::Separator    ();
-          ImGui::BulletText   ("Fullscreen and Center Modes cannot be used in Multi-Monitor Mode");
-          ImGui::BulletText   ("This may introduce performance penalties, pay attention to Presentation Mode");
+          ImGui::BulletText   ("全屏和居中模式不能在多显示器模式下使用");
+          ImGui::BulletText   ("这可能会带来性能损失，请注意演示模式");
           ImGui::EndTooltip   ();
         }
 
         if (! (config.window.center || config.window.multi_monitor_mode))
         {
           ImGui::TreePush    ("");
-          ImGui::TextColored (ImVec4 (1.0f, 1.0f, 0.0f, 1.0f), "\nPress Ctrl + Shift + ScrollLock to Toggle Drag-Lock Mode");
-          ImGui::BulletText  ("Useful for Positioning Borderless Windows.");
+          ImGui::TextColored (ImVec4 (1.0f, 1.0f, 0.0f, 1.0f), "\n按 Ctrl + Shift + ScrollLock 切换拖动锁定模式");
+          ImGui::BulletText  ("对于定位无边框窗口很有用。");
           ImGui::Text        ("");
           ImGui::TreePop     ();
         }
@@ -176,18 +156,16 @@ SK::ControlPanel::Window::Draw (void)
         }
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ( "Pixel-Aligned Placement behaves inconsistently "
-                              "when Desktop Resolution changes");
+          ImGui::SetTooltip ( "当桌面分辨率更改时，像素对齐放置的行为不一致");
 
         if (! config.window.center)
         {
           ImGui::SameLine ();
 
-          ImGui::Checkbox   ("Remember Dragged Position", &config.window.persistent_drag);
+          ImGui::Checkbox   ("记住拖动的位置", &config.window.persistent_drag);
 
           if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ( "Store the location of windows moved using "
-                                "Drag-Lock and apply at game startup" );
+            ImGui::SetTooltip ( "保存使用拖动锁定模式移动的窗口位置并在游戏启动时应用" );
         }
 
         bool moved = false;
@@ -307,10 +285,10 @@ SK::ControlPanel::Window::Draw (void)
           //   Adjusting the Slider
           static bool queue_move = false;
 
-          moved  = ImGui::SliderFloat ("X Offset##WindowRel",       &x_pos, 0.0f, extent_x, "%.3f %%"); ImGui::SameLine ();
-          moved |= ImGui::Checkbox    ("Right-aligned##WindowRel",  &right_align);
-          moved |= ImGui::SliderFloat ("Y Offset##WindowRel",       &y_pos, 0.0f, extent_y, "%.3f %%"); ImGui::SameLine ();
-          moved |= ImGui::Checkbox    ("Bottom-aligned##WindowRel", &bottom_align);
+          moved  = ImGui::SliderFloat ("X 偏移##WindowRel",       &x_pos, 0.0f, extent_x, "%.3f %%"); ImGui::SameLine ();
+          moved |= ImGui::Checkbox    ("右对齐##WindowRel",  &right_align);
+          moved |= ImGui::SliderFloat ("Y 偏移##WindowRel",       &y_pos, 0.0f, extent_y, "%.3f %%"); ImGui::SameLine ();
+          moved |= ImGui::Checkbox    ("底对齐##WindowRel", &bottom_align);
 
           // We need to set pixel offset to 1 to do what the user expects
           //   these values to do... 0 = NO OFFSET, but the slider may move
@@ -366,27 +344,27 @@ SK::ControlPanel::Window::Draw (void)
         }
       }
 
-      ImGui::Text     ("Window Layering");
+      ImGui::Text     ("窗口分层");
       ImGui::TreePush ("");
 
       bool changed = false;
 
       changed |= ImGui::RadioButton ("无优先级",         &config.window.always_on_top,  NoPreferenceOnTop); ImGui::SameLine ();
-      changed |= ImGui::RadioButton ("Prevent Always-On-Top", &config.window.always_on_top, PreventAlwaysOnTop); ImGui::SameLine ();
-      changed |= ImGui::RadioButton ("Force Always-On-Top",   &config.window.always_on_top,        AlwaysOnTop); ImGui::SameLine ();
-      changed |= ImGui::RadioButton ("Multitasking-On-Top",   &config.window.always_on_top,   SmartAlwaysOnTop);
+      changed |= ImGui::RadioButton ("防止始终置顶", &config.window.always_on_top, PreventAlwaysOnTop); ImGui::SameLine ();
+      changed |= ImGui::RadioButton ("强制始终置顶",   &config.window.always_on_top,        AlwaysOnTop); ImGui::SameLine ();
+      changed |= ImGui::RadioButton ("置顶多任务处理",   &config.window.always_on_top,   SmartAlwaysOnTop);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
-        ImGui::Text         ("Intelligently Raises and Lowers the Game Window for Optimum Multitasking");
+        ImGui::Text         ("智能地升高和降低游戏窗口以实现最佳的多任务处理");
         ImGui::Separator    ();
-        ImGui::BulletText   ("Improves framepacing when KB&M input is given to other applications");
-        ImGui::BulletText   ("Enables G-Sync / FreeSync / VRR in overlapping multi-monitor scenarios");
+        ImGui::BulletText   ("当 KB&M 输入提供给其他应用程序时改善帧节奏");
+        ImGui::BulletText   ("在重叠的多显示器场景中启用 G-Sync /FreeSync /VRR");
         ImGui::Separator    ();
         if (! config.window.background_render)
-          ImGui::Text       (ICON_FA_INFO_CIRCLE " Enable 'Continue Rendering' mode for Ultra-tasking");
-        ImGui::Text         (ICON_FA_EXCLAMATION_TRIANGLE " Advanced feature: Leave Global Injection running to raise windows dragged over the game");
+          ImGui::Text       (ICON_FA_INFO_CIRCLE " 启用多任务“继续绘制”模式");
+        ImGui::Text         (ICON_FA_EXCLAMATION_TRIANGLE " 高级功能：保持全局注入运行以提升拖动到游戏上的窗口");
         ImGui::EndTooltip   ();
       }
 
@@ -416,37 +394,37 @@ SK::ControlPanel::Window::Draw (void)
       ImGui::TreePop ();
     }
 
-    if (ImGui::CollapsingHeader ("Input/Output Behavior", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("输入 / 输出行为", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
       bool background_render = config.window.background_render;
       bool background_mute   = config.window.background_mute;
 
-      ImGui::Text     ("Background Behavior");
+      ImGui::Text     ("后台行为");
       ImGui::TreePush ("");
 
-      if ( ImGui::Checkbox ( "Mute Game ", &background_mute ) )
+      if ( ImGui::Checkbox ( "静音游戏 ", &background_mute ) )
         SK_DeferCommand    ("Window.BackgroundMute toggle");
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Mute the Game when Another Window has Input Focus");
+        ImGui::SetTooltip ("当另一个窗口具有输入焦点时使游戏静音");
 
       if (! rb.isTrueFullscreen ())
       {
         ImGui::SameLine ();
 
-        if ( ImGui::Checkbox ( "Continue Rendering", &background_render ) )
+        if ( ImGui::Checkbox ( "继续运行", &background_render ) )
           SK_DeferCommand    ("Window.BackgroundRender toggle");
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Block Application Switch Notifications to the Game");
+          ImGui::Text         ("阻止游戏的应用程序切换通知");
           ImGui::Separator    ();
-          ImGui::BulletText   ("Most Games will Continue Rendering");
-          ImGui::BulletText   ("Disables a Game's Built-in Mute-on-Alt+Tab Functionality");
-          ImGui::BulletText   ("See \"Input Management | Enable / Disable Devices\" to Configure Background Behavior");
+          ImGui::BulletText   ("大多数游戏将继续运行");
+          ImGui::BulletText   ("禁用游戏内置的 Alt+Tab 静音功能");
+          ImGui::BulletText   ("请参阅“输入管理 | 启用/禁用设备”以配置后台行为");
           ImGui::EndTooltip   ();
         }
 
@@ -454,16 +432,16 @@ SK::ControlPanel::Window::Draw (void)
         ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
         ImGui::SameLine    ();
 
-        ImGui::Checkbox ("Treat Foreground as Active", &config.window.treat_fg_as_active);
+        ImGui::Checkbox ("将前窗视为活动状态", &config.window.treat_fg_as_active);
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Game Considers the Foreground Window as Active");
+          ImGui::Text         ("游戏将前景窗口视为活动窗口");
           ImGui::Separator    ();
-          ImGui::BulletText   ("Try this if \"Continue Rendering\" does not behave as expected");
-          ImGui::BulletText   ("Some games check the Foreground Window to determine if they are Active");
-          ImGui::BulletText   ("Normal games will track Keyboard Focus and Activation Events instead");
+          ImGui::BulletText   ("如果“继续运行”未按预期运行，请尝试此操作");
+          ImGui::BulletText   ("有些游戏会检查前台窗口以确定它们是否处于活动状态");
+          ImGui::BulletText   ("普通游戏将改为跟踪键盘焦点和激活事件");
           ImGui::EndTooltip   ();
         }
       }
@@ -472,7 +450,7 @@ SK::ControlPanel::Window::Draw (void)
 
       SK_ImGui_CursorBoundaryConfig ();
 
-      ImGui::Text     ("Screensaver Behavior");
+      ImGui::Text     ("屏幕保护程序行为");
       ImGui::TreePush ("");
 
       int screensaver_opt =
@@ -482,9 +460,9 @@ SK::ControlPanel::Window::Draw (void)
                                           : 0;
 
       if ( ImGui::Combo ( "###Screensaver_Behavior", &screensaver_opt,
-                          "Game Default\0"
-                          "Disable in (Borderless) Fullscreen\0"
-                          "Always Disable While Running\0\0",
+                          "游戏默认\0"
+                          "在（无边框）全屏中禁用\0"
+                          "运行时始终禁用\0\0",
                             3 ) )
       {
         switch (screensaver_opt)

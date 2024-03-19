@@ -3581,7 +3581,7 @@ SK_ImGui_ControlPanel (void)
         ImGui::Separator ();
 
         bool hdr_changed =
-            ImGui::Checkbox ( "保存全范围 HDR 屏幕截图",
+            ImGui::Checkbox ( "保存全范围 HDR 截图",
                                 &config.screenshots.png_compress );
 
         // Show AVIF options in 64-bit builds
@@ -3688,7 +3688,7 @@ SK_ImGui_ControlPanel (void)
             {
               ImGui::BeginTooltip ();
               ImGui::BulletText   ("Windows 本身支持 4:2:0 的 10 位和 12 位 AVIF 图像，或 4:4:4 的 8 位");
-              ImGui::BulletText   ("更高质量的色度子采样 AVIF 图像只能在 Chrome 中正确渲染。");
+              ImGui::BulletText   ("更高质量的色度子采样 AVIF 图像只能在 Chrome 中正确绘制。");
               ImGui::EndTooltip   ();
             }
 
@@ -3733,7 +3733,7 @@ SK_ImGui_ControlPanel (void)
               ImGui::TextUnformatted ("专门压缩图像以实现最小文件大小需要多长时间");
               ImGui::BulletText      ("< 7 的值非常慢，可能需要几分钟的时间。");
               ImGui::BulletText      ("压缩是在后台线程上完成的，不太可能消耗过多的 CPU。");
-              ImGui::BulletText      ("如果将速度设置得太低，则在退出时 HDR 屏幕截图可能无法完成。");
+              ImGui::BulletText      ("如果将速度设置得太低，则在退出时 HDR 截图可能无法完成。");
               ImGui::EndTooltip      ();
             }
           }
@@ -5248,7 +5248,7 @@ SK_ImGui_ControlPanel (void)
                 ImGui::TreePush    ( "" );
                 ImGui::TextColored ( ImColor (1.f, 1.f, 1.f),
                                        "\t窗口管理 > 输入/输出"
-                                       " 行为 > 继续渲染" );
+                                       " 行为 > 继续绘制" );
                 ImGui::TreePop     (    );
                 ImGui::TreePop     (    );
               }
@@ -5985,7 +5985,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::BeginGroup ();
 
           changed |=
-            ImGui::Checkbox ( "不闲置渲染线程(s)",
+            ImGui::Checkbox ( "不闲置绘制线程(s)",
                                 &config.render.framerate.sleepless_render );
 
           if (ImGui::IsItemHovered ())
@@ -6036,13 +6036,13 @@ SK_ImGui_ControlPanel (void)
           ImGui::PushItemWidth (ImGui::GetContentRegionAvail ().x);
 
           if (ImGui::Combo ( "###Render Thread Priority", &min_render_prio,
-                                "渲染优先级:\t闲置\0"
-                                "渲染优先级:\t低\0"
-                                "渲染优先级:\t低于正常\0"
-                                "渲染优先级:\t正常\0"
-                                "渲染优先级:\t高于正常\0"
-                                "渲染优先级:\t高\0"
-                                "渲染优先级:\t实时\0\0" ))
+                                "绘制优先级:\t闲置\0"
+                                "绘制优先级:\t低\0"
+                                "绘制优先级:\t低于正常\0"
+                                "绘制优先级:\t正常\0"
+                                "绘制优先级:\t高于正常\0"
+                                "绘制优先级:\t高\0"
+                                "绘制优先级:\t实时\0\0" ))
           {
             switch (min_render_prio)
             {
@@ -6349,7 +6349,7 @@ SK_ImGui_ControlPanel (void)
 
     if (SK::SteamAPI::AppID () > 0 && SK::SteamAPI::GetCallbacksRun ())
     {
-      if (ImGui::Checkbox ("启用 Steam 屏幕截图挂钩", &config.steam.screenshots.enable_hook))
+      if (ImGui::Checkbox ("启用 Steam 截图挂钩", &config.steam.screenshots.enable_hook))
       {
         rb.screenshot_mgr->init ();
       }
@@ -6362,7 +6362,7 @@ SK_ImGui_ControlPanel (void)
       if (config.steam.screenshots.enable_hook)
       {
         ImGui::TreePush ("");
-        ImGui::Checkbox ("在 Steam 屏幕截图中显示 OSD",
+        ImGui::Checkbox ("在 Steam 截图中显示 OSD",
                                     &config.screenshots.show_osd_by_default);
         ImGui::TreePop  (  );
       }
@@ -6370,20 +6370,20 @@ SK_ImGui_ControlPanel (void)
 
     bool png_changed = false;
 
-    ImGui::Checkbox ("将屏幕截图复制到剪贴板",    &config.screenshots.copy_to_clipboard);
-    ImGui::Checkbox ("在屏幕截图捕获时播放声音", &config.screenshots.play_sound       );
+    ImGui::Checkbox ("将截图复制到剪贴板",    &config.screenshots.copy_to_clipboard);
+    ImGui::Checkbox ("在截图捕获时播放声音", &config.screenshots.play_sound       );
 
     png_changed =
       ImGui::Checkbox (
-        rb.isHDRCapable () ? "保存 HDR 屏幕截图          " :
-                        "保存无损 .PNG 屏幕截图",
+        rb.isHDRCapable () ? "保存 HDR 截图          " :
+                        "保存无损 .PNG 截图",
                                     &config.screenshots.png_compress
                       );
 
     if (rb.isHDRCapable ())
     {
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("请参阅 HDR 菜单来配置 HDR 屏幕截图格式和压缩设置。");
+        ImGui::SetTooltip ("请参阅 HDR 菜单来配置 HDR 截图格式和压缩设置。");
     }
 
     const bool bHasPlatformIntegration =
@@ -6399,7 +6399,7 @@ SK_ImGui_ControlPanel (void)
         SK_RunOnce (SK_Platform_GetUserName (szName, 511));
 
         ImGui::SetTooltip (
-          "以作者身份将你的平台名称 ('%hs') 添加到屏幕截图中",
+          "以作者身份将你的平台名称 ('%hs') 添加到截图中",
                    szName );
       }
     }
@@ -6455,8 +6455,8 @@ SK_ImGui_ControlPanel (void)
       if (SK::SteamAPI::AppID () > 0 && SK::SteamAPI::GetCallbacksRun () && ImGui::IsItemHovered ())
       {
         ImGui::SetTooltip ( rb.isHDRCapable () ?
-                              "Steam 不支持 HDR 屏幕截图，因此 SK 维护自己的 .JXR 屏幕截图保存" :
-                              "Steam 不支持 .PNG 屏幕截图，因此 SK 维护自己的无损屏幕截图保存。" );
+                              "Steam 不支持 HDR 截图，因此 SK 维护自己的 .JXR 截图保存" :
+                              "Steam 不支持 .PNG 截图，因此 SK 维护自己的无损截图保存。" );
       }
 
       ImGui::SameLine ();
@@ -7041,14 +7041,14 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("你好");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("请参阅 Discord 发布");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("发布及汉化请参阅1");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("请参阅 Discord 发布");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("发布及汉化请参阅2");                    ImGui::SameLine ();
     }
-    ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "帮助 | 发布");                    ImGui::SameLine ();
-    ImGui::TextUnformatted   ("用于该项目的测试版 / 稳定版更新。");
+    ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "3");                    ImGui::SameLine ();
+    ImGui::TextUnformatted   ("4");
 
     ImGui::Spacing ();
     ImGui::Spacing ();
