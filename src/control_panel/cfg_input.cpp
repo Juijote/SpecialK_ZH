@@ -974,8 +974,8 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::TextUnformatted ("打开 / 关闭控制面板");
               ImGui::Separator   ();
               ImGui::TextUnformatted ("关闭无线游戏手柄");
-              ImGui::TextUnformatted ("Alt + Tab App1（按下时设置应用程序）");
-              ImGui::TextUnformatted ("Alt + Tab App2（按下时设置应用程序）");
+              ImGui::TextUnformatted ("Alt + Tab App1（按下时设置游戏程序）");
+              ImGui::TextUnformatted ("Alt + Tab App2（按下时设置游戏程序）");
               ImGui::TextUnformatted ("游戏音量调高 10%");
               ImGui::TextUnformatted ("游戏音量降低 10%");
               ImGui::TextUnformatted ("HDR 亮度 -10 nits");
@@ -2067,7 +2067,7 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::TreePush      ("");
 
       ImGui::BeginGroup    (  );
-      ImGui::Text          ("鼠标问题?");
+      ImGui::Text          ("修复部分鼠标问题");
       ImGui::TreePush      ("");
 
 #if 0
@@ -2176,19 +2176,19 @@ extern float SK_ImGui_PulseNav_Strength;
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip  ();
-          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "不允许游戏将指针移动到屏幕中心");
+          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "不允许游戏将指针移动到显示器中心");
           ImGui::Separator   ();
           ImGui::BulletText  ("任何时候指针可见");
           ImGui::BulletText  ("修复了质量效应仙女座等有缺陷的游戏");
         ImGui::EndTooltip    ();
       }
 
-      ImGui::Checkbox ("No Warp (UI open)",                     &SK_ImGui_Cursor.prefs.no_warp.ui_open);
+      ImGui::Checkbox ("无变形（UI 打开）",                     &SK_ImGui_Cursor.prefs.no_warp.ui_open);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip  ();
-          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "不允许游戏将指针移动到屏幕中心");
+          ImGui::TextColored (ImVec4 (1.f, 1.f, 1.f, 1.f), "不允许游戏将指针移动到显示器中心");
           ImGui::Separator   ();
           ImGui::BulletText  ("任何时候 UI 可见");
           ImGui::BulletText  ("如果鼠标操作困难，可能需要使用它。");
@@ -2200,8 +2200,8 @@ extern float SK_ImGui_PulseNav_Strength;
       if ( SK_ImGui_Cursor.prefs.no_warp.ui_open ||
            SK_ImGui_Cursor.prefs.no_warp.visible )
       {
-        if ( ImGui::SliderFloat ( "Anti-Warp Deadzone##CursorDeadzone",
-                                    &float_thresh, 1.0f, 100.0f, "%4.2f%% of Screen" ) )
+        if ( ImGui::SliderFloat ( "反变形死区##CursorDeadzone",
+                                    &float_thresh, 1.0f, 100.0f, "显示器的 %4.2f%%" ) )
         {
           if (float_thresh <= 1.0f)
             float_thresh = 1.0f;
@@ -2252,7 +2252,7 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::BeginGroup   (  );
       ImGui::Combo        ("鼠标输入", &config.input.mouse.disabled_to_game,
                            "启用\0禁用（始终）\0已禁用（后台）\0\0");
-      ImGui::Combo        ("Keyboard Input", &config.input.keyboard.disabled_to_game,
+      ImGui::Combo        ("键盘输入", &config.input.keyboard.disabled_to_game,
                            "启用\0禁用（始终）\0已禁用（后台）\0\0");
 
       if (ImGui::IsItemHovered () && config.input.keyboard.disabled_to_game == SK_InputEnablement::DisabledInBackground)
@@ -2382,17 +2382,17 @@ extern float SK_ImGui_PulseNav_Strength;
           if (dwFlags & RIDEV_APPKEYS)
           {
             flags.emplace_back ("RIDEV_APPKEYS");
-            descs.emplace_back ("应用程序键快捷键已启用");
+            descs.emplace_back ("游戏程序键快捷键已启用");
           }
           if (dwFlags & RIDEV_EXINPUTSINK)
           {
             flags.emplace_back ("RIDEV_EXINPUTSINK");
-            descs.emplace_back ("如果前台应用程序不使用 RawInput，则接收 RawInput 数据");
+            descs.emplace_back ("如果前台游戏程序不使用 RawInput，则接收 RawInput 数据");
           }
           if (dwFlags & RIDEV_DEVNOTIFY)
           {
             flags.emplace_back ("RIDEV_DEVNOTIFY");
-            descs.emplace_back ("如果前台应用程序不使用 RawInput，则接收 RawInput 数据");
+            descs.emplace_back ("如果前台游戏程序不使用 RawInput，则接收 RawInput 数据");
           }
         };
 

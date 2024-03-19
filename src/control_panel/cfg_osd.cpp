@@ -226,7 +226,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::TreePop  ();
 
       if (config.disk.show && hovered)
-        ImGui::SetTooltip ("需要重启应用程序");
+        ImGui::SetTooltip ("需要重启游戏程序");
 
       if (! config.disk.show)
         SKIF_ImGui_PopDisableState ( );

@@ -246,7 +246,7 @@ SK_ImGui_DrawVRAMGauge (void)
       ImGui::Text         ( "显存配额 (%hs) 已用完",
                              szQuota );
       ImGui::Separator    ( );
-      ImGui::BulletText   ( "考虑降低游戏中的图形设置或关闭后台应用程序。" );
+      ImGui::BulletText   ( "考虑降低游戏中的图形设置或关闭后台游戏程序。" );
       ImGui::BulletText   ( "右键单击显存仪表可设置显存配额或重置配额警告。" );
       ImGui::EndTooltip   ( );
     }
@@ -813,9 +813,9 @@ SK::ControlPanel::D3D11::Draw (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip ();
-            ImGui::Text         ("High-Performance Windowed Rendering");
+            ImGui::Text         ("高性能窗口渲染");
             ImGui::Separator    ();
-            ImGui::BulletText   ("Makes Windowed Mode Perform Same as Fullscreen Exclusive");
+            ImGui::BulletText   ("使窗口模式的性能与全屏独占相同");
             ImGui::EndTooltip   ();
           }
         }
@@ -824,7 +824,7 @@ SK::ControlPanel::D3D11::Draw (void)
       bool clamp_sync_interval =
         (config.render.framerate.sync_interval_clamp > 0);
 
-      if (ImGui::Checkbox ("Clamp Presentation Interval", &clamp_sync_interval))
+      if (ImGui::Checkbox ("固定刷新间隔", &clamp_sync_interval))
       {
         if (clamp_sync_interval)
         {
@@ -840,10 +840,10 @@ SK::ControlPanel::D3D11::Draw (void)
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    ();
-        ImGui::TextUnformatted ("Prevent games from setting Presentation Intervals incompatible with VRR");
+        ImGui::TextUnformatted ("防止游戏设置与 VRR 不兼容的演示间隔");
         ImGui::Separator       ();
-        ImGui::BulletText      ("Intervals > 1 disable VRR and switch to Fixed-Refresh");
-        ImGui::BulletText      ("Interval 0 may also disable VRR, if framerate exceeds refresh");
+        ImGui::BulletText      ("间隔 > 1 禁用 VRR 并切换到固定刷新");
+        ImGui::BulletText      ("如果 FPS 超过刷新，间隔 0 也可能会禁用 VRR");
         ImGui::EndTooltip      ();
       }
 
@@ -854,7 +854,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
         if (! ((d3d12 && !config.render.dxgi.allow_d3d12_footguns) || indirect))
         {
-          if (ImGui::Checkbox ("Waitable SwapChain", &waitable_))
+          if (ImGui::Checkbox ("可等待交换链", &waitable_))
           {
             if (! waitable_) config.render.framerate.swapchain_wait = 0;
             else             config.render.framerate.swapchain_wait = 15;
@@ -883,12 +883,12 @@ SK::ControlPanel::D3D11::Draw (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip ();
-            ImGui::Text         ("Reduces Input Latency in SK's Framerate Limiter");
+            ImGui::Text         ("减少 SK FPS 限制器中的输入延迟");
             if (rb.api != SK_RenderAPI::D3D12)
             {
               ImGui::Separator  ();
-              ImGui::BulletText ("Fullscreen Exclusive will not work while enabled");
-              ImGui::BulletText ("Fullscreen Exclusive is obsolete");
+              ImGui::BulletText ("启用后全屏独占将不起作用");
+              ImGui::BulletText ("全屏独占已过时");
             }
             ImGui::EndTooltip   ();
           }
@@ -907,7 +907,7 @@ SK::ControlPanel::D3D11::Draw (void)
         if (SK_DXGI_SupportsTearing ())
         {
           bool tearing_pref = config.render.dxgi.allow_tearing;
-          if (ImGui::Checkbox ("Enable Tearing", &tearing_pref))
+          if (ImGui::Checkbox ("启用撕裂", &tearing_pref))
           {
             config.render.dxgi.allow_tearing = tearing_pref;
 
@@ -917,9 +917,9 @@ SK::ControlPanel::D3D11::Draw (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip ();
-            ImGui::Text         ("Enables True VSYNC -OFF- in Windowed Mode");
+            ImGui::Text         ("在窗口模式下启用真正的 VSYNC -OFF-");
             ImGui::Separator    ();
-            ImGui::BulletText   ("Presentation Interval 0 will turn VSYNC off");
+            ImGui::BulletText   ("演示间隔 0 将关闭 VSYNC");
             ImGui::EndTooltip   ();
           }
         }
@@ -944,20 +944,20 @@ SK::ControlPanel::D3D11::Draw (void)
       ImGui::PushItemWidth (100.0f * ui_scale);
 
       bool present_interval_changed =
-      ImGui::InputInt ("Presentation Interval",       &config.render.framerate.present_interval);
+      ImGui::InputInt ("演示间隔",       &config.render.framerate.present_interval);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
 
-        ImGui::Text       ("This Controls V-Sync");
+        ImGui::Text       ("控制垂直同步");
         ImGui::Separator  (                                               );
-        ImGui::BulletText ("-1=Game Controlled,  0=Force Off,  1=Force On");
+        ImGui::BulletText ("-1=游戏控制,  0=强制关闭,  1=强制开启");
 
         //if (config.render.framerate.drop_late_flips && config.render.framerate.present_interval != 0)
         //  ImGui::BulletText ("Values > 1 do not Apply unless \"Drop Late Frames\" or SK's Framerate Limiter are Disabled");
         //else
-          ImGui::BulletText (">1=Fractional Refresh Rates");
+          ImGui::BulletText (">1=分数刷新率");
 
         ImGui::EndTooltip ();
       }
@@ -969,8 +969,8 @@ SK::ControlPanel::D3D11::Draw (void)
                                       config.render.framerate.sync_interval_clamp != SK_NoPreference)
       {
         SK_ImGui_Warning (
-          L"Fractional VSYNC Rates Will Prevent VRR From Working\r\n\r\n\t>>"
-          L" SyncIntervalClamp Has Been Disabled (required to use 1/n Refresh VSYNC)"
+          L"分数刷新率速率将阻止 VRR 工作\r\n\r\n\t>>"
+          L" SyncIntervalClamp 已被禁用（需要使用 1/n 刷新 VSYNC）"
         );
 
         config.render.framerate.sync_interval_clamp = SK_NoPreference;
@@ -978,7 +978,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
       if (! ((d3d12 && !config.render.dxgi.allow_d3d12_footguns) || indirect))
       {
-        if (ImGui::InputInt ("BackBuffer Count", &config.render.framerate.buffer_count))
+        if (ImGui::InputInt ("后台缓冲区计数", &config.render.framerate.buffer_count))
         {
           auto& io =
             ImGui::GetIO ();
@@ -1005,7 +1005,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
       if (! ((d3d12 && !config.render.dxgi.allow_d3d12_footguns) || indirect))
       {
-        if (ImGui::InputInt ("Maximum Device Latency", &config.render.framerate.pre_render_limit))
+        if (ImGui::InputInt ("最大设备延迟", &config.render.framerate.pre_render_limit))
         {
           if (config.render.framerate.pre_render_limit <  0)
               config.render.framerate.pre_render_limit = SK_NoPreference;
@@ -1164,11 +1164,11 @@ SK::ControlPanel::D3D11::Draw (void)
         ImGui::Checkbox ("忽略没有纹理贴图的纹理", &config.textures.cache.ignore_nonmipped);
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("Important Compatibility Setting for Some Games (e.g. The Witcher 3)");
+          ImGui::SetTooltip ("某些游戏的重要兼容性设置（例如《巫师 3》）");
 
         ImGui::SameLine ();
 
-        ImGui::Checkbox ("Cache Staged Texture Uploads", &config.textures.cache.allow_staging);
+        ImGui::Checkbox ("缓存分阶段纹理上传", &config.textures.cache.allow_staging);
 
         if (ImGui::IsItemHovered ())
         {
@@ -1190,22 +1190,22 @@ SK::ControlPanel::D3D11::Draw (void)
                                                config.render.dxgi.res.max.isZero () );
 
     const bool res_limits =
-      ImGui::CollapsingHeader ("Resolution Limiting", enable_resolution_limits ? ImGuiTreeNodeFlags_DefaultOpen : 0x00);
+      ImGui::CollapsingHeader ("分辨率限制", enable_resolution_limits ? ImGuiTreeNodeFlags_DefaultOpen : 0x00);
 
     if (ImGui::IsItemHovered ())
     {
       ImGui::BeginTooltip ();
-      ImGui::Text         ("Restrict the lowest/highest resolutions reported to a game");
+      ImGui::Text         ("限制向游戏报告的最低/最高分辨率");
       ImGui::Separator    ();
-      ImGui::BulletText   ("Useful for games that compute aspect ratio based on the highest reported resolution.");
+      ImGui::BulletText   ("对于根据报告的最高分辨率计算宽高比的游戏很有用。");
       ImGui::EndTooltip   ();
     }
 
     if (res_limits)
     {
       ImGui::TreePush  ("");
-      ImGui::InputInt2 ("Minimum Resolution", reinterpret_cast <int *> (&config.render.dxgi.res.min.x));
-      ImGui::InputInt2 ("Maximum Resolution", reinterpret_cast <int *> (&config.render.dxgi.res.max.x));
+      ImGui::InputInt2 ("最低分辨率", reinterpret_cast <int *> (&config.render.dxgi.res.min.x));
+      ImGui::InputInt2 ("最大分辨率", reinterpret_cast <int *> (&config.render.dxgi.res.max.x));
 
       // Fix for stupid users ... and stupid programmers who don't range validate
       //
@@ -1220,16 +1220,16 @@ SK::ControlPanel::D3D11::Draw (void)
 
     if (d3d11)
     {
-      if ((! indirect) && ImGui::Button (" Render Mod Tools "))
+      if ((! indirect) && ImGui::Button (" 渲染模组工具 "))
       {
         show_shader_mod_dlg = (!show_shader_mod_dlg);
       }
 
       if (! indirect) ImGui::SameLine ();
-      if (! indirect) ImGui::Checkbox ("D3D11 Deferred Mode", &config.render.dxgi.deferred_isolation);
+      if (! indirect) ImGui::Checkbox ("D3D11 延迟模式", &config.render.dxgi.deferred_isolation);
 
       if (! indirect) if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Try changing this option if textures / shaders are missing from the mod tools.");
+        ImGui::SetTooltip ("如果模组工具中缺少纹理/着色器，请尝试更改此选项。");
     }
 
     if (! config.reshade.is_addon)
@@ -1247,28 +1247,28 @@ SK::ControlPanel::D3D11::Draw (void)
     {
       if (d3d11 && !indirect) ImGui::SameLine ();
       bool changed =
-        ImGui::Checkbox ("Draw ReShade First", &config.reshade.draw_first);
+        ImGui::Checkbox ("首先绘制 ReShade", &config.reshade.draw_first);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    ();
-        ImGui::TextUnformatted ("Apply ReShade Before SK Image Processing");
+        ImGui::TextUnformatted ("在 SK 图像处理之前应用 ReShade");
         ImGui::Separator       ();
         ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
-        ImGui::TextUnformatted ("Draw First");
+        ImGui::TextUnformatted ("先绘制");
         ImGui::PopStyleColor   ();
         ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-        ImGui::BulletText      ("Intended for use with SDR, Native HDR and SK Inverse Tonemapped HDR.");
-        ImGui::BulletText      ("This mode has highest performance and should be used by default.");
+        ImGui::BulletText      ("适用于 SDR、原生 HDR 和 SK 逆色彩映射 HDR。");
+        ImGui::BulletText      ("此模式具有最高性能，应默认使用。");
         ImGui::PopStyleColor   ();
         ImGui::Spacing         ();
         ImGui::Spacing         ();
         ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
-        ImGui::TextUnformatted ("Draw After");
+        ImGui::TextUnformatted ("之后绘制");
         ImGui::PopStyleColor   ();
         ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-        ImGui::BulletText      ("Required if using ReShade to analyze SK's HDR Tonemapping.");
-        ImGui::BulletText      ("This mode has a slight performance penalty in D3D12.");
+        ImGui::BulletText      ("如果使用 ReShade 分析 SK 的 HDR 色彩映射，则需要。");
+        ImGui::BulletText      ("此模式在 D3D12 中会有轻微的性能损失。");
         ImGui::PopStyleColor   ();
         ImGui::EndTooltip      ();
       }
@@ -1280,7 +1280,7 @@ SK::ControlPanel::D3D11::Draw (void)
     if (d3d11 && (! indirect)) ImGui::SameLine ();
 
     const bool advanced =
-      d3d11 && (! indirect) && ImGui::TreeNode ("Advanced (Debug)###Advanced_D3D11");
+      d3d11 && (! indirect) && ImGui::TreeNode ("高级（调试）###Advanced_D3D11");
 
     if (advanced)
     {
@@ -1291,10 +1291,10 @@ SK::ControlPanel::D3D11::Draw (void)
       if (! indirect)
       {
 #ifdef _SUPPORT_ENHANCED_DEPTH
-        ImGui::Checkbox ("Enhanced (64-bit) Depth+Stencil Buffer", &config.render.dxgi.enhanced_depth);
+        ImGui::Checkbox ("增强型（64 位）深度 + 模板缓冲区", &config.render.dxgi.enhanced_depth);
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("Requires application restart");
+          ImGui::SetTooltip ("需要重启游戏程序");
 #endif
 
         if (sk::NVAPI::nv_hardware)
@@ -1306,7 +1306,7 @@ SK::ControlPanel::D3D11::Draw (void)
         }
       }
 
-      ImGui::Checkbox ( "Enable D3D11 Debug Layer",
+      ImGui::Checkbox ( "启用 D3D11 调试层",
                   &config.render.dxgi.debug_layer );
       
       if (config.render.dxgi.debug_layer)
@@ -1320,17 +1320,17 @@ SK::ControlPanel::D3D11::Draw (void)
           ImGui::SameLine ();
 
           if (
-            ImGui::Button ( _pauseDebugOutput ? "Resume Output"
-                                              : "Pause Output" )
+            ImGui::Button ( _pauseDebugOutput ? "恢复输出"
+                                              : "暂停输出" )
              ) _pauseDebugOutput = !_pauseDebugOutput;
 
           ImGui::SameLine ();
           
           bool bClearLog =
-            ImGui::Button ("Clear Log");
+            ImGui::Button ("清除日志");
 
           ImGui::BeginChild (
-            ImGui::GetID ("D3D11_Debug_Panel"),
+            ImGui::GetID ("D3 d11 调试面板"),
                   ImVec2 (0.0f, -1.0f),  true,
                     ImGuiWindowFlags_NavFlattened
           );
@@ -1411,7 +1411,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
             if (ImGui::BeginPopup ("D3D11_Debug_MessageMenu"))
             {
-              ImGui::Text ("Debug Message Configuration");
+              ImGui::Text ("调试消息配置");
 
               ImGui::TreePush ("");
 
@@ -1421,7 +1421,7 @@ SK::ControlPanel::D3D11::Draw (void)
               bool break_ =
                 std::find (break_ids.begin (), break_ids.end (), _debug_id) != break_ids.end ();
 
-              if (ImGui::Checkbox ("Mute this message", &deny))
+              if (ImGui::Checkbox ("将此消息静音", &deny))
               {
                 auto& sec =
                   debug_ini->get_section (L"Messages.Filter");
@@ -1486,7 +1486,7 @@ SK::ControlPanel::D3D11::Draw (void)
                 pInfoQueueD3D11->AddStorageFilterEntries   (&filter);
               }
 
-              if (ImGui::Checkbox ("Break on this message", &break_))
+              if (ImGui::Checkbox ("中断此消息", &break_))
               {
                 auto& sec =
                   debug_ini->get_section (L"Messages.Break");
@@ -1564,7 +1564,7 @@ SK::ControlPanel::D3D11::Draw (void)
             {
               pInfoQueueD3D11->AddApplicationMessage (
                 D3D11_MESSAGE_SEVERITY_MESSAGE,
-                  "Hello From The D3D11 Debug Layer..." );
+                  "来自 D3D11 调试层的问候..." );
 
               D3D11_MESSAGE_ID ia_nop =
                 D3D11_MESSAGE_ID_CREATEINPUTLAYOUT_EMPTY_LAYOUT;
@@ -1749,7 +1749,7 @@ SK::ControlPanel::D3D11::Draw (void)
                   default:
                     ImGui::TextColored (
                        _d3d11_colors [D3D11_MESSAGE_SEVERITY_ERROR],
-                         "UNKNOWN MESSAGE TYPE (?!)"
+                         "未知的消息类型 (?!)"
                                        );
                     message_id = -1;
                     break;
@@ -1774,7 +1774,7 @@ SK::ControlPanel::D3D11::Draw (void)
               else if (ImGui::IsItemHovered ())
               {
                 ImGui::BeginTooltip ();
-                ImGui::Text         ("Message ID: %d", message_id);
+                ImGui::Text         ("信息 ID: %d", message_id);
                 ImGui::Separator    ();
                    _DrawMessageText ();
                 ImGui::EndTooltip   ();
@@ -1804,18 +1804,18 @@ SK::ControlPanel::D3D11::Draw (void)
       ImGui::TextUnformatted ("右键单击以配置显存配额或重置警告");
       ImGui::Separator       ();
       ImGui::TreePush        ("");
-      ImGui::TextUnformatted ("The statistics shown are graphics memory actively used by the GAME (Resident VRAM) vs. VRAM the driver can dedicate to the GAME (VRAM Budget).\r\n\r\n");
-      ImGui::BulletText      ("This differs significantly from all current monitoring tools...\r\n\r\n");
+      ImGui::TextUnformatted ("显示的统计数据是游戏主动使用的图形内存（占用显存）与驱动程序可专用于游戏的显存（显存配额）。\r\n\r\n");
+      ImGui::BulletText      ("这与所有当前的监控工具有很大不同......\r\n\r\n");
       ImGui::TreePush        ("");
-      ImGui::TextUnformatted ("MSI Afterburner, for example, can measure system-wide graphics memory allocation or per-process allocation depending on how it is configured,");
-      ImGui::TextUnformatted ("but is incapable of measuring Resident VRAM, nor does it know anything about per-process limits on VRAM (Budgets).\r\n\r\n");
+      ImGui::TextUnformatted ("例如，MSI Afterburner 可以测量系统范围的图形内存分配或每个进程的分配，具体取决于其配置方式，");
+      ImGui::TextUnformatted ("但无法测量占用显存，也不了解每个进程对显存的限制（配额）。\r\n\r\n");
       ImGui::TreePop         ();
-      ImGui::TextUnformatted ("Correctly measuring a game's VRAM requirements involves knowledge of VRAM Residency and per-process VRAM Budgets!\r\n");
-      ImGui::TextUnformatted ("Budgets change dynamically in WDDM 2.0+ when there is demand by other applications for VRAM that reduces the amount available to the game.\r\n\r\n");
-      ImGui::BulletText      ("Special K's VRAM gauge adjusts to changing VRAM Budgets in real-time to correctly assess VRAM availability.");
+      ImGui::TextUnformatted ("正确测量游戏的显存要求需要了解显存占用和每个进程的显存配额！\r\n");
+      ImGui::TextUnformatted ("当其他应用程序对显存的需求减少了游戏可用的数量时，WDDM 2.0+ 中的配额会动态变化。\r\n\r\n");
+      ImGui::BulletText      ("Special K 的显存仪表会根据不断变化的显存配额进行实时调整，以正确评估显存可用性。");
       ImGui::TreePop         ();
       ImGui::Separator       ();
-      ImGui::TextUnformatted ("VRAM statistics for game sessions are summarized at exit in logs/dxgi_budget.log");
+      ImGui::TextUnformatted ("游戏会话的显存统计信息在退出时汇总在 logs/dxgi_budget.log 中");
       ImGui::EndTooltip      ();
     }
 
@@ -1824,8 +1824,8 @@ SK::ControlPanel::D3D11::Draw (void)
       bool warn =
         config.render.dxgi.warn_if_vram_exceeds > 0.0f;
 
-      if (ImGui::Checkbox ( warn ? "Warn if Used VRAM Exceeds"
-                                 : "Warn if Useable VRAM is Low", &warn ))
+      if (ImGui::Checkbox ( warn ? "如果已用显存超出配额则发出警告"
+                                 : "如果可用显存不足时发出警告", &warn ))
       {
         if (warn) config.render.dxgi.warn_if_vram_exceeds = 95.0f;
         else      config.render.dxgi.warn_if_vram_exceeds =  0.0f;
@@ -1841,13 +1841,13 @@ SK::ControlPanel::D3D11::Draw (void)
         /// XXX: FIXME
         SK_ImGui::SliderFloatDeferred (
           "###VRAM_QUOTA", &config.render.dxgi.warn_if_vram_exceeds,
-                           &limit, 15.0f, 105.0f, "%2.2f%% of Available" );
+                           &limit, 15.0f, 105.0f, "%2.2f%% 可用" );
 
         if (config.render.dxgi.warned_low_vram)
         {
           ImGui::SameLine ();
 
-          if (ImGui::Button ("Reset Warning"))
+          if (ImGui::Button ("重置警告"))
           {
             config.render.dxgi.warned_low_vram = false;
           }
@@ -2095,7 +2095,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 void
 SK::ControlPanel::D3D11::TextureMenu (SK_TLS *pTLS)
 {
-  if (ImGui::BeginMenu ("Browse Texture Assets"))
+  if (ImGui::BeginMenu ("查看纹理资源"))
   {
     wchar_t wszPath [MAX_PATH + 2] = { };
 
@@ -2114,7 +2114,7 @@ SK::ControlPanel::D3D11::TextureMenu (SK_TLS *pTLS)
                               SK_D3D11_Textures->injectable_texture_bytes, Auto, pTLS
                                                  ).data () );
 
-    if ( ImGui::MenuItem ( "Injectable Textures", inj_view.data (), nullptr ) )
+    if ( ImGui::MenuItem ( "可注入纹理", inj_view.data (), nullptr ) )
     {
       wcscpy      (wszPath, SK_D3D11_res_root->c_str ());
       PathAppendW (wszPath, LR"(inject\textures)");
@@ -2128,7 +2128,7 @@ SK::ControlPanel::D3D11::TextureMenu (SK_TLS *pTLS)
                                SK_File_SizeToString (
                                  SK_D3D11_Textures->dumped_texture_bytes, Auto, pTLS
                                                     ).data () );
-       if ( ImGui::MenuItem ( "Dumped Textures", dump_view.data (), nullptr ) )
+       if ( ImGui::MenuItem ( "转存纹理", dump_view.data (), nullptr ) )
        {
          wcscpy      (wszPath, SK_D3D11_res_root->c_str ());
          PathAppendW (wszPath, LR"(dump\textures)");

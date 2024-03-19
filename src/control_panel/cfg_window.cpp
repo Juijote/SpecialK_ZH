@@ -450,7 +450,7 @@ SK::ControlPanel::Window::Draw (void)
 
       SK_ImGui_CursorBoundaryConfig ();
 
-      ImGui::Text     ("屏幕保护程序行为");
+      ImGui::Text     ("显示器保护程序行为");
       ImGui::TreePush ("");
 
       int screensaver_opt =

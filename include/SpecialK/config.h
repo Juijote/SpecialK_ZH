@@ -496,7 +496,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          sk_osd_insertion_keybind = {
       SK_Keybind {
-        "截屏并插入 Special K 的 OSD", L"F8",
+        "截图并插入 Special K 的 OSD", L"F8",
          false, false, false, VK_F8
       }, L"InsertOSD"
     };

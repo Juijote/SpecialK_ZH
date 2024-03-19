@@ -229,7 +229,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       }
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("通过关闭不需要的 API，可以减少应用程序启动时间以及与第三方软件的负面交互...");
+        ImGui::SetTooltip ("通过关闭不需要的 API，可以减少游戏程序启动时间以及与第三方软件的负面交互...");
 
       ImGui::Columns    ( 1 );
 
@@ -412,15 +412,15 @@ SK::ControlPanel::Compatibility::Draw (void)
       case 0:
         ImGui::Columns   (3);
 
-        DescribeRect (&game_window.actual.window, "窗口", "实际" );
-        DescribeRect (&game_window.actual.client, "客户端", "实际" );
+        DescribeRect (&game_window.actual.window, "Window", "Actual" );
+        DescribeRect (&game_window.actual.client, "Client", "Actual" );
 
         ImGui::Columns   (1);
         ImGui::Separator ( );
         ImGui::Columns   (3);
 
-        DescribeRect (&game_window.game.window,   "窗口", "游戏"   );
-        DescribeRect (&game_window.game.client,   "客户端", "游戏"   );
+        DescribeRect (&game_window.game.window,   "Window", "Game"   );
+        DescribeRect (&game_window.game.client,   "Client", "Game"   );
 
         ImGui::Columns   (1);
         ImGui::Separator ( );
@@ -429,8 +429,8 @@ SK::ControlPanel::Compatibility::Draw (void)
         GetClientRect (game_window.hWnd, &client);
         GetWindowRect (game_window.hWnd, &window);
 
-        DescribeRect  (&window,   "窗口", "获取窗口区域"   );
-        DescribeRect  (&client,   "客户端", "获取客户端区域"   );
+        DescribeRect  (&window,   "Window", "GetWindowRect"   );
+        DescribeRect  (&client,   "Client", "GetClientRect"   );
 
         ImGui::Columns   (1);
         break;
@@ -441,8 +441,8 @@ SK::ControlPanel::Compatibility::Draw (void)
         {
           std::string summary;
 
-          if ((dwStyle & WS_OVERLAPPED)   == WS_OVERLAPPED)   summary += "重叠, ";
-          if ((dwStyle & WS_POPUP)        == WS_POPUP)        summary += "弹出窗口, ";
+          if ((dwStyle & WS_OVERLAPPED)   == WS_OVERLAPPED)   summary += "Overlapped, ";
+          if ((dwStyle & WS_POPUP)        == WS_POPUP)        summary += "Popup, ";
           if ((dwStyle & WS_CHILD)        == WS_CHILD)        summary += "Child, ";
           if ((dwStyle & WS_MINIMIZE)     == WS_MINIMIZE)     summary += "Minimize, ";
           if ((dwStyle & WS_VISIBLE)      == WS_VISIBLE)      summary += "Visible, ";
@@ -470,7 +470,7 @@ SK::ControlPanel::Compatibility::Draw (void)
 
         ImGui::BeginGroup ();
         ImGui::Text      ( "App_Active   :" );
-        ImGui::Text      ( "Active HWND  :" );
+        ImGui::Text      ( "活动 Active HWND  :" );
         ImGui::Text      ( "Foreground   :" );
         ImGui::Text      ( "Input Focus  :" );
         ImGui::Text      ( "Game Window  :" );
@@ -578,7 +578,7 @@ SK::ControlPanel::Compatibility::Draw (void)
                             SK_ImGui_Cursor.idle ? "闲置" :
                                                    "无闲置",
                               SK_ImGui_Cursor.last_move);
-      ImGui::Text        (" 鼠标：在窗口中=%s, 追踪=%s%s 最后 WM_MOUSEMOVE=%d",
+      ImGui::Text        (" 鼠标是否在窗口中=%s, 追踪=%s%s 最后 WM_MOUSEMOVE=%d",
                                game_window.mouse.inside ? "是"       : "否",
                              game_window.mouse.tracking ? "是"       : "否",
                             game_window.mouse.can_track ? "," : " (不支持),",

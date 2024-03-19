@@ -1267,7 +1267,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
       {
         ImGui::Separator ();
 
-        if (ImGui::MenuItem ("编辑 Steam 应用程序清单"))
+        if (ImGui::MenuItem ("编辑 Steam 游戏程序清单"))
         {
           SK_ShellExecuteW ( HWND_DESKTOP,   L"打开",
                              L"notepad.exe", SK_Steam_GetApplicationManifestPath ().c_str (),

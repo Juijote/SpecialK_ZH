@@ -7039,9 +7039,9 @@ SK_ImGui_StageNextFrame (void)
 
     if (*szName != '\0')
     {
-      ImGui::Text            ("嗨~");                                                            ImGui::SameLine ();
+      ImGui::Text            ("你好，");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("发布及汉化请参阅 [设置 - 菜单 - 帮助]");                      ImGui::SameLine ();
+      ImGui::TextUnformatted (" 发布及汉化请参阅 [设置 - 菜单 - 帮助]");                      ImGui::SameLine ();
     }
     else
     {
