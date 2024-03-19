@@ -106,7 +106,7 @@ SK::ControlPanel::Notifications::Draw (void)
       ImGui::SameLine ();
 
       bool bConfigIndividual =
-        ImGui::TreeNode ("配置单独的通知");
+        ImGui::TreeNode ("设置单独的通知");
 
       if (bConfigIndividual)
       { ImGui::TreePop ();
@@ -131,7 +131,7 @@ SK::ControlPanel::Notifications::Draw (void)
 
               ImGui::SameLine ();
 
-              if (ImGui::Button ("配置"))
+              if (ImGui::Button ("设置"))
               {
                 SK_ImGui_CreateNotification (
                   str_id.c_str (), SK_ImGui_Toast::Other, nullptr, nullptr,

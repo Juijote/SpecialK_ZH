@@ -243,7 +243,7 @@ SK::ControlPanel::Compatibility::Draw (void)
           (                     SK_GL_OnD3D11 && !config.apis.OpenGL.hook_next     ))
       {
         ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, .7f, .3f, 1.f));
-        ImGui::BulletText     ("当前配置可能会导致 Special K 无法正常工作！");
+        ImGui::BulletText     ("当前设置可能会导致 Special K 无法正常工作！");
         ImGui::PopStyleColor  ();
 
         if (ImGui::IsItemHovered ())
@@ -578,7 +578,7 @@ SK::ControlPanel::Compatibility::Draw (void)
                             SK_ImGui_Cursor.idle ? "闲置" :
                                                    "无闲置",
                               SK_ImGui_Cursor.last_move);
-      ImGui::Text        (" 鼠标是否在窗口中=%s, 追踪=%s%s 最后 WM_MOUSEMOVE=%d",
+      ImGui::Text        ("鼠标是否在窗口中=%s, 追踪=%s%s 最后 WM_MOUSEMOVE=%d",
                                game_window.mouse.inside ? "是"       : "否",
                              game_window.mouse.tracking ? "是"       : "否",
                             game_window.mouse.can_track ? "," : " (不支持),",

@@ -952,7 +952,7 @@ void BasicInit (void)
   // Add a notification that will not go away until a user reads it...
   SK_ImGui_CreateNotification (
     "Notification.HelloWorld", SK_ImGui_Toast::Success,
-    "可以通过右键单击通知来配置通知。",
+    "可以通过右键单击通知来设置通知。",
     "Special K 通知系统初始化成功",
       25000, SK_ImGui_Toast::ShowCaption |
              SK_ImGui_Toast::ShowTitle   |
@@ -4091,7 +4091,7 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
                               "显存配额:\t%0.1f%% of Available; %ls"
                               "\r\n\r\n\t\t %ls "
                               "超出配额 %0.1f%%\t (%ls)\r\n\r\n "
-                              " 通过右键单击配置显存配额"
+                              " 通过右键单击设置显存配额"
                               " 显存规格", used.c_str (),
                     config.render.dxgi.warn_if_vram_exceeds,
                                     quota.c_str (), L"*", percent_over,

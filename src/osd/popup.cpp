@@ -867,7 +867,7 @@ SK_ImGui_DrawNotifications (void)
 
         if (ImGui::IsItemHovered ())
         {
-          ImGui::SetTooltip ("右键单击以配置此通知");
+          ImGui::SetTooltip ("右键单击以设置此通知");
         }
       }
     }

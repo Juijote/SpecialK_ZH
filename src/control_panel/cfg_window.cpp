@@ -424,7 +424,7 @@ SK::ControlPanel::Window::Draw (void)
           ImGui::Separator    ();
           ImGui::BulletText   ("大多数游戏将继续运行");
           ImGui::BulletText   ("禁用游戏内置的 Alt+Tab 静音功能");
-          ImGui::BulletText   ("请参阅“输入管理 | 启用/禁用设备”以配置后台行为");
+          ImGui::BulletText   ("请参阅“输入管理 | 启用/禁用设备”以设置后台行为");
           ImGui::EndTooltip   ();
         }
 

@@ -863,7 +863,7 @@ SK_WASAPI_GetChannelName (int channel_idx)
         break;
 
       default:
-        SK_LOG0 ( ( L" >> 未知的扬声器配置: %x <<", dwConfig ),
+        SK_LOG0 ( ( L" >> 未知的扬声器设置: %x <<", dwConfig ),
                     L"  WASAPI  " );
         break;
     }

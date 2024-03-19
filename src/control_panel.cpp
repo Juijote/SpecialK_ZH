@@ -800,7 +800,7 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K  (v ";
     title += SK_GetVersionStrA ();
-    title += ")[Juij 汉化测试]";//[2024-03-18]
+    title += ")[Juij 汉化] [2024-03-20]";
   }
 
   title += "  控制面板";
@@ -2200,7 +2200,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("右键单击“HDR 校准”以配置快捷键");
+      ImGui::SetTooltip ("右键单击“HDR 校准”以设置快捷键");
     }
   }
 
@@ -2982,7 +2982,7 @@ SK_NV_LatencyControlPanel (void)
       ImGui::Separator       ();
       ImGui::BulletText      ("在某些情况下，禁用原生 Reflex 并使用 SK 的实现可能会更好。");
       ImGui::BulletText      ("如果使用 SK 的延迟分析来量化 CPU / GPU 绑定状态和输入游戏设置\r\n\t"
-                              " 为了获得最佳性能，暂时禁用原生 Reflex 非常重要。");
+                              "为了获得最佳性能，暂时禁用原生 Reflex 非常重要。");
       ImGui::EndTooltip      ();
     }
 
@@ -3072,7 +3072,7 @@ SK_NV_GSYNCControlPanel ()
 
     if (ImGui::BeginPopup ("G-Sync 控制面板"))
     {
-      ImGui::TextUnformatted ("NVIDIA G-Sync 配置");
+      ImGui::TextUnformatted ("NVIDIA G-Sync 设置");
 
       ImGui::TreePush ("");
 
@@ -3232,7 +3232,7 @@ SK_ImGui_ControlPanel (void)
                                      nullptr, nullptr, SW_NORMAL );
             }
 
-            if (ImGui::MenuItem ("云配置", ""))
+            if (ImGui::MenuItem ("云设置", ""))
             {
               SK_ShellExecuteA ( nullptr, "explore",
                                    SK::SteamAPI::GetConfigDir ().c_str (),
@@ -4549,7 +4549,7 @@ SK_ImGui_ControlPanel (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::SetTooltip (
-                "为了获得最佳性能:\r\n\t"
+                " 为了获得最佳性能:\r\n\t"
                 "确保 Windows 游戏模式已打开，然后重启游戏。"
               );
             }
@@ -4996,7 +4996,7 @@ SK_ImGui_ControlPanel (void)
         ImGui::BeginTooltip    ();
         ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
         ImGui::SameLine        ();
-        ImGui::TextUnformatted ("右键配置 G-Sync / FastSync");
+        ImGui::TextUnformatted ("右键设置 G-Sync / FastSync");
 
         if (rb.gsync_state.capable && (! rb.gsync_state.maybe_active))
         {
@@ -5937,7 +5937,7 @@ SK_ImGui_ControlPanel (void)
                   ImGui::BulletText      ("NVIDIA Reflex 将设置为低延迟模式");
                 ImGui::TextColored     (ImVec4 (1.f, 1.f, .5f, 1.f), " " ICON_FA_MOUSE);
                 ImGui::SameLine        ();
-                ImGui::TextUnformatted ("右键单击以配置自动 VRR 行为");
+                ImGui::TextUnformatted ("右键单击以设置自动 VRR 行为");
                 ImGui::Separator       ();
                 ImGui::TextColored     (ImVec4 (.6f, .6f, 1.f, 1.f), ICON_FA_INFO_CIRCLE);
                 ImGui::SameLine        ();
@@ -6201,7 +6201,7 @@ SK_ImGui_ControlPanel (void)
     ImGui::Text         ("OSD 的高级图形扩展");
     ImGui::Separator    ();
     ImGui::BulletText   ("小组件是性能数据的图形表示");
-    ImGui::BulletText   ("右键单击小组件以访问其配置菜单");
+    ImGui::BulletText   ("右键单击小组件以访问其设置菜单");
     ImGui::EndTooltip   ();
   }
 
@@ -6382,7 +6382,7 @@ SK_ImGui_ControlPanel (void)
     if (rb.isHDRCapable ())
     {
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("请参阅 HDR 菜单来配置 HDR 截图格式和压缩设置。");
+        ImGui::SetTooltip ("请参阅 HDR 菜单来设置 HDR 截图格式和压缩设置。");
     }
 
     const bool bHasPlatformIntegration =
@@ -7040,11 +7040,11 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("你好，");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("插件发布及汉化请参阅 [设置 - 菜单 - 帮助]");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("插件发布及汉化请参阅 [控制面板 - 帮助 - 汉化更新] 或访问 https://juij.eu.org/#SpecialK");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("发布及汉化请参阅 [设置 - 菜单 - 帮助]");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("插件发布及汉化请参阅 [控制面板 - 帮助 - 汉化更新] 或访问 https://juij.eu.org/#SpecialK");                    ImGui::SameLine ();
     }
     ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "");                    ImGui::SameLine ();
     ImGui::TextUnformatted   ("");
@@ -7244,7 +7244,7 @@ SK_ImGui_StageNextFrame (void)
       ImGui::SameLine ();
     }
 
-    ImGui::TextUnformatted (  "打开 Special K 的配置菜单。 " );
+    ImGui::TextUnformatted (  "打开 Special K 的控制面板进行设置。 " );
 
     ImGui::SameLine (); ImGui::Spacing     ();
     ImGui::SameLine (); ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
@@ -7252,7 +7252,7 @@ SK_ImGui_StageNextFrame (void)
     ImGui::SameLine ();
     ImGui::TextColored  (ImVec4 (0.999f, 0.666f, 0.333f, 1.f), ICON_FA_INFO_CIRCLE);
     ImGui::SameLine ();
-    ImGui::TextUnformatted ("在 OSD 设置中配置此启动提示。");
+    ImGui::TextUnformatted ("在 OSD 设置中设置此启动提示。");
 
     ImGui::End             ( );
     ImGui::PopStyleColor   (2);

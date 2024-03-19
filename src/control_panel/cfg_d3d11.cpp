@@ -1411,7 +1411,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
             if (ImGui::BeginPopup ("D3D11_Debug_MessageMenu"))
             {
-              ImGui::Text ("调试消息配置");
+              ImGui::Text ("调试消息设置");
 
               ImGui::TreePush ("");
 
@@ -1801,13 +1801,13 @@ SK::ControlPanel::D3D11::Draw (void)
     if (ImGui::IsItemHovered ())
     {
       ImGui::BeginTooltip    ();
-      ImGui::TextUnformatted ("右键单击以配置显存配额或重置警告");
+      ImGui::TextUnformatted ("右键单击以设置显存配额或重置警告");
       ImGui::Separator       ();
       ImGui::TreePush        ("");
       ImGui::TextUnformatted ("显示的统计数据是游戏主动使用的图形内存（占用显存）与驱动程序可专用于游戏的显存（显存配额）。\r\n\r\n");
       ImGui::BulletText      ("这与所有当前的监控工具有很大不同......\r\n\r\n");
       ImGui::TreePush        ("");
-      ImGui::TextUnformatted ("例如，MSI Afterburner 可以测量系统范围的图形内存分配或每个进程的分配，具体取决于其配置方式，");
+      ImGui::TextUnformatted ("例如，MSI Afterburner 可以测量系统范围的图形内存分配或每个进程的分配，具体取决于其设置方式，");
       ImGui::TextUnformatted ("但无法测量占用显存，也不了解每个进程对显存的限制（配额）。\r\n\r\n");
       ImGui::TreePop         ();
       ImGui::TextUnformatted ("正确测量游戏的显存要求需要了解显存占用和每个进程的显存配额！\r\n");
@@ -2028,7 +2028,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
       ImGui::EndGroup        ();
 
       ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (0.95f, 0.95f, 0.45f, 1.0f));
-      ImGui::TextUnformatted ("显示输出配置");
+      ImGui::TextUnformatted ("显示输出设置");
       ImGui::PopStyleColor   ();
       ImGui::Separator       ();
 
@@ -2086,7 +2086,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 
       ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
       ImGui::SameLine        ();
-      ImGui::TextUnformatted ("右键单击配置全Ping / 窗口模式");
+      ImGui::TextUnformatted ("右键单击设置全Ping / 窗口模式");
       ImGui::EndTooltip      ();
     }
   }

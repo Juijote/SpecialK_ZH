@@ -879,7 +879,7 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::RadioButton ("无##XInputSlot", (int *)&config.input.gamepad.xinput.ui_slot, 4);
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ("配置菜单仅响应键盘/鼠标输入");
+          ImGui::SetTooltip ("设置菜单仅响应键盘/鼠标输入");
 
         ImGui::NextColumn ( );
 
@@ -1423,7 +1423,7 @@ SK::ControlPanel::Input::Draw (void)
                     ImGui::SameLine        ( );
                     ImGui::BeginGroup      ( );
                     ImGui::TextUnformatted ( " 关闭游戏手柄电源" );
-                    ImGui::TextUnformatted ( " 蓝牙配置" );
+                    ImGui::TextUnformatted ( " 蓝牙设置" );
                     ImGui::EndGroup        ( );
                     ImGui::EndTooltip      ( );
                   }
@@ -2093,7 +2093,7 @@ extern float SK_ImGui_PulseNav_Strength;
         ImGui::BeginTooltip ();
         ImGui::Text         ("禁用 RawInput 鼠标增量处理");
         ImGui::Separator    ();
-        ImGui::BulletText   ("在仅使用 DirectInput / RawInput 鼠标的游戏中，这可能会导致配置菜单无法使用。");
+        ImGui::BulletText   ("在仅使用 DirectInput / RawInput 鼠标的游戏中，这可能会导致设置菜单无法使用。");
         ImGui::EndTooltip   ();
       }
 
@@ -2162,7 +2162,7 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::Checkbox ("当没有指针可见时阻止输入", &config.input.ui.capture_hidden);  ImGui::SameLine ();
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("如果将指针移离配置 UI，通常会阻止鼠标操作");
+        ImGui::SetTooltip ("如果将指针移离设置 UI，通常会阻止鼠标操作");
 
       ImGui::EndGroup   (  );
 

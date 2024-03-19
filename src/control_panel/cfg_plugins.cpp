@@ -339,7 +339,7 @@ SK::ControlPanel::PlugIns::Draw (void)
       ImGui::EndGroup   ();
       ImGui::EndGroup   ();
 
-      if (ImGui::Button ("查看 ReShade 配置/日志"))
+      if (ImGui::Button ("查看 ReShade 设置/日志"))
       {
         std::wstring reshade_profile_path =
           std::wstring (SK_GetConfigPath ()) + LR"(\ReShade)";
@@ -368,10 +368,10 @@ SK::ControlPanel::PlugIns::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("所有 ReShade 配置、日志和预设都将使用游戏的安装目录");
+          ImGui::TextUnformatted ("所有 ReShade 设置、日志和预设都将使用游戏的安装目录");
           ImGui::Separator       ();
-          ImGui::BulletText      ("全局配置默认值/masters (Global/ReShade/{default_|master_}ReShade.ini) 将不起作用");
-          ImGui::BulletText      ("删除本地 ReShade.ini 文件以选择加入 SK 托管配置");
+          ImGui::BulletText      ("全局设置默认值/masters (Global/ReShade/{default_|master_}ReShade.ini) 将不起作用");
+          ImGui::BulletText      ("删除本地 ReShade.ini 文件以选择加入 SK 托管设置");
           ImGui::EndTooltip      ();
         }
       }
