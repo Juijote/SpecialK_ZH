@@ -101,9 +101,9 @@ SK_ImGui_SelectAudioSessionDlg (void)
                                                                       ImGuiWindowFlags_NoNavInputs);
     ImGui::BeginGroup ( );
     ImGui::Columns    (2);
-    ImGui::Text       ("Task");
+    ImGui::Text       ("任务");
     ImGui::NextColumn ();
-    ImGui::Text       ("Volume / Mute");
+    ImGui::Text       ("音量 / 静音");
     ImGui::NextColumn ();
     ImGui::Columns    (1);
 
@@ -176,7 +176,7 @@ SK_ImGui_SelectAudioSessionDlg (void)
 
           ImGui::PushItemWidth (ImGui::GetContentRegionAvail ().x - 37.0f);
           {
-            if (ImGui::SliderFloat (szLabel, &volume, 0.0f, 100.0f, "Volume: %03.1f%%"))
+            if (ImGui::SliderFloat (szLabel, &volume, 0.0f, 100.0f, "音量: %03.1f%%"))
               volume_ctl->SetMasterVolume (volume / 100.0f, nullptr);
           }
           ImGui::PopItemWidth  ( );
@@ -964,7 +964,7 @@ SK_ImGui_VolumeManager (void)
           {
             session_changed = true;
 
-            snprintf (channel_volumes [i].mute_button, 13, "静音##%u", i);
+            snprintf (channel_volumes [i].mute_button, 13, "JingYin##%u", i);
             snprintf (channel_volumes [i].slider_label, 7, "##vol%u",      i);
           }
 

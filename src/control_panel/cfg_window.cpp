@@ -85,7 +85,7 @@ SK::ControlPanel::Window::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("游戏窗口分辨率设置报错");
+          ImGui::Text         ("游戏窗口分辨率报告错误时尝试进行设置");
           ImGui::Separator    ();
           ImGui::BulletText   ("0x0 = 禁用");
           ImGui::BulletText   ("下次更改样式/位置设置时应用");
@@ -138,7 +138,7 @@ SK::ControlPanel::Window::Draw (void)
         bool pixel_perfect = ( config.window.offset.x.percent == 0.0 &&
                                config.window.offset.y.percent == 0.0 );
 
-        if (ImGui::Checkbox ("Pixel-Aligned Placement", &pixel_perfect))
+        if (ImGui::Checkbox ("像素对齐放置", &pixel_perfect))
         {
           if (pixel_perfect) {
             config.window.offset.x.absolute = 0;
@@ -203,10 +203,10 @@ SK::ControlPanel::Window::Draw (void)
                 fy_pos =
             sk::narrow_cast <float> (y_pos);
 
-          moved  = ImGui::SliderFloat ("X Offset##WindowPix",       &fx_pos, 0.0f, extent_x, "%.0f pixels"); ImGui::SameLine ();
-          moved |= ImGui::Checkbox    ("Right-aligned##WindowPix",  &right_align);
-          moved |= ImGui::SliderFloat ("Y Offset##WindowPix",       &fy_pos, 0.0f, extent_y, "%.0f pixels"); ImGui::SameLine ();
-          moved |= ImGui::Checkbox    ("Bottom-aligned##WindowPix", &bottom_align);
+          moved  = ImGui::SliderFloat ("X 偏移##WindowPix",       &fx_pos, 0.0f, extent_x, "%.0f 像素"); ImGui::SameLine ();
+          moved |= ImGui::Checkbox    ("右对齐##WindowPix",  &right_align);
+          moved |= ImGui::SliderFloat ("Y 偏移##WindowPix",       &fy_pos, 0.0f, extent_y, "%.0f 像素"); ImGui::SameLine ();
+          moved |= ImGui::Checkbox    ("底对齐##WindowPix", &bottom_align);
 
           if (moved)
           {

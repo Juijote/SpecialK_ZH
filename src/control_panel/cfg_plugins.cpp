@@ -124,7 +124,7 @@ SK_ImGui_PlugInSelector (iSK_INI* ini, const std::string& name, const wchar_t* p
     else
       ImGui::Text       ("默认情况下建议延迟加载顺序。");
     ImGui::Separator    ();
-    ImGui::BulletText   ("如果插件未显示或游戏报错，请尝试尽早加载。");
+    ImGui::BulletText   ("如果插件未显示或游戏报错，请尝试提前加载。");
     ImGui::BulletText   ("提前插件在 Special K 之前处理运行；如果提前加载，ReShade 会将其效果应用到 Special K 的 UI。");
     ImGui::BulletText   ("延缓插件具有未定义的加载顺序，但可能允许 ReShade 在某些顽固游戏中作为插件加载。");
     ImGui::EndTooltip   ();

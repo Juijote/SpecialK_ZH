@@ -492,12 +492,12 @@ SK::ControlPanel::Steam::Draw (void)
           ImGui::EndTooltip   ();
         }
 
-        ImGui::Checkbox   (" 尽早加载 Steam 叠加层  ",          &config.steam.preload_overlay);
+        ImGui::Checkbox   (" 提前加载 Steam 叠加层  ",          &config.steam.preload_overlay);
 
         if (ImGui::IsItemHovered ())
           ImGui::SetTooltip ("可以使 Steam 界面在原本无法正常工作的情况下正常工作。");
 
-        ImGui::Checkbox   (" 尽早加载 Steam 客户端 DLL  ",       &config.steam.preload_client);
+        ImGui::Checkbox   (" 提前加载 Steam 客户端 DLL  ",       &config.steam.preload_client);
 
         if (ImGui::IsItemHovered ())
           ImGui::SetTooltip ("可能会阻止某些基于 Steam DRM 的游戏在启动时挂起。");

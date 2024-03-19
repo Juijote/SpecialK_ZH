@@ -4221,7 +4221,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::EndMenu        ();
         }
 
-        if (ImGui::MenuItem ( "文档", "官方维基", &selected ))
+        if (ImGui::MenuItem ( "Wiki 文档", "官方维基", &selected ))
         {
           SK_SteamOverlay_GoToURL (
               "https://wiki.special-k.info", true
@@ -7039,16 +7039,16 @@ SK_ImGui_StageNextFrame (void)
 
     if (*szName != '\0')
     {
-      ImGui::Text            ("你好");                                                            ImGui::SameLine ();
+      ImGui::Text            ("嗨~");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("发布及汉化请参阅1");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("发布及汉化请参阅 [设置 - 菜单 - 帮助]");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("发布及汉化请参阅2");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("发布及汉化请参阅 [设置 - 菜单 - 帮助]");                    ImGui::SameLine ();
     }
-    ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "3");                    ImGui::SameLine ();
-    ImGui::TextUnformatted   ("4");
+    ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "");                    ImGui::SameLine ();
+    ImGui::TextUnformatted   ("");
 
     ImGui::Spacing ();
     ImGui::Spacing ();
