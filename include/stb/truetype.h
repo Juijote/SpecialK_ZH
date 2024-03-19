@@ -338,7 +338,7 @@ int main (int argc, char** argv)
   unsigned char* bitmap;
   int w, h, i, j, c = (argc > 1 ? atoi (argv[1]) : 'a'), s = (argc > 2 ? atoi (argv[2]) : 20);
 
-  fread (ttf_buffer, 1, 1 << 25, fopen (argc > 3 ? argv[3] : "c:/windows/fonts/msyh.ttf", "rb"));
+  fread (ttf_buffer, 1, 1 << 25, fopen (argc > 3 ? argv[3] : "c:/windows/fonts/simsun.ttf", "rb"));
 
   stbtt_InitFont (&font, ttf_buffer, stbtt_GetFontOffsetForIndex (ttf_buffer, 0));
   bitmap = stbtt_GetCodepointBitmap (&font, 0, stbtt_ScaleForPixelHeight (&font, s), c, &w, &h, 0, 0);
@@ -380,7 +380,7 @@ int main (int arg, char** argv)
   float scale, xpos = 2; // leave a little padding in case the character extends left
   char* text = "Heljo World!"; // intentionally misspelled to show 'lj' brokenness
 
-  fread (buffer, 1, 1000000, fopen ("c:/windows/fonts/msyh.ttf", "rb"));
+  fread (buffer, 1, 1000000, fopen ("c:/windows/fonts/simsun.ttf", "rb"));
   stbtt_InitFont (&font, buffer, 0);
 
   scale = stbtt_ScaleForPixelHeight (&font, 15);

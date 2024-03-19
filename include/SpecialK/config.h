@@ -278,11 +278,11 @@ struct sk_config_t
       struct font_params_s {
         std::string file   = "";
         float       size   = 7.0F;
-      } chinese      { "msyh.ttf",    18.0f },
-        cyrillic     { "msyh.ttf",    18.0f },
-        default_font { "msyh.ttf",    18.0f },
-        japanese     { "msyh.ttf",    18.0f },
-        korean       { "msyh.ttf",    18.0f };
+      } chinese      { "simsun.ttf",    18.0f },
+        cyrillic     { "simsun.ttf",    18.0f },
+        default_font { "simsun.ttf",    18.0f },
+        japanese     { "simsun.ttf",    18.0f },
+        korean       { "simsun.ttf",    18.0f };
     } font;
 
     // Per-game (mostly compatibility) settings
