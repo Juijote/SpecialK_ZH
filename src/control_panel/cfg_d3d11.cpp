@@ -99,7 +99,7 @@ SK_ImGui_DrawTexCache_Chart (void)
                      (ImVec4 (0.3f, 1.0f, 0.3f, 1.0f),
                        "%5u      Hits",              SK_D3D11_Textures->RedundantLoads_2D.load () );     ImGui::NextColumn ();
        if (SK_D3D11_Textures->Budget != 0)
-         ImGui::Text ( "Budget:  %7zu MiB  ",        SK_D3D11_Textures->Budget / 1048576ui64 );
+         ImGui::Text ( "配额:  %7zu MiB  ",        SK_D3D11_Textures->Budget / 1048576ui64 );
     ImGui::Columns   ( 1 );
 
     ImGui::Separator (   );
@@ -109,7 +109,7 @@ SK_ImGui_DrawTexCache_Chart (void)
       ImGui::TextColored
                      ( ImVec4 (1.0f, 0.3f, 0.3f, 1.60f),
                        "%5u   Misses",             SK_D3D11_Textures->CacheMisses_2D.load () );          ImGui::NextColumn ();
-     ImGui::Text   ( "Time:        %#7.01lf ms  ", SK_D3D11_Textures->RedundantTime_2D       );
+     ImGui::Text   ( "时间:        %#7.01lf ms  ", SK_D3D11_Textures->RedundantTime_2D       );
     ImGui::Columns   ( 1 );
 
     ImGui::Separator (   );
@@ -120,7 +120,7 @@ SK_ImGui_DrawTexCache_Chart (void)
                                                           (float)SK_D3D11_Textures->CacheMisses_2D, 0.4f ), 0.95f, 0.8f),
                        " %.2f  Hit/Miss",                (double)SK_D3D11_Textures->RedundantLoads_2D /
                                                          (double)SK_D3D11_Textures->CacheMisses_2D  );   ImGui::NextColumn ();
-      ImGui::Text    ( "Driver I/O: %7llu MiB  ",      SK_D3D11_Textures->RedundantData_2D >> 20ui64 );
+      ImGui::Text    ( "驱动 I/O: %7llu MiB  ",      SK_D3D11_Textures->RedundantData_2D >> 20ui64 );
 
     ImGui::Columns   ( 1 );
 
@@ -153,10 +153,10 @@ SK_ImGui_DrawTexCache_Chart (void)
     {
       ImGui::Separator ();
 
-      ImGui::Checkbox ("Measure residency", &config.textures.cache.residency_managemnt);
+      ImGui::Checkbox ("测量占用", &config.textures.cache.residency_managemnt);
 
       ImGui::SameLine ();
-      ImGui::Checkbox ("Vibrate on cache miss", &config.textures.cache.vibrate_on_miss);
+      ImGui::Checkbox ("缓存缺失时振动", &config.textures.cache.vibrate_on_miss);
 
       if (config.textures.cache.residency_managemnt)
       {
@@ -813,9 +813,9 @@ SK::ControlPanel::D3D11::Draw (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip ();
-            ImGui::Text         ("高性能窗口渲染");
+            ImGui::Text         ("高性能窗口绘制");
             ImGui::Separator    ();
-            ImGui::BulletText   ("使窗口模式的性能与全屏独占相同");
+            ImGui::BulletText   ("使窗口模式的性能与全Ping独占相同");
             ImGui::EndTooltip   ();
           }
         }
@@ -887,8 +887,8 @@ SK::ControlPanel::D3D11::Draw (void)
             if (rb.api != SK_RenderAPI::D3D12)
             {
               ImGui::Separator  ();
-              ImGui::BulletText ("启用后全屏独占将不起作用");
-              ImGui::BulletText ("全屏独占已过时");
+              ImGui::BulletText ("启用后全Ping独占将不起作用");
+              ImGui::BulletText ("全Ping独占已过时");
             }
             ImGui::EndTooltip   ();
           }
@@ -1220,7 +1220,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
     if (d3d11)
     {
-      if ((! indirect) && ImGui::Button (" 渲染模组工具 "))
+      if ((! indirect) && ImGui::Button (" 绘制模组工具 "))
       {
         show_shader_mod_dlg = (!show_shader_mod_dlg);
       }
@@ -1903,7 +1903,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 
       ImGui::BeginTooltip      ();
       ImGui::PushStyleColor    (ImGuiCol_Text, ImVec4 (0.95f, 0.95f, 0.45f, 1.0f));
-      ImGui::TextUnformatted   ("帧缓冲区和演示设置");
+      ImGui::TextUnformatted   ("FPS 缓冲区和演示设置");
       ImGui::PopStyleColor     ();
       ImGui::Separator         ();
 
@@ -2086,7 +2086,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 
       ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
       ImGui::SameLine        ();
-      ImGui::TextUnformatted ("右键单击配置全屏 / 窗口模式");
+      ImGui::TextUnformatted ("右键单击配置全Ping / 窗口模式");
       ImGui::EndTooltip      ();
     }
   }

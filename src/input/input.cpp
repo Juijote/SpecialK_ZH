@@ -672,7 +672,7 @@ SK_ImGui_ProcessGamepadStatusBar (bool bDraw)
 
         SK_ImGui_CreateNotification (
           label.c_str (), SK_ImGui_Toast::Warning,
-            SK_FormatString ("Gamepad %d's Battery Level Is Critically Low", gamepad.slot).c_str (),
+            SK_FormatString ("游戏手柄 %d 的电池电量严重不足", gamepad.slot).c_str (),
             nullptr, 10000UL, SK_ImGui_Toast::UseDuration |
                               SK_ImGui_Toast::ShowCaption |
                               SK_ImGui_Toast::ShowOnce
@@ -737,7 +737,7 @@ SK_ImGui_ProcessGamepadStatusBar (bool bDraw)
         ImGui::EndGroup ();
 
         if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("Click to turn off (if supported)");
+            ImGui::SetTooltip ("单击以关闭（如果支持）");
 
         if (ImGui::IsItemClicked ())
         {

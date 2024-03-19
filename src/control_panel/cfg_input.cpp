@@ -2281,10 +2281,10 @@ extern float SK_ImGui_PulseNav_Strength;
                           (ImGuiCol_Text, ImVec4 (0.75f, 0.75f, 0.75f, 1.f));
       ImGui::PushItemWidth(
         ImGui::GetFont ()->CalcTextSizeA (
-          1.0f, FLT_MAX, 0.0f, "如果启用“继续绘制”和游戏手柄输入, "
+          1.0f, FLT_MAX, 0.0f, "如果启用“继续运行”和游戏手柄输入, "
         ).x
       );
-      ImGui::TextWrapped  ("如果启用“继续绘制”和游戏手柄输入， "
+      ImGui::TextWrapped  ("如果启用“继续运行”和游戏手柄输入， "
                            "当其他应用程序使用键盘和鼠标时，您可以继续使用游戏手柄玩此游戏。");
       ImGui::PopItemWidth (  );
       ImGui::PopStyleColor(  );
@@ -2297,8 +2297,7 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::PushStyleColor
                           (ImGuiCol_Text, ImVec4 (0.825f, 0.825f, 0.825f, 1.f));
       ImGui::TextUnformatted
-                          ("这些设置结合使用效果最佳 "
-                           "“继续绘制”（请参阅​​窗口管理）");
+                          ("这些设置结合 “继续运行”（请参阅​​窗口管理） 使用效果最佳 ");
       ImGui::PopStyleColor(  );
       ImGui::EndGroup     (  );
 #if 0

@@ -77,10 +77,10 @@ struct frame_timing_s {
   NvU32 gpuFrameTimeUs        = 0;
 } static gpu_frame_times [64];
 
-static stage_timing_s sim      { "模拟"       }; static stage_timing_s render   { "Render Submit"   };
-static stage_timing_s specialk { "Special K"        }; static stage_timing_s present  { "Present"         };
-static stage_timing_s driver   { "驱动"           }; static stage_timing_s os       { "OS Render Queue" };
-static stage_timing_s gpu      { "GPU 绘制"       }; static stage_timing_s gpu_busy { "GPU Busy"        };
+static stage_timing_s sim      { "仿真"       }; static stage_timing_s render   { "绘制提交"   };
+static stage_timing_s specialk { "Special K"        }; static stage_timing_s present  { "当前"         };
+static stage_timing_s driver   { "驱动"           }; static stage_timing_s os       { "操作系统绘制队列" };
+static stage_timing_s gpu      { "GPU 绘制"       }; static stage_timing_s gpu_busy { "GPU 绘制"        };
 static stage_timing_s total    { "总 FPS 时间" };
 static stage_timing_s input    { "输入时长"        };
 

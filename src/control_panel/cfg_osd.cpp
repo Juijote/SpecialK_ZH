@@ -11,7 +11,7 @@ bool
 SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
 {
   const bool bRet =
-    ImGui::Checkbox ("在视频录制中显示 OSD", &config.render.osd.draw_in_vidcap);
+    ImGui::Checkbox ("在录制中显示 OSD", &config.render.osd.draw_in_vidcap);
 
   if (bRet)
   {
@@ -38,7 +38,7 @@ SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
       //
       SK_Thread_Create ( [](LPVOID toggle) -> DWORD
       {
-        SetCurrentThreadDescription (                 L"[SK] 视频录制 OSD 故障保护" );
+        SetCurrentThreadDescription (                 L"[SK] 录制 OSD 故障保护" );
         SetThreadPriority           ( SK_GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL );
         SetThreadPriorityBoost      ( SK_GetCurrentThread (), TRUE                          );
 
@@ -50,7 +50,7 @@ SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
         {
           *pToggle->dest = pToggle->original;
 
-          SK_ImGui_Warning (L"此游戏不支持在视频录制时禁用 OSD。");
+          SK_ImGui_Warning (L"此游戏不支持在录制时禁用 OSD。");
         }
 
         InterlockedExchange (&pToggle->testing, FALSE);
@@ -66,7 +66,7 @@ SK::ControlPanel::OSD::DrawVideoCaptureOptions (void)
   if (ImGui::IsItemHovered ())
   {
     ImGui::BeginTooltip    ();
-    ImGui::TextUnformatted ("控制在某些视频录制软件中的可见性");
+    ImGui::TextUnformatted ("控制在某些录制软件中的可见性");
     ImGui::Separator       ();
     ImGui::BulletText      ("桌面录制模式不受影响，仅游戏录制");
     ImGui::BulletText      ("默认启用以获得最大兼容性");

@@ -1990,7 +1990,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     ImGui::BeginTooltip ();
     ImGui::Text         ("在游戏窗口未覆盖的地方用背景填充游戏显示器");
     ImGui::Separator    ();
-    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全屏）");
+    ImGui::BulletText   ("为了获得最佳效果，请使用游戏的内部窗口模式选项（不是无边框/无边框全Ping）");
 
     if (display.mpo_planes <= 1)
     {
@@ -2224,7 +2224,7 @@ DisplayModeMenu (bool windowed)
   bool       force  = windowed ? config.display.force_windowed :
                                  config.display.force_fullscreen;
 
-  const char* modes = "窗口模式\0全屏模式\0\0";
+  const char* modes = "窗口模式\0全Ping模式\0\0";
 
 
   // Engaging fullscreen mode in OpenGL is more complicated than I want to
@@ -2829,7 +2829,7 @@ DisplayModeMenu (bool windowed)
     }
 
     modes =
-      "有边框\0无边框\0无边框全屏\0\0";
+      "有边框\0无边框\0无边框全Ping\0\0";
 
     static bool                     queued_changes = false;
     static std::stack <std::string> change_commands;
@@ -3024,13 +3024,13 @@ SK_NV_LatencyControlPanel (void)
 void
 SK_DXGI_FullscreenControlPanel (void)
 {
-  if (ImGui::BeginPopup ("DXGI 全屏控制面板"))
+  if (ImGui::BeginPopup ("DXGI 全Ping控制面板"))
   {
-    ImGui::TextUnformatted ("D3D11 / D3D12 全屏设置\t(Experimental)");
+    ImGui::TextUnformatted ("D3D11 / D3D12 全Ping设置\t(Experimental)");
 
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("启用假全屏模式", &config.render.dxgi.fake_fullscreen_mode))
+    if (ImGui::Checkbox ("启用假全Ping模式", &config.render.dxgi.fake_fullscreen_mode))
     {
       // "Fake Fullscreen" requires background rendering
       if (config.render.dxgi.fake_fullscreen_mode)
@@ -3042,7 +3042,7 @@ SK_DXGI_FullscreenControlPanel (void)
 
     if (ImGui::IsItemHovered ())
     {
-      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全屏。");
+      ImGui::SetTooltip ("对于等于或低于桌面的分辨率，请防止使用 TRUE 全Ping。");
     }
 
     if (ImGui::Checkbox ("允许 FPS 更改", &config.display.allow_refresh_change))
@@ -4825,7 +4825,7 @@ SK_ImGui_ControlPanel (void)
       bool bFakeFullscreen =
         rb.isFakeFullscreen ();
 
-      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全屏\" 分辨率"
+      if (ImGui::MenuItem ( bFakeFullscreen ? " \"全Ping\" 分辨率"
                                             : " 窗口分辨率      ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
@@ -4840,7 +4840,7 @@ SK_ImGui_ControlPanel (void)
 
     else
     {
-      if (ImGui::MenuItem (" 全屏分辨率 ", szResolution))
+      if (ImGui::MenuItem (" 全Ping分辨率 ", szResolution))
       {
         config.window.res.override.x = (int)((float)(client.right  - client.left) * g_fDPIScale);
         config.window.res.override.y = (int)((float)(client.bottom - client.top)  * g_fDPIScale);
@@ -4887,7 +4887,7 @@ SK_ImGui_ControlPanel (void)
     {
       if (SK_API_IsDXGIBased (rb.api))
       {
-        ImGui::OpenPopup         ("DXGI 全屏控制面板");
+        ImGui::OpenPopup         ("DXGI 全Ping控制面板");
         ImGui::SetNextWindowSize (ImVec2 (-1.0f, -1.0f), ImGuiCond_Always);
       }
     }
@@ -5120,7 +5120,7 @@ SK_ImGui_ControlPanel (void)
 
       ImGui::TextUnformatted ("抗锯齿:  ");                                          ImGui::SameLine ();
       ImGui::Checkbox        ("线条",             &config.imgui.render.antialias_lines);   ImGui::SameLine ();
-      ImGui::Checkbox        ("轮廓",          &config.imgui.render.antialias_contours);
+      ImGui::Checkbox        ("边缘",          &config.imgui.render.antialias_contours);
 
       ImGui::TreePop     ();
     }
@@ -5247,8 +5247,7 @@ SK_ImGui_ControlPanel (void)
                 ImGui::Spacing     (    );
                 ImGui::TreePush    ( "" );
                 ImGui::TextColored ( ImColor (1.f, 1.f, 1.f),
-                                       "\t窗口管理 > 输入/输出"
-                                       " 行为 > 继续绘制" );
+                                       "\t窗口管理 > 输入/输出行为 > 继续运行" );
                 ImGui::TreePop     (    );
                 ImGui::TreePop     (    );
               }
@@ -5319,7 +5318,7 @@ SK_ImGui_ControlPanel (void)
             ImGui::BeginTooltip    ( );
             ImGui::BeginGroup      ( );
             ImGui::TextColored     ( ImColor::HSV (0.18f, 0.88f, 0.94f),
-                                       "  按住 Ctrl 键单击" );
+                                       "按住 Ctrl 键单击" );
             ImGui::TextColored     ( ImColor::HSV (0.18f, 0.88f, 0.94f),
                                        "右键点击" );
             ImGui::EndGroup        ( );
@@ -7041,7 +7040,7 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("你好，");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted (" 发布及汉化请参阅 [设置 - 菜单 - 帮助]");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("插件发布及汉化请参阅 [设置 - 菜单 - 帮助]");                      ImGui::SameLine ();
     }
     else
     {
@@ -7180,7 +7179,7 @@ SK_ImGui_StageNextFrame (void)
     if (config.input.gamepad.xinput.ui_slot < 4)
     {
                                          ImGui::SameLine ();
-      ImGui::TextUnformatted ("  或  "); ImGui::SameLine ();
+      ImGui::TextUnformatted ("或"); ImGui::SameLine ();
 
       if (SK_ImGui_HasPlayStationController ())
       {
@@ -7245,7 +7244,7 @@ SK_ImGui_StageNextFrame (void)
       ImGui::SameLine ();
     }
 
-    ImGui::TextUnformatted (  " 打开 Special K 的配置菜单。 " );
+    ImGui::TextUnformatted (  "打开 Special K 的配置菜单。 " );
 
     ImGui::SameLine (); ImGui::Spacing     ();
     ImGui::SameLine (); ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
@@ -7605,17 +7604,17 @@ SK_ImGui_StageNextFrame (void)
                                                      0.925f * io.DisplaySize.y )
                                         );
 
-    if (! ImGui::IsPopupOpen ("全屏 / 窗口显示模式切换失败"))
+    if (! ImGui::IsPopupOpen ("全Ping / 窗口显示模式切换失败"))
     {
       SK_ImGui_WantExit = false;
       orig_nav_state    = nav_usable;
 
-      ImGui::OpenPopup ("全屏 / 窗口显示模式切换失败");
+      ImGui::OpenPopup ("全Ping / 窗口显示模式切换失败");
     }
   }
 
   if ( ImGui::BeginPopupModal (
-         "全屏 / 窗口显示模式切换失败",
+         "全Ping / 窗口显示模式切换失败",
            nullptr,
              ImGuiWindowFlags_AlwaysAutoResize |
              ImGuiWindowFlags_NoScrollbar      |

@@ -974,10 +974,10 @@ SK_ImGui_DrawGraph_FramePacing (void)
     {
       ImGui::BeginTooltip    ();
       ImGui::BeginGroup      ();
-      ImGui::TextUnformatted ("Present Latency:      ");
-      ImGui::TextUnformatted ("GPU Idle Time:        ");
-      ImGui::TextUnformatted ("Frame Time (Display): ");
-      ImGui::TextUnformatted ("Frame Time (CPU):     ");
+      ImGui::TextUnformatted ("当前延迟:      ");
+      ImGui::TextUnformatted ("GPU 空闲时间:        ");
+      ImGui::TextUnformatted ("Frame 时间（显示）: ");
+      ImGui::TextUnformatted ("Frame 时间（CPU):     ");
       ImGui::EndGroup        ();
       ImGui::SameLine        ();
       ImGui::BeginGroup      ();

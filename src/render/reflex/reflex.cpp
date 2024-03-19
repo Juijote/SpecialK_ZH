@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/nvapi.h>
@@ -793,13 +774,13 @@ SK_NV_AdaptiveSyncControl (void)
           else lastChecked = SK_timeGetTime () + 333;
         }
 
-        ImGui::Text       ("Adaptive Sync Status for %hs", SK_WideCharToUTF8 (rb.display_name).c_str ());
+        ImGui::Text       ("自适应同步状态 %hs", SK_WideCharToUTF8 (rb.display_name).c_str ());
         ImGui::Separator  ();
         ImGui::BeginGroup ();
-        ImGui::Text       ("Current State:");
+        ImGui::Text       ("当前状态:");
         if (! getAdaptiveSync.bDisableAdaptiveSync)
         {
-          ImGui::Text     ("Frame Splitting:");
+          ImGui::Text     ("Frame 分割:");
 
           if (getAdaptiveSync.maxFrameInterval != 0)
           {
@@ -851,8 +832,8 @@ SK_NV_AdaptiveSyncControl (void)
             toggle_split =
               ImGui::Button (
                 getAdaptiveSync.bDisableFrameSplitting == 0x0 ?
-                              "禁用 FPS 分割"       :
-                               "启用 FPS 分割" );
+                              "禁用 Frame 分割"       :
+                               "启用 Frame 分割" );
           }
         }
 

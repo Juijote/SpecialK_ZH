@@ -54,14 +54,14 @@ SK::ControlPanel::Window::Draw (void)
         }
 
         else
-          ImGui::SetTooltip ("选中全屏时无法更改");
+          ImGui::SetTooltip ("选中全Ping时无法更改");
       }
 
       if (borderless)
       {
         ImGui::SameLine ();
 
-        if ( ImGui::Checkbox ( "全屏无边框", &fullscreen ) )
+        if ( ImGui::Checkbox ( "全Ping无边框", &fullscreen ) )
         {
           config.window.fullscreen = fullscreen;
           SK_ImGui_AdjustCursor ();
@@ -121,7 +121,7 @@ SK::ControlPanel::Window::Draw (void)
           ImGui::BeginTooltip ();
           ImGui::Text         ("允许覆盖多个显示器的分辨率覆盖");
           ImGui::Separator    ();
-          ImGui::BulletText   ("全屏和居中模式不能在多显示器模式下使用");
+          ImGui::BulletText   ("全Ping和居中模式不能在多显示器模式下使用");
           ImGui::BulletText   ("这可能会带来性能损失，请注意演示模式");
           ImGui::EndTooltip   ();
         }
@@ -363,7 +363,7 @@ SK::ControlPanel::Window::Draw (void)
         ImGui::BulletText   ("在重叠的多显示器场景中启用 G-Sync /FreeSync /VRR");
         ImGui::Separator    ();
         if (! config.window.background_render)
-          ImGui::Text       (ICON_FA_INFO_CIRCLE " 启用多任务“继续绘制”模式");
+          ImGui::Text       (ICON_FA_INFO_CIRCLE " 启用多任务“继续运行”模式");
         ImGui::Text         (ICON_FA_EXCLAMATION_TRIANGLE " 高级功能：保持全局注入运行以提升拖动到游戏上的窗口");
         ImGui::EndTooltip   ();
       }
@@ -461,7 +461,7 @@ SK::ControlPanel::Window::Draw (void)
 
       if ( ImGui::Combo ( "###Screensaver_Behavior", &screensaver_opt,
                           "游戏默认\0"
-                          "在（无边框）全屏中禁用\0"
+                          "在（无边框）全Ping中禁用\0"
                           "运行时始终禁用\0\0",
                             3 ) )
       {
