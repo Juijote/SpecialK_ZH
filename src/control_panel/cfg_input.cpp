@@ -2297,7 +2297,7 @@ extern float SK_ImGui_PulseNav_Strength;
       ImGui::PushStyleColor
                           (ImGuiCol_Text, ImVec4 (0.825f, 0.825f, 0.825f, 1.f));
       ImGui::TextUnformatted
-                          ("这些设置结合 “继续运行”（请参阅​​窗口管理） 使用效果最佳 ");
+                          ("这些设置结合 “继续运行”使用效果最佳（请参阅​​窗口管理）");
       ImGui::PopStyleColor(  );
       ImGui::EndGroup     (  );
 #if 0
