@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -324,7 +305,7 @@ SK::ControlPanel::Input::Draw (void)
         for ( int i = 0 ; i < XUSER_MAX_COUNT ; ++i )
         {
           if (xinput.reads [i] > 0)
-            ImGui::Text     ("Gamepad %d     %lu", i, xinput.reads [i]);
+            ImGui::Text     ("游戏手柄 %d     %lu", i, xinput.reads [i]);
         }
         ImGui::EndGroup     ();
         ImGui::SameLine     ();
@@ -335,7 +316,7 @@ SK::ControlPanel::Input::Draw (void)
           {
             ImGui::TextColored ( ImVec4 (1.f, 0.f, 0.f, 1.f),
               config.input.gamepad.xinput.disable [i] ?
-                                      "  Disabled" : "" );
+                                      "  禁用" : "" );
           }
         }
         ImGui::EndGroup     ();
@@ -355,7 +336,7 @@ SK::ControlPanel::Input::Draw (void)
       if (ImGui::IsItemHovered ( ))
       {
         ImGui::BeginTooltip ( );
-        ImGui::Text ("Gamepad     %lu", wgi.reads);
+        ImGui::Text ("游戏手柄     %lu", wgi.reads);
         ImGui::EndTooltip ( );
       }
     }
@@ -384,11 +365,11 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::BeginTooltip ();
 
         if (hid.kbd_reads > 0)
-          ImGui::Text       ("Keyboard    %lu", hid.kbd_reads);
+          ImGui::Text       ("键盘    %lu", hid.kbd_reads);
         if (hid.mouse_reads > 0)
-          ImGui::Text       ("Mouse       %lu", hid.mouse_reads);
+          ImGui::Text       ("鼠标       %lu", hid.mouse_reads);
         if (hid.gamepad_reads > 0)
-          ImGui::Text       ("Gamepad     %lu", hid.gamepad_reads);
+          ImGui::Text       ("游戏手柄     %lu", hid.gamepad_reads);
 
         ImGui::EndTooltip   ();
       }
@@ -407,7 +388,7 @@ SK::ControlPanel::Input::Draw (void)
       {
         ImGui::BeginTooltip ();
         if (winmm.reads > 0)
-          ImGui::Text       ("Gamepad     %lu", winmm.reads);
+          ImGui::Text       ("游戏手柄     %lu", winmm.reads);
         ImGui::EndTooltip   ();
       }
     }
@@ -427,7 +408,7 @@ SK::ControlPanel::Input::Draw (void)
       {
         ImGui::BeginTooltip ();
         if (messagebus.reads > 0)
-          ImGui::Text       ("Gamepad     %lu", messagebus.reads);
+          ImGui::Text       ("游戏手柄     %lu", messagebus.reads);
         ImGui::EndTooltip   ();
       }
     }
@@ -447,13 +428,13 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::BeginTooltip ();
 
         if (di7.kbd_reads > 0) {
-          ImGui::Text       ("Keyboard  %lu", di7.kbd_reads);
+          ImGui::Text       ("键盘  %lu", di7.kbd_reads);
         }
         if (di7.mouse_reads > 0) {
-          ImGui::Text       ("Mouse     %lu", di7.mouse_reads);
+          ImGui::Text       ("鼠标     %lu", di7.mouse_reads);
         }
         if (di7.gamepad_reads > 0) {
-          ImGui::Text       ("Gamepad   %lu", di7.gamepad_reads);
+          ImGui::Text       ("游戏手柄   %lu", di7.gamepad_reads);
         };
 
         ImGui::EndTooltip   ();
@@ -474,13 +455,13 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::BeginTooltip ();
 
         if (di8.kbd_reads > 0) {
-          ImGui::Text       ("Keyboard  %lu", di8.kbd_reads);
+          ImGui::Text       ("键盘  %lu", di8.kbd_reads);
         }
         if (di8.mouse_reads > 0) {
-          ImGui::Text       ("Mouse     %lu", di8.mouse_reads);
+          ImGui::Text       ("鼠标     %lu", di8.mouse_reads);
         }
         if (di8.gamepad_reads > 0) {
-          ImGui::Text       ("Gamepad   %lu", di8.gamepad_reads);
+          ImGui::Text       ("游戏手柄   %lu", di8.gamepad_reads);
         };
 
         ImGui::EndTooltip   ();
@@ -500,9 +481,9 @@ SK::ControlPanel::Input::Draw (void)
       {
         ImGui::BeginTooltip ();
         if (winhook.mouse_reads > 0)
-          ImGui::Text ("Mouse      %lu", winhook.mouse_reads);
+          ImGui::Text ("鼠标      %lu", winhook.mouse_reads);
         if (winhook.kbd_reads > 0)
-          ImGui::Text ("Keyboard   %lu", winhook.kbd_reads);
+          ImGui::Text ("键盘   %lu", winhook.kbd_reads);
         ImGui::EndTooltip   ();
       }
     }
@@ -561,13 +542,13 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::BeginTooltip ();
                                                                              
         if (raw_input.kbd_reads > 0) {
-          ImGui::Text       ("Keyboard   %lu", raw_input.kbd_reads);
+          ImGui::Text       ("键盘   %lu", raw_input.kbd_reads);
         }
         if (raw_input.mouse_reads > 0) {
-          ImGui::Text       ("Mouse      %lu", raw_input.mouse_reads);
+          ImGui::Text       ("鼠标      %lu", raw_input.mouse_reads);
         }
         if (raw_input.gamepad_reads > 0) {
-          ImGui::Text       ("Gamepad    %lu", raw_input.gamepad_reads);
+          ImGui::Text       ("游戏手柄    %lu", raw_input.gamepad_reads);
         }
 
         ImGui::EndTooltip   ();
@@ -598,7 +579,7 @@ SK::ControlPanel::Input::Draw (void)
       ImGui::BeginGroup ();
 
       bool bIdleHideChange =
-      ImGui::Checkbox ( "Hide When Not Moved", &config.input.cursor.manage   );
+      ImGui::Checkbox ( "不移动时隐藏", &config.input.cursor.manage   );
       
       if ( bIdleHideChange )
         SK_ImGui_Cursor.force = sk_cursor_state::None;

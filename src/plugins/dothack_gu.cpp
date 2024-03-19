@@ -303,7 +303,7 @@ SK_DGPU_PlugInCfg (void)
   //extern LONG SK_D3D11_Resampler_GetRetiredCount    (void);
     extern LONG SK_D3D11_Resampler_GetErrorCount      (void);
 
-    bool tex_manage = ImGui::CollapsingHeader ("Texture Management##DotHack", ImGuiTreeNodeFlags_DefaultOpen);
+    bool tex_manage = ImGui::CollapsingHeader ("纹理管理##DotHack", ImGuiTreeNodeFlags_DefaultOpen);
 
     LONG jobs = SK_D3D11_Resampler_GetActiveJobCount () + SK_D3D11_Resampler_GetWaitingJobCount ();
 

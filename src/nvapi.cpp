@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -2056,10 +2037,10 @@ SK_NvAPI_SetAntiAliasingOverride ( const wchar_t** pwszPropertyList )
     {
       int result =
         MessageBox ( nullptr,
-                       L"Please run this game as Administrator to install Anti-Aliasing "
-                       L"compatibility bits\r\n\r\n"
-                       L"\t>> Pressing Cancel will disable AA Override",
-                         L"Insufficient User Privileges",
+                       L"请以管理员身份运行此游戏以安装抗锯齿功能 "
+                       L"兼容性 bits\r\n\r\n"
+                       L"\t>> 按“取消”将禁用 AA 叠加层",
+                         L"用户权限不足",
                            MB_OKCANCEL | MB_ICONASTERISK | MB_SETFOREGROUND |
                            MB_TOPMOST );
 
@@ -3790,10 +3771,10 @@ sk::NVAPI::SetSLIOverride    (       DLL_ROLE role,
     {
       int result =
         MessageBox ( nullptr,
-                       L"Please run this game as Administrator to install SLI "
-                       L"compatibility bits\r\n\r\n"
+                       L"请以管理员身份运行此游戏以安装 SLI "
+                       L"兼容性 bits\r\n\r\n"
                        L"\t>> Pressing Cancel will disable SLI Override",
-                         L"Insufficient User Privileges",
+                         L"用户权限不足",
                            MB_OKCANCEL | MB_ICONASTERISK | MB_SETFOREGROUND |
                            MB_TOPMOST );
 

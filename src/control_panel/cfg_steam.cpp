@@ -1161,7 +1161,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
       {
         if (! user_ex->BConnected ())
         {
-          if (ImGui::MenuItem ("Connect to Steam"))
+          if (ImGui::MenuItem ("连接到 Steam"))
           {
             SK_Steam_ConnectUserIfNeeded (user_ex->GetSteamID ());
           }
@@ -1180,7 +1180,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
             case SK::SteamAPI::k_ELogonStateNotLoggedOn:
             case SK::SteamAPI::k_ELogonStateLoggingOff:
             {
-              if (ImGui::MenuItem ("Log On"))
+              if (ImGui::MenuItem ("登录"))
               {
                 dwStartLogOnTime = SK::ControlPanel::current_time;
                 user_ex->LogOn (user_ex->GetSteamID ());
@@ -1190,7 +1190,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
               {
                 ImGui::Separator  (  );
                 ImGui::TreePush   ("");
-                ImGui::BulletText ("Logging off... (%3.1f seconds)",
+                ImGui::BulletText ("登出... (%3.1f 秒)",
                   double (SK::ControlPanel::current_time - dwStartLogOffTime)
                          / 1000.0
                 );
@@ -1201,7 +1201,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
             case SK::SteamAPI::k_ELogonStateLoggedOn:
             case SK::SteamAPI::k_ELogonStateLoggingOn:
             {
-              if (ImGui::MenuItem ("Log Off"))
+              if (ImGui::MenuItem ("登出"))
               {
                 dwStartLogOffTime = SK::ControlPanel::current_time;
                 user_ex->LogOff ();
@@ -1211,7 +1211,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
               {
                 ImGui::Separator  (  );
                 ImGui::TreePush   ("");
-                ImGui::BulletText ("Logging on... (%3.1f seconds)",
+                ImGui::BulletText ("登录中... (%3.1f 秒)",
                   double (SK::ControlPanel::current_time - dwStartLogOnTime)
                          / 1000.0
                 );
@@ -1267,13 +1267,13 @@ SK::ControlPanel::Steam::DrawMenu (void)
       {
         ImGui::Separator ();
 
-        if (ImGui::MenuItem ("Edit Steam Application Manifest"))
+        if (ImGui::MenuItem ("编辑 Steam 应用程序清单"))
         {
-          SK_ShellExecuteW ( HWND_DESKTOP,   L"OPEN",
+          SK_ShellExecuteW ( HWND_DESKTOP,   L"打开",
                              L"notepad.exe", SK_Steam_GetApplicationManifestPath ().c_str (),
                              nullptr,        SW_SHOWNORMAL );
 
-          SK_ImGui_Warning (L"Remember to close notepad, Steam will count the game as running until you do.");
+          SK_ImGui_Warning (L"请记住关闭记事本，Steam 会将游戏视为正在运行，直到你关闭为止。");
         }
       }
 
@@ -1328,7 +1328,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
             {
               if (! SK_SteamDB_ManifestFetch (get))
               {
-                SK_LOG0 ( ( L"Failed to fetch depot manifest info for (appid=%lu, depot=%lu)",
+                SK_LOG0 ( ( L"无法获取仓库清单信息r (appid=%lu, depot=%lu)",
                             SK::SteamAPI::AppID (), it.depot ),
                             L" Steam DB " );
               }
@@ -1467,7 +1467,7 @@ SK::ControlPanel::Steam::DrawMenu (void)
 
         bool selected = false;
 
-        if (ImGui::MenuItem ("Refresh Patch List", "", &selected))
+        if (ImGui::MenuItem ("刷新补丁列表", "", &selected))
           InitializeSteamDepots ();
 
         ImGui::EndMenu (); // Steam Unroll

@@ -1184,7 +1184,7 @@ SK_Yakuza0_PlugInCfg (void)
     }
 
     if ((! yakuza_cant_count) &&
-        ImGui::CollapsingHeader ("Texture Management"))
+        ImGui::CollapsingHeader ("纹理管理"))
     {
       static bool tex_changed = false;
 

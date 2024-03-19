@@ -477,7 +477,7 @@ SK_YS8_ControlPanel (void)
     bool changed = false;
 
     const bool tex_manage =
-      ImGui::CollapsingHeader ("Texture Management##Ys8", ImGuiTreeNodeFlags_DefaultOpen);
+      ImGui::CollapsingHeader ("纹理管理##Ys8", ImGuiTreeNodeFlags_DefaultOpen);
 
     const LONG jobs =
       SK_D3D11_Resampler_GetActiveJobCount () + SK_D3D11_Resampler_GetWaitingJobCount ();

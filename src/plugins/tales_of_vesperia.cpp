@@ -574,7 +574,7 @@ SK_TVFix_PlugInCfg (void)
     ImGui::BeginGroup ();
 
     const bool tex_manage =
-      ImGui::CollapsingHeader ("Texture Management##ToV", ImGuiTreeNodeFlags_DefaultOpen);
+      ImGui::CollapsingHeader ("纹理管理##ToV", ImGuiTreeNodeFlags_DefaultOpen);
 
     bool changed = false;
 

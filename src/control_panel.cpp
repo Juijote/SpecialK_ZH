@@ -1617,7 +1617,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
       auto mode_orig = mode;
 
-      if ( ImGui::Combo ( "模式", (int *)&mode,
+      if ( ImGui::Combo ( "Mode", (int *)&mode,
                                   " 空间动态\0 空间静态\0 空间动态 2x2\0"
                                   " 空间静态 2x2\0 时态\0\0" ) )
       {
@@ -1907,7 +1907,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   ImGui::BeginGroup  ();
   ImGui::Text        ("MPO 平面: ");
   ImGui::Text        ("硬件调度: ");
-  ImGui::Text        ("硬件复制队列: ");
+  ImGui::Text        ("硬件绘制队列: ");
   ImGui::EndGroup    ();
   ImGui::SameLine    ();
   ImGui::BeginGroup  ();
@@ -4773,7 +4773,7 @@ SK_ImGui_ControlPanel (void)
                ( hdr_out ? "     (HDR)"
                          : "" )      );
 
-      if (ImGui::MenuItem (" Framebuffer Resolution",
+      if (ImGui::MenuItem (" FPS 缓冲分辨率",
                                        szResolution))
       {
         config.window.res.override.x =
@@ -5759,7 +5759,7 @@ SK_ImGui_ControlPanel (void)
                 szModeList = szDLSSGOnly;
             }
 
-            if (ImGui::Combo ("模式", &mode, szModeList))
+            if (ImGui::Combo ("Mode", &mode, szModeList))
             {
               struct vsync_prefs_s {
                 int present_interval = config.render.framerate.present_interval == 0 ? -1 :
@@ -5925,24 +5925,24 @@ SK_ImGui_ControlPanel (void)
               if (ImGui::IsItemHovered ())
               {
                 ImGui::BeginTooltip    ();
-                ImGui::TextUnformatted ("The Framerate Limiter Self-Optimizes When VRR is Detected");
+                ImGui::TextUnformatted ("检测到 VRR 时 FPS 限制器会自我优化");
                 ImGui::Separator       ();
-                ImGui::BulletText      ("Limit will be set lower than refresh to remove 1 frame of latency");
-                ImGui::BulletText      ("Games will be prevented from using 1/2, 1/3 or 1/4 Refresh VSYNC");
+                ImGui::BulletText      ("限制将设置为低于刷新以消除 1 FPS 延迟");
+                ImGui::BulletText      ("将阻止游戏使用 1/2、1/3 或 1/4 刷新 VSYNC");
                 if (config.render.framerate.auto_low_latency.policy.ultra_low_latency)
                 {
-                  ImGui::BulletText    ("NVIDIA Reflex will be set to Low Latency + Boost mode");
-                  ImGui::BulletText    ("Framerate limiter mode will be set to VRR Optimized");
+                  ImGui::BulletText    ("NVIDIA Reflex 将设置为低延迟 + 提升 模式");
+                  ImGui::BulletText    ("FPS 限制器模式将设置为 VRR 优化");
                 }
                 else
-                  ImGui::BulletText      ("NVIDIA Reflex will be set to Low Latency mode");
+                  ImGui::BulletText      ("NVIDIA Reflex 将设置为低延迟模式");
                 ImGui::TextColored     (ImVec4 (1.f, 1.f, .5f, 1.f), " " ICON_FA_MOUSE);
                 ImGui::SameLine        ();
-                ImGui::TextUnformatted ("Right-click to configure Auto VRR behavior");
+                ImGui::TextUnformatted ("右键单击以配置自动 VRR 行为");
                 ImGui::Separator       ();
                 ImGui::TextColored     (ImVec4 (.6f, .6f, 1.f, 1.f), ICON_FA_INFO_CIRCLE);
                 ImGui::SameLine        ();
-                ImGui::TextUnformatted ("This option turns itself off and displays green after optimizing the framerate limiter");
+                ImGui::TextUnformatted ("优化 FPS 限制器后，此选项会自行关闭并显示绿色");
                 ImGui::EndTooltip      ();
               }
 
@@ -5953,16 +5953,16 @@ SK_ImGui_ControlPanel (void)
                 bool vrr_changed = false;
 
                 vrr_changed |=
-                  ImGui::Checkbox ("Enable By Default", &config.render.framerate.auto_low_latency.policy.global_opt);
+                  ImGui::Checkbox ("默认启用", &config.render.framerate.auto_low_latency.policy.global_opt);
 
                 if (ImGui::IsItemHovered ())
-                  ImGui::SetTooltip ("Controls whether games automatically use this feature");
+                  ImGui::SetTooltip ("控制游戏是否自动使用此功能");
 
                 vrr_changed |=
                   ImGui::Checkbox ("Ultra Low-Latency", &config.render.framerate.auto_low_latency.policy.ultra_low_latency);
 
                 if (ImGui::IsItemHovered ())
-                  ImGui::SetTooltip ("Aggressively favor low-latency even if it worsens frame pacing");
+                  ImGui::SetTooltip ("积极支持低延迟，即使它会破坏 FPS 节奏");
 
                 // Turn on Auto-Low Latency after making any changes
                 if (vrr_changed)

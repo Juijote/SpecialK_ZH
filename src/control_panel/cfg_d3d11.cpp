@@ -78,9 +78,9 @@ SK_ImGui_DrawTexCache_Chart (void)
     ImGui::Separator (   );
     ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::Columns   ( 3 );
-      ImGui::Text    ( "          尺寸" );                                                                 ImGui::NextColumn ();
-      ImGui::Text    ( "      活动" );                                                                 ImGui::NextColumn ();
-      ImGui::Text    ( "       保存" );
+      ImGui::Text    ( "          大小" );                                                                 ImGui::NextColumn ();
+      ImGui::Text    ( "      使用" );                                                                 ImGui::NextColumn ();
+      ImGui::Text    ( "       缓存" );
     ImGui::Columns   ( 1 );
     ImGui::PopStyleColor
                      (   );
@@ -805,10 +805,10 @@ SK::ControlPanel::D3D11::Draw (void)
       if (! indirect)
       {
         if (d3d12)
-          ImGui::Checkbox   ("D3D12 中的强制复制丢弃", &config.render.framerate.flip_discard);
+          ImGui::Checkbox   ("D3D12 中的强制绘制丢弃", &config.render.framerate.flip_discard);
         else
         {
-          ImGui::Checkbox   ("使用复制模型演示", &config.render.framerate.flip_discard);
+          ImGui::Checkbox   ("使用绘制模型演示", &config.render.framerate.flip_discard);
 
           if (ImGui::IsItemHovered ())
           {
@@ -1045,15 +1045,15 @@ SK::ControlPanel::D3D11::Draw (void)
       ImGui::TreePop  ();
     }
 
-    if (d3d11 && (! indirect) && ImGui::CollapsingHeader ("Texture Management"))
+    if (d3d11 && (! indirect) && ImGui::CollapsingHeader ("纹理管理"))
     {
       ImGui::TreePush ("");
-      ImGui::Checkbox ("Enable Texture Caching", &config.textures.d3d11.cache);
+      ImGui::Checkbox ("启用纹理缓存", &config.textures.d3d11.cache);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    ();
-        ImGui::TextUnformatted ("Reduces Driver Memory Management Overhead in Games that Stream Textures");
+        ImGui::TextUnformatted ("减少流纹理游戏中的驱动程序内存管理开销");
 
         static bool orig_cache = config.textures.d3d11.cache;
 
@@ -1161,7 +1161,7 @@ SK::ControlPanel::D3D11::Draw (void)
         ImGui::Spacing  ();
         ImGui::SameLine ();
 
-        ImGui::Checkbox ("Ignore Textures Without Mipmaps", &config.textures.cache.ignore_nonmipped);
+        ImGui::Checkbox ("忽略没有纹理贴图的纹理", &config.textures.cache.ignore_nonmipped);
 
         if (ImGui::IsItemHovered ())
           ImGui::SetTooltip ("Important Compatibility Setting for Some Games (e.g. The Witcher 3)");
@@ -1173,10 +1173,10 @@ SK::ControlPanel::D3D11::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-          ImGui::Text         ("Enable Texture Dumping and Injection in Unity-based Games");
+          ImGui::Text         ("在基于 Unity 的游戏中启用纹理转存和注入");
           ImGui::Separator    ();
-          ImGui::BulletText   ("May cause degraded performance.");
-          ImGui::BulletText   ("Try to leave this off unless textures are missing from the mod tools.");
+          ImGui::BulletText   ("可能会导致性能下降。");
+          ImGui::BulletText   ("尝试将其关闭，除非模组工具中缺少纹理。");
           ImGui::EndTooltip   ();
         }
       }
@@ -1801,7 +1801,7 @@ SK::ControlPanel::D3D11::Draw (void)
     if (ImGui::IsItemHovered ())
     {
       ImGui::BeginTooltip    ();
-      ImGui::TextUnformatted ("Right-click to Configure VRAM Quotas or Reset Warnings");
+      ImGui::TextUnformatted ("右键单击以配置显存配额或重置警告");
       ImGui::Separator       ();
       ImGui::TreePush        ("");
       ImGui::TextUnformatted ("The statistics shown are graphics memory actively used by the GAME (Resident VRAM) vs. VRAM the driver can dedicate to the GAME (VRAM Budget).\r\n\r\n");
@@ -2086,7 +2086,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 
       ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
       ImGui::SameLine        ();
-      ImGui::TextUnformatted ("Right-click to configure Fullscreen / Windowed Mode");
+      ImGui::TextUnformatted ("右键单击配置全屏 / 窗口模式");
       ImGui::EndTooltip      ();
     }
   }

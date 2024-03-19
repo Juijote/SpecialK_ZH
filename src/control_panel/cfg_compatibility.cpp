@@ -22,9 +22,9 @@ SK::ControlPanel::Compatibility::Draw (void)
     if (ImGui::CollapsingHeader ("第三方软件"))
     {
       ImGui::TreePush ("");
-      ImGui::Checkbox     ("Disable GeForce Experience and NVIDIA Shield", &config.compatibility.disable_nv_bloat);
+      ImGui::Checkbox     ("禁用 GeForce Experience 和 NVIDIA Shield", &config.compatibility.disable_nv_bloat);
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("May improve software compatibility, but disables ShadowPlay, couch co-op and various Shield-related functionality.");
+        ImGui::SetTooltip ("可能会提高软件兼容性，但会禁用 ShadowPlay 和各种与 Shield 相关的功能。");
       ImGui::TreePop  ();
     }
 
@@ -173,11 +173,11 @@ SK::ControlPanel::Compatibility::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip ();
-            ImGui::TextColored (ImColor (235, 235, 235), "Requires Third-Party Plug-In:");
+            ImGui::TextColored (ImColor (235, 235, 235), "需要第三方插件:");
             ImGui::SameLine    ();
             ImGui::TextColored (ImColor (255, 255, 0),   "dgVoodoo2");
             ImGui::Separator   ();
-            ImGui::BulletText  ("Please install this to: '%s'", dgvoodoo2_install_path.c_str ());
+            ImGui::BulletText  ("请将其安装到: '%s'", dgvoodoo2_install_path.c_str ());
           ImGui::EndTooltip   ();
         }
       };
@@ -215,7 +215,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       ImGui::NextColumn (  );
 
       // The active API will be re-enabled immediately
-      if (ImGui::Button (" Disable All But the Active API "))
+      if (ImGui::Button (" 禁用除活动 API 之外的所有 API "))
       {
         config.apis.d3d9ex.hook_next     = false; config.apis.d3d9.hook_next       = false;
         config.apis.dxgi.d3d11.hook_next = false; config.apis.dxgi.d3d12.hook_next = false;
@@ -229,7 +229,7 @@ SK::ControlPanel::Compatibility::Draw (void)
       }
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Application start time and negative interactions with third-party software can be reduced by turning off APIs that are not needed...");
+        ImGui::SetTooltip ("通过关闭不需要的 API，可以减少应用程序启动时间以及与第三方软件的负面交互...");
 
       ImGui::Columns    ( 1 );
 
@@ -243,20 +243,20 @@ SK::ControlPanel::Compatibility::Draw (void)
           (                     SK_GL_OnD3D11 && !config.apis.OpenGL.hook_next     ))
       {
         ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, .7f, .3f, 1.f));
-        ImGui::BulletText     ("The current configuration may prevent Special K from working properly!");
+        ImGui::BulletText     ("当前配置可能会导致 Special K 无法正常工作！");
         ImGui::PopStyleColor  ();
 
         if (ImGui::IsItemHovered ())
         {
           if      (SK_GL_OnD3D11 && !config.apis.OpenGL.hook_next)
-            ImGui::SetTooltip ("OpenGL-IK is currently being used, but OpenGL has been disabled for future launches!\n"
-                                "This may prevent Special K from working properly on the next launch.");
+            ImGui::SetTooltip ("目前正在使用 OpenGL-IK，但 OpenGL 已在将来的发布中被禁用！\n"
+                                "这可能会导致 Special K 在下次启动时无法正常工作。");
           else if (SK_GL_OnD3D11 && !config.apis.dxgi.d3d11.hook_next)
-            ImGui::SetTooltip ("OpenGL-IK is currently being used, but Direct3D 11 has been disabled for future launches!\n"
-                                "This may cause Special K to fall back on OpenGL on the next launch.");
+            ImGui::SetTooltip ("目前正在使用 OpenGL-IK，但 Direct3D 11 已在未来发布时禁用！\n"
+                                "这可能会导致 Special K 在下次启动时退回到 OpenGL。");
           else
-            ImGui::SetTooltip ("The render API that is currently being used by the game has been disabled!\n"
-                                "This may prevent Special K from working properly on the next launch.");
+            ImGui::SetTooltip ("游戏当前使用的渲染 API 已被禁用！\n"
+                                "这可能会导致 Special K 在下次启动时无法正常工作。");
         }
       }
 
@@ -271,17 +271,17 @@ SK::ControlPanel::Compatibility::Draw (void)
       ImGui::TreePush ("");
       ImGui::Checkbox ("NvAPI  ", &config.apis.NvAPI.enable);
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("NVIDIA's hardware monitoring API, needed for the GPU stats on the OSD. Turn off only if your driver is buggy.");
+        ImGui::SetTooltip ("NVIDIA 的硬件监控 API，需要在 OSD 上显示 GPU 统计信息，仅当驱动程序存在漏洞时才关闭。");
 
       ImGui::SameLine ();
       ImGui::Checkbox ("ADL   ",   &config.apis.ADL.enable);
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("AMD's hardware monitoring API, needed for the GPU stats on the OSD. Turn off only if your driver is buggy.");
+        ImGui::SetTooltip ("AMD 的硬件监控 API，需要在 OSD 上显示 GPU 统计信息，仅当驱动程序存在漏洞时才关闭。");
 
       ImGui::SameLine ();
       ImGui::Checkbox ("D3DKMT",   &config.apis.D3DKMT.enable_perfdata);
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Microsofts's hardware monitoring API, needed for the GPU stats on the OSD to supplement missing data from NvAPI or ADL. On some drivers, this may cause performance issues.");
+        ImGui::SetTooltip ("微软的硬件监控 API，需要 OSD 上的 GPU 统计数据来补充 NvAPI 或 ADL 中缺失的数据，在某些驱动程序上，这可能会导致性能问题。");
 
       ImGui::TreePop  ();
     }
@@ -294,20 +294,20 @@ SK::ControlPanel::Compatibility::Draw (void)
     {
       ImGui::TreePush   ("");
       ImGui::BeginGroup (  );
-      ImGui::Checkbox   ("Enable Crash Handler",          &config.system.handle_crashes);
+      ImGui::Checkbox   ("启用崩溃处理程序",          &config.system.handle_crashes);
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("Play Metal Gear Solid Alert Sound and Log Crashes in logs/crash.log");
+        ImGui::SetTooltip ("在 logs/crash.log 中播放《合金装备》警报声和崩溃日志");
 
-      ImGui::Checkbox  ("ReHook LoadLibrary",             &config.compatibility.rehook_loadlibrary);
+      ImGui::Checkbox  ("ReHook 加载库",             &config.compatibility.rehook_loadlibrary);
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ();
-        ImGui::Text         ("Keep LoadLibrary Hook at Front of Hook Chain");
+        ImGui::Text         ("将 LoadLibrary 钩保持在钩链的前面");
         ImGui::Separator    ();
-        ImGui::BulletText   ("Improves Debug Log Accuracy");
-        ImGui::BulletText   ("Third-Party Software May Deadlock Game at Startup if Enabled");
+        ImGui::BulletText   ("提高调试日志的准确性");
+        ImGui::BulletText   ("如果启用，第三方软件可能会在启动时导致游戏锁死");
         ImGui::EndTooltip   ();
       }
 

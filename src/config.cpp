@@ -1135,9 +1135,9 @@ SK_LoadConfig (const std::wstring& name)
         SK_RunOnce (
           SK_ImGui_WarningWithTitle (
             SK_FormatStringW (
-              L"Special K Requires 5+ MiB of Free Storage on Drive %hc:\\ \t ( %ws )",
+              L"Special K 磁盘上需要 5+ MiB 的可用存储空间 %hc:\\ \t ( %ws )",
                 ('A' + (char)uiDriveNum), wszStartupDir ).c_str (),
-              L"Insufficient Storage"
+              L"存储空间不足"
           )
         );
 
@@ -1778,8 +1778,8 @@ auto DeclKeybind =
 
     ConfigEntry (render.d3d9.force_d3d9ex,               L"Force D3D9Ex Context",                                      dll_ini,         L"Render.D3D9",           L"ForceD3D9Ex"),
     ConfigEntry (render.d3d9.impure,                     L"Force PURE device off",                                     dll_ini,         L"Render.D3D9",           L"ForceImpure"),
-    ConfigEntry (render.d3d9.enable_texture_mods,        L"Enable Texture Modding Support",                            dll_ini,         L"Render.D3D9",           L"EnableTextureMods"),
-    ConfigEntry (render.d3d9.enable_flipex,              L"Enable D3D9Ex FlipEx SwapEffect",                           dll_ini,         L"Render.D3D9",           L"EnableFlipEx"),
+    ConfigEntry (render.d3d9.enable_texture_mods,        L"启用纹理修改支持",                            dll_ini,         L"Render.D3D9",           L"EnableTextureMods"),
+    ConfigEntry (render.d3d9.enable_flipex,              L"启用 D3D9Ex FlipEx 交换效应",                           dll_ini,         L"Render.D3D9",           L"EnableFlipEx"),
     ConfigEntry (render.d3d9.use_d3d9on12,               L"Use D3D9On12 instead of normal driver",                     dll_ini,         L"Render.D3D9",           L"UseD3D9On12"),
 
 
@@ -1851,8 +1851,8 @@ auto DeclKeybind =
     ConfigEntry (texture.cache.min_size,                 L"Minimum Data Size to Evict",                                dll_ini,         L"Textures.Cache",        L"MinSizeInMiB"),
     ConfigEntry (texture.cache.max_size,                 L"Maximum Data Size to Evict",                                dll_ini,         L"Textures.Cache",        L"MaxSizeInMiB"),
 
-    ConfigEntry (texture.cache.ignore_non_mipped,        L"Ignore textures without mipmaps?",                          dll_ini,         L"Textures.Cache",        L"IgnoreNonMipmapped"),
-    ConfigEntry (texture.cache.allow_staging,            L"Enable texture caching/dumping/injecting staged textures",  dll_ini,         L"Textures.Cache",        L"AllowStaging"),
+    ConfigEntry (texture.cache.ignore_non_mipped,        L"忽略没有纹理贴图的纹理?",                          dll_ini,         L"Textures.Cache",        L"IgnoreNonMipmapped"),
+    ConfigEntry (texture.cache.allow_staging,            L"启用纹理缓存/转存/注入暂存纹理",  dll_ini,         L"Textures.Cache",        L"AllowStaging"),
     ConfigEntry (texture.cache.allow_unsafe_refs,        L"For games with broken resource reference counting, allow"
                                                          L" textures to be cached anyway (needed for injection).",     dll_ini,         L"Textures.Cache",        L"AllowUnsafeRefCounting"),
     ConfigEntry (texture.cache.manage_residency,         L"Actively manage D3D11 teture residency",                    dll_ini,         L"Textures.Cache",        L"ManageResidency"),

@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/control_panel/plugins.h>
@@ -75,7 +56,7 @@ void
 SK_ImGui_PlugInDisclaimer (void)
 {
   ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (0.15f, 0.95f, 0.98f).Value);
-  ImGui::TextWrapped    ("If you run into problems with a Plug-In, press and hold Ctrl + Shift at game startup to disable them.");
+  ImGui::TextWrapped    ("如果遇到插件问题，请在游戏启动时按住 Ctrl + Shift 以禁用它们。");
   ImGui::PopStyleColor  ();
 }
 
@@ -91,7 +72,7 @@ SK_ImGui_PlugInSelector (iSK_INI* ini, const std::string& name, const wchar_t* p
     return false;
 
   std::string hash_name  = name + "##PlugIn";
-  std::string hash_load  = "Load Order##";
+  std::string hash_load  = "加载列表##";
               hash_load += name;
 
   float cursor_x =
@@ -108,7 +89,7 @@ SK_ImGui_PlugInSelector (iSK_INI* ini, const std::string& name, const wchar_t* p
   if (ImGui::IsItemHovered ())
   {
     if (GetFileAttributesW (path) == INVALID_FILE_ATTRIBUTES)
-      ImGui::SetTooltip ("Please install %s to %hs", name.c_str (), std::filesystem::path (path).c_str ());
+      ImGui::SetTooltip ("请将 %s 安装到 %hs", name.c_str (), std::filesystem::path (path).c_str ());
   }
 
   if (ini->contains_section (import_name))
@@ -130,7 +111,7 @@ SK_ImGui_PlugInSelector (iSK_INI* ini, const std::string& name, const wchar_t* p
     static_cast <int> (order);
 
   changed |=
-    ImGui::Combo (hash_load.c_str (), &iOrder, "Early\0Plug-In\0Lazy\0\0");
+    ImGui::Combo (hash_load.c_str (), &iOrder, "提前\0插件\0延缓\0\0");
 
   if (changed)
     order = static_cast <SK_Import_LoadOrder> (iOrder);
@@ -139,13 +120,13 @@ SK_ImGui_PlugInSelector (iSK_INI* ini, const std::string& name, const wchar_t* p
   {
     ImGui::BeginTooltip ();
     if (! SK_IsInjected ())
-      ImGui::Text       ("Plug-In Load Order is Suggested by Default.");
+      ImGui::Text       ("默认情况下建议插件加载顺序。");
     else
-      ImGui::Text       ("Lazy Load Order is Suggested by Default.");
+      ImGui::Text       ("默认情况下建议延迟加载顺序。");
     ImGui::Separator    ();
-    ImGui::BulletText   ("If a plug-in does not show up or the game crashes, try loading it early.");
-    ImGui::BulletText   ("Early plug-ins handle rendering before Special K; ReShade will apply its effects to Special K's UI if loaded early.");
-    ImGui::BulletText   ("Lazy plug-ins have undefined load order, but may allow ReShade to load as a plug-in in some stubborn games.");
+    ImGui::BulletText   ("如果插件未显示或游戏崩溃，请尝试尽早加载。");
+    ImGui::BulletText   ("提前插件在 Special K 之前处理渲染；如果提前加载，ReShade 会将其效果应用到 Special K 的 UI。");
+    ImGui::BulletText   ("延缓插件具有未定义的加载顺序，但可能允许 ReShade 在某些顽固游戏中作为插件加载。");
     ImGui::EndTooltip   ();
   }
 
@@ -260,13 +241,13 @@ SK::ControlPanel::PlugIns::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.72f, 0.07f, 0.80f));
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
 
-    if (ImGui::CollapsingHeader ("Third-Party", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("第三方", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush    ("");
 
       changed |=
           SK_ImGui_PlugInSelector (
-            dll_ini, "ReShade (Un|Official)", imp_path_reshade, imp_name_reshade, reshade_official, order,
+            dll_ini, "ReShade（非|官方）", imp_path_reshade, imp_name_reshade, reshade_official, order,
               SK_IsInjected () ? SK_Import_LoadOrder::Lazy :
                                  SK_Import_LoadOrder::PlugIn );
 
@@ -287,7 +268,7 @@ SK::ControlPanel::PlugIns::Draw (void)
       {
         ImGui::SameLine ();
 
-        if (ImGui::Button ("Load Now"))
+        if (ImGui::Button ("立即加载"))
         {
           HMODULE hModReShade =
             SK_ReShade_LoadDLL (imp_path_reshade, L"Compatibility");
@@ -304,15 +285,14 @@ SK::ControlPanel::PlugIns::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::SetTooltip (
-            "If using a version of ReShade 6.0 or newer, you can "
-            "hot-load ReShade without restarting the game."
+            "如果使用 ReShade 6.0 或更高版本，你可以热加载 ReShade，而无需重新启动游戏。"
           );
         }
       }
 
       ImGui::TreePush ("");
 
-      if (ImGui::Checkbox ("Compatibility Mode", &compatibility))
+      if (ImGui::Checkbox ("兼容模式", &compatibility))
       {
         dll_ini->get_section (imp_name_reshade).get_value (L"Mode").assign (
           compatibility ? L"Compatibility" :
@@ -325,12 +305,12 @@ SK::ControlPanel::PlugIns::Draw (void)
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip    ();
-        ImGui::TextUnformatted ("Compatibility mode should be preferred unless you need a specific Add-On.");
+        ImGui::TextUnformatted ("除非需要特定的附加组件，否则应首选兼容模式。");
         ImGui::Separator       ();
-        ImGui::BulletText      ("Load-Order is irrelevant in Compatibility mode.");
-        ImGui::BulletText      ("Frame Generation games are more stable in Compatibility mode.");
-        ImGui::BulletText      ("May disable support for some ReShade Add-Ons.");
-        ImGui::BulletText      ("Very little support can be offered for non-Compatibility mode.");
+        ImGui::BulletText      ("加载顺序在兼容模式下无关紧要。");
+        ImGui::BulletText      ("幀生成游戏在兼容模式下更加稳定。");
+        ImGui::BulletText      ("可能会禁用对某些 ReShade 附加组件的支持。");
+        ImGui::BulletText      ("对非兼容模式提供的支持非常少。");
         ImGui::EndTooltip      ();
       }
 
@@ -359,7 +339,7 @@ SK::ControlPanel::PlugIns::Draw (void)
       ImGui::EndGroup   ();
       ImGui::EndGroup   ();
 
-      if (ImGui::Button ("Browse ReShade Config / Logs"))
+      if (ImGui::Button ("打开 ReShade 配置/日志"))
       {
         std::wstring reshade_profile_path =
           std::wstring (SK_GetConfigPath ()) + LR"(\ReShade)";
@@ -382,16 +362,16 @@ SK::ControlPanel::PlugIns::Draw (void)
                                ICON_FA_EXCLAMATION_TRIANGLE " NOTE: " );
         ImGui::SameLine    ( );
         ImGui::TextColored ( ImColor::HSV (.15f, .8f, .9f), "%s",
-                               "There is a ReShade.ini file in the game's directory." );
+                               "游戏目录中有 ReShade.ini 文件。" );
         ImGui::EndGroup    ( );
         
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("All ReShade Config, Logs and Presets will use the game's install directory");
+          ImGui::TextUnformatted ("所有 ReShade 配置、日志和预设都将使用游戏的安装目录");
           ImGui::Separator       ();
-          ImGui::BulletText      ("Global config defaults/masters (Global/ReShade/{default_|master_}ReShade.ini) will not work");
-          ImGui::BulletText      ("Delete local ReShade.ini file to opt-in to SK managed configuration");
+          ImGui::BulletText      ("全局配置默认值/masters (Global/ReShade/{default_|master_}ReShade.ini) 将不起作用");
+          ImGui::BulletText      ("删除本地 ReShade.ini 文件以选择加入 SK 托管配置");
           ImGui::EndTooltip      ();
         }
       }
@@ -413,18 +393,18 @@ SK::ControlPanel::PlugIns::Draw (void)
       ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.14f, 0.78f, 0.87f, 0.80f));
 
       const bool unofficial =
-        ImGui::CollapsingHeader ("Unofficial");
+        ImGui::CollapsingHeader ("非官方");
 
       ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (.247f, .95f, .98f));
       ImGui::SameLine       ();
-      ImGui::Text           ("           Customized for Special K");
+      ImGui::Text           ("           定制用于 Special K");
       ImGui::PopStyleColor  ();
 
       if (unofficial)
       {
         ImGui::TreePush    ("");
         changed |=
-            SK_ImGui_PlugInSelector (dll_ini, "ReShade (Deprecated!!)", imp_path_reshade_ex, imp_name_reshade_ex, reshade_unofficial, order_ex);
+            SK_ImGui_PlugInSelector (dll_ini, "ReShade（已弃用！！）", imp_path_reshade_ex, imp_name_reshade_ex, reshade_unofficial, order_ex);
         ImGui::TreePop     (  );
       }
       ImGui::PopStyleColor ( 3);
@@ -498,9 +478,9 @@ SK::ControlPanel::PlugIns::Draw (void)
 
     ImGui::Separator ();
 
-    if (ImGui::Button ("Add Plug-In"))
+    if (ImGui::Button ("添加插件"))
     {
-      fileDialog.SetTitle       ("Select a Plug-In DLL");
+      fileDialog.SetTitle       ("选择插件 DLL");
       fileDialog.SetTypeFilters (  { ".dll", ".asi" }  );
       fileDialog.Open ();
     }
@@ -587,7 +567,7 @@ SK::ControlPanel::PlugIns::Draw (void)
 
       if (! import.loaded)
       {
-        if (ImGui::Button ("Load DLL"))
+        if (ImGui::Button ("加载 DLL"))
         {
           if (SK_LoadLibraryW (import.path) != nullptr)
           {
@@ -598,7 +578,7 @@ SK::ControlPanel::PlugIns::Draw (void)
 
       else
       {
-        if (ImGui::Button ("Unload DLL (Risky)"))
+        if (ImGui::Button ("卸载 DLL（有风险）"))
         {
           if ( SK_FreeLibrary (
                  SK_GetModuleHandleW (import.path) )
@@ -634,7 +614,7 @@ SK::ControlPanel::PlugIns::Draw (void)
           if (bUnity)
           {
             SK_ImGui_Warning (
-              L"NOTE: This is unlikely to work in a Unity Engine game, a local version of ReShade may be necessary."
+              L"注意：这不太可能在 Unity 引擎游戏中起作用，可能需要本地版本的 ReShade。"
             );
           }
         }

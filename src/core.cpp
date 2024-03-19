@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/resource.h>
@@ -4106,16 +4087,16 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
 
           SK_ImGui_CreateNotification (
             "VRAM.OverQuota", SK_ImGui_Toast::Warning,
-            SK_FormatString ( "VRAM Used:\t%ls\r\n"
-                              "VRAM Quota:\t%0.1f%% of Available; %ls"
+            SK_FormatString ( "使用显存:\t%ls\r\n"
+                              "显存配额:\t%0.1f%% of Available; %ls"
                               "\r\n\r\n\t\t %ls "
-                              "Over Budget by %0.1f%%\t (%ls)\r\n\r\n "
-                              " Configure VRAM Quotas by Right-Clicking the"
-                              " VRAM Gauge", used.c_str (),
+                              "超出配额 %0.1f%%\t (%ls)\r\n\r\n "
+                              " 通过右键单击配置显存配额"
+                              " 显存规格", used.c_str (),
                     config.render.dxgi.warn_if_vram_exceeds,
                                     quota.c_str (), L"*", percent_over,
                                   overage.c_str ()
-                             ).c_str (), "Insufficient VRAM", 20000,
+                             ).c_str (), "显存不足", 20000,
                                          SK_ImGui_Toast::UseDuration |
                                          SK_ImGui_Toast::ShowTitle   |
                                          SK_ImGui_Toast::ShowCaption |

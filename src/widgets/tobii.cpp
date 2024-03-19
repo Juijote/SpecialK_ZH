@@ -1,23 +1,4 @@
-﻿/**
-* This file is part of Special K.
-*
-* Special K is free software : you can redistribute it
-* and/or modify it under the terms of the GNU General Public License
-* as published by The Free Software Foundation, either version 3 of
-* the License, or (at your option) any later version.
-*
-* Special K is distributed in the hope that it will be useful,
-*
-* But WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Special K.
-*
-*   If not, see <http://www.gnu.org/licenses/>.
-*
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <filesystem>
@@ -656,7 +637,7 @@ public:
       ImGui::Columns    (2, nullptr, false);
       ImGui::BeginGroup ( );
       changed |= ImGui::MenuItem ("绘制凝视光标", nullptr, &gaze_cursor.draw);
-      changed |= ImGui::MenuItem ("小组件凝视",    nullptr, &widget_gazing);
+      changed |= ImGui::MenuItem ("凝视小组件",    nullptr, &widget_gazing);
       ImGui::EndGroup   ();
       ImGui::SameLine   (); ImGui::Spacing  ();
       ImGui::NextColumn ();

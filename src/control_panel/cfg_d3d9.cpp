@@ -1,23 +1,4 @@
-/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -52,7 +33,7 @@ SK::ControlPanel::D3D9::Draw (void)
 
     ImGui::SameLine ();
 
-    ImGui::Checkbox ("Enable Texture Modding", &config.textures.d3d9_mod);
+    ImGui::Checkbox ("启用纹理修改", &config.textures.d3d9_mod);
 
     if (ImGui::IsItemHovered ())
     {
@@ -79,7 +60,7 @@ SK::ControlPanel::D3D9::Draw (void)
     if (config.textures.d3d9_mod)
     {
     ImGui::TreePush ("");
-    if (ImGui::CollapsingHeader ("Texture Memory Stats", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader ("纹理内存统计", ImGuiTreeNodeFlags_DefaultOpen))
     {
       SK::D3D9::TextureManager& tex_mgr =
         SK_D3D9_GetTextureManager ();
@@ -87,15 +68,15 @@ SK::ControlPanel::D3D9::Draw (void)
       ImGui::PushStyleVar (ImGuiStyleVar_ChildRounding, 15.0f);
       ImGui::TreePush     ("");
 
-      ImGui::BeginChild  ("Texture Details", ImVec2 ( font.size           * 30.0f,
+      ImGui::BeginChild  ("纹理细节", ImVec2 ( font.size           * 30.0f,
                                                       font.size_multiline * 6.0f ),
                                                true, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NavFlattened );
 
       ImGui::Columns   ( 3 );
         ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, 1.0f, 1.0f, 1.0f));
-        ImGui::Text    ( "          Size" );                                                                 ImGui::NextColumn ();
-        ImGui::Text    ( "      Activity" );                                                                 ImGui::NextColumn ();
-        ImGui::Text    ( "       Savings" );
+        ImGui::Text    ( "          大小" );                                                                 ImGui::NextColumn ();
+        ImGui::Text    ( "      使用" );                                                                 ImGui::NextColumn ();
+        ImGui::Text    ( "       缓存" );
         ImGui::PopStyleColor  ();
       ImGui::Columns   ( 1 );
 
@@ -143,7 +124,7 @@ SK::ControlPanel::D3D9::Draw (void)
       bool selected = (! __remap_textures);
 
       ImGui::Columns   ( 3 );
-        ImGui::Selectable  ( SK_FormatString ( "%6zi MiB Base###D3D9_BaseTextures",
+        ImGui::Selectable  ( SK_FormatString ( "%6zi MiB 基础###D3D9_BaseTextures",
                                                  tex_mgr.cacheSizeBasic () >> 20ULL ).c_str (),
                                &selected ); ImGui::NextColumn ();
 
@@ -152,7 +133,7 @@ SK::ControlPanel::D3D9::Draw (void)
         if (SK_ImGui_IsItemClicked ())
           __remap_textures = false;
         if ((! selected) && (ImGui::IsItemHovered () || ImGui::IsItemFocused ()))
-          ImGui::SetTooltip ("Click here to use the game's original textures.");
+          ImGui::SetTooltip ("单击此处使用游戏的原始纹理。");
 
         ImGui::TextColored
                        (ImVec4 (1.0f, 0.3f, 0.3f, 1.0f),
@@ -168,7 +149,7 @@ SK::ControlPanel::D3D9::Draw (void)
       ImGui::PushStyleColor (ImGuiCol_Text, color);
 
       ImGui::Columns   ( 3 );
-        ImGui::Selectable  ( SK_FormatString ( "%6zi MiB Injected###D3D9_InjectedTextures",
+        ImGui::Selectable  ( SK_FormatString ( "%6zi MiB 注入###D3D9_InjectedTextures",
                                                            tex_mgr.cacheSizeInjected () >> 20ULL ).c_str (),
                                          &selected ); ImGui::NextColumn ();
 
@@ -177,7 +158,7 @@ SK::ControlPanel::D3D9::Draw (void)
         if (SK_ImGui_IsItemClicked ())
           __remap_textures = true;
         if ((! selected) && (ImGui::IsItemHovered () || ImGui::IsItemFocused ()))
-          ImGui::SetTooltip ("Click here to use custom textures.");
+          ImGui::SetTooltip ("单击此处使用自定义纹理。");
 
         ImGui::TextColored (ImColor::HSV (std::min ( 0.4f * (float)tex_mgr.getHitCount  () /
                                                             (float)tex_mgr.getMissCount (), 0.4f ), 0.98f, 1.0f),
@@ -185,21 +166,21 @@ SK::ControlPanel::D3D9::Draw (void)
                                                            (double)tex_mgr.getMissCount ()          ); ImGui::NextColumn ();
 
 #ifdef _M_AMD64
-                               ImGui::Text ("Driver: %7lli MiB  ", tex_mgr.getByteSaved () >> 20ULL);
+                               ImGui::Text ("驱动: %7lli MiB  ", tex_mgr.getByteSaved () >> 20ULL);
 #else /* _M_IX86 */
-                               ImGui::Text ("Driver: %7i MiB  ",   tex_mgr.getByteSaved () >> 20ULL);
+                               ImGui::Text ("驱动: %7i MiB  ",   tex_mgr.getByteSaved () >> 20ULL);
 
 #endif
 
       ImGui::PopStyleColor
                        (   );
       ImGui::Columns   ( 1 );
-      ImGui::SliderInt ("Cache Size (in MiB)###D3D9_TexCache_Size_MiB", &config.textures.cache.max_size, 256, 4096);
+      ImGui::SliderInt ("缓存大小（以 MiB 为单位）###D3D9_TexCache_Size_MiB", &config.textures.cache.max_size, 256, 4096);
     //ImGui::PopFont   (   );
       ImGui::EndChild  (   );
 
 #if 0
-      if (ImGui::CollapsingHeader ("Thread Stats"))
+      if (ImGui::CollapsingHeader ("线程统计"))
       {
         std::vector <SK::D3D9::TexThreadStats> stats =
           SK::D3D9::tex_mgr.getThreadStats ();
@@ -253,25 +234,25 @@ SK_ImGui_SummarizeD3D9Swapchain (IDirect3DSwapChain9 *pSwap9)
     {
       ImGui::BeginTooltip    ();
       ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (0.95f, 0.95f, 0.45f, 1.0f));
-      ImGui::TextUnformatted ("Framebuffer and Presentation Setup");
+      ImGui::TextUnformatted ("FPS 缓冲区和演示设置");
       ImGui::PopStyleColor   ();
       ImGui::Separator       ();
 
       ImGui::BeginGroup      ();
       ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (0.685f, 0.685f, 0.685f, 1.0f));
-      ImGui::TextUnformatted ("Color:");
-      ImGui::TextUnformatted ("Depth/Stencil:");
-      ImGui::TextUnformatted ("Resolution:");
-      ImGui::TextUnformatted ("Back Buffers:");
+      ImGui::TextUnformatted ("色彩:");
+      ImGui::TextUnformatted ("深度/模板:");
+      ImGui::TextUnformatted ("分辨率:");
+      ImGui::TextUnformatted ("后台缓冲区:");
       if (! pparams.Windowed)
         ImGui::TextUnformatted
-                             ("Refresh Rate:");
-      ImGui::TextUnformatted ("Swap Interval:");
-      ImGui::TextUnformatted ("Swap Effect:");
-      ImGui::TextUnformatted ("MSAA Samples:");
+                             ("刷新率:");
+      ImGui::TextUnformatted ("交换间隔:");
+      ImGui::TextUnformatted ("互换效应:");
+      ImGui::TextUnformatted ("MSAA 样本:");
       if (pparams.Flags != 0)
         ImGui::TextUnformatted
-                             ("Flags:");
+                             ("标记:");
       ImGui::PopStyleColor   ();
       ImGui::EndGroup        ();
 
@@ -287,19 +268,19 @@ SK_ImGui_SummarizeD3D9Swapchain (IDirect3DSwapChain9 *pSwap9)
         ImGui::Text          ("%u Hz",                                   pparams.FullScreen_RefreshRateInHz);
       if (pparams.PresentationInterval == D3DPRESENT_INTERVAL_IMMEDIATE ||
           pparams.PresentationInterval == D3DPRESENT_FORCEIMMEDIATE)
-        ImGui::Text          ("%u: VSYNC OFF",                           SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
+        ImGui::Text          ("%u: VSYNC 关闭",                           SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
       else if (pparams.PresentationInterval == D3DPRESENT_INTERVAL_DEFAULT)
-        ImGui::Text          ("%u: Default V-SYNC",                      SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
+        ImGui::Text          ("%u: 默认 V-SYNC",                      SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
       else if (pparams.PresentationInterval == D3DPRESENT_INTERVAL_ONE)
-        ImGui::Text          ("%u: Normal V-SYNC",                       SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
+        ImGui::Text          ("%u: 正常 V-SYNC",                       SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
       else if (pparams.PresentationInterval == D3DPRESENT_INTERVAL_TWO)
-        ImGui::Text          ("%u: 1/2 Refresh V-SYNC",                  SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
+        ImGui::Text          ("%u: 1/2 刷新率 V-SYNC",                  SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
       else if (pparams.PresentationInterval == D3DPRESENT_INTERVAL_THREE)
-        ImGui::Text          ("%u: 1/3 Refresh V-SYNC",                  SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
+        ImGui::Text          ("%u: 1/3 刷新率 V-SYNC",                  SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
       else if (pparams.PresentationInterval == D3DPRESENT_INTERVAL_FOUR)
-        ImGui::Text          ("%u: 1/4 Refresh V-SYNC",                  SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
+        ImGui::Text          ("%u: 1/4 刷新率 V-SYNC",                  SK_D3D9_GetNominalPresentInterval (pparams.PresentationInterval));
       else
-        ImGui::Text          ("%u: UNKNOWN or Invalid",                  pparams.PresentationInterval);
+        ImGui::Text          ("%u: 未知或无效",                  pparams.PresentationInterval);
       ImGui::Text            ("%hs",            SK_D3D9_SwapEffectToStr (pparams.SwapEffect).c_str ());
       ImGui::Text            ("%u",                                      pparams.MultiSampleType);
       if (pparams.Flags != 0)

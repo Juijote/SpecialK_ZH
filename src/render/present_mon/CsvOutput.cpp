@@ -16,13 +16,13 @@ PresentModeToString (PresentMode mode)
   switch (mode)
   {
     case PresentMode::Hardware_Legacy_Flip:                 return "硬件:  传统跳帧";
-    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "硬件:  旧帧复制到前端缓冲区";
+    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "硬件:  旧帧绘制到前端缓冲区";
     case PresentMode::Hardware_Independent_Flip:            return "硬件:  独立跳帧";
-    case PresentMode::Composed_Flip:                        return "合成:  复制";
-    case PresentMode::Composed_Copy_GPU_GDI:                return "合成:  使用 GPU GDI 复制";
-    case PresentMode::Composed_Copy_CPU_GDI:                return "合成:  使用 CPU GDI 复制";
+    case PresentMode::Composed_Flip:                        return "合成:  绘制";
+    case PresentMode::Composed_Copy_GPU_GDI:                return "合成:  使用 GPU GDI 绘制";
+    case PresentMode::Composed_Copy_CPU_GDI:                return "合成:  使用 CPU GDI 绘制";
     case PresentMode::Composed_Composition_Atlas:           return "合成:  合成图集";
-    case PresentMode::Hardware_Composed_Independent_Flip:   return "硬件合成:  独立复制";
+    case PresentMode::Hardware_Composed_Independent_Flip:   return "硬件合成:  独立绘制";
     default:                                                return "其他";
   }
 }
