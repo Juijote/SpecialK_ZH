@@ -314,7 +314,7 @@ protected:
   SK_ConfigSerializedKeybind
     toggle_cursor = {
       SK_Keybind {
-        "Toggle Gaze Cursor", L"",
+        "切换注视光标", L"",
           false, false, false, 255
       }, L"ToggleCursor"
     };
@@ -322,7 +322,7 @@ protected:
   SK_ConfigSerializedKeybind
     toggle_widget_gazing = {
       SK_Keybind {
-        "Toggle Widget Gazing", L"",
+        "切换注视小组件", L"",
           false, false, false, 255
       }, L"ToggleWidgetGazing"
     };
@@ -636,8 +636,8 @@ public:
 
       ImGui::Columns    (2, nullptr, false);
       ImGui::BeginGroup ( );
-      changed |= ImGui::MenuItem ("绘制凝视光标", nullptr, &gaze_cursor.draw);
-      changed |= ImGui::MenuItem ("凝视小组件",    nullptr, &widget_gazing);
+      changed |= ImGui::MenuItem ("绘制注视光标", nullptr, &gaze_cursor.draw);
+      changed |= ImGui::MenuItem ("注视小组件",    nullptr, &widget_gazing);
       ImGui::EndGroup   ();
       ImGui::SameLine   (); ImGui::Spacing  ();
       ImGui::NextColumn ();
@@ -689,7 +689,7 @@ public:
         &supported           );
       if (supported == TOBII_SUPPORTED)
       {
-        ImGui::BulletText ("Supports Facial Recognition");
+        ImGui::BulletText ("支持人脸识别");
       }
       ImGui::EndGroup   ();
 

@@ -3532,7 +3532,7 @@ SK_ImGui_ControlPanel (void)
         if (steam_overlay)
         {
           HDRLuminanceSlider (
-            "Steam Overlay 亮度###STEAM_LUMINANCE", config.platform.overlay_hdr_luminance,
+            "Steam 叠加层亮度###STEAM_LUMINANCE", config.platform.overlay_hdr_luminance,
                                                                   rb.display_gamut.maxAverageY
           );
         }
@@ -3540,7 +3540,7 @@ SK_ImGui_ControlPanel (void)
         if (config.rtss.present)
         {
           HDRLuminanceSlider (
-            "RTSS Overlay 亮度###RTSS_LUMINANCE", config.rtss.overlay_luminance,
+            "RTSS 叠加层亮度###RTSS_LUMINANCE", config.rtss.overlay_luminance,
                                                         rb.display_gamut.maxAverageY
           );
         }
@@ -3548,7 +3548,7 @@ SK_ImGui_ControlPanel (void)
         if (config.epic.present)
         {
           HDRLuminanceSlider (
-            "Epic Overlay 亮度###EPIC_LUMINANCE", config.platform.overlay_hdr_luminance,
+            "Epic 叠加层亮度###EPIC_LUMINANCE", config.platform.overlay_hdr_luminance,
                                                                 rb.display_gamut.maxAverageY
           );
         }
@@ -3556,7 +3556,7 @@ SK_ImGui_ControlPanel (void)
         if (config.discord.present)
         {
           HDRLuminanceSlider (
-            "Discord Overlay 亮度###DISCORD_LUMINANCE", config.discord.overlay_luminance,
+            "Discord 叠加层亮度###DISCORD_LUMINANCE", config.discord.overlay_luminance,
                                                                  rb.display_gamut.maxAverageY
           );
         }
@@ -3573,7 +3573,7 @@ SK_ImGui_ControlPanel (void)
         if (uplay_overlay)
         {
           HDRLuminanceSlider (
-            "uPlay Overlay 亮度###UPLAY_LUMINANCE", config.uplay.overlay_luminance,
+            "uPlay 叠加层亮度###UPLAY_LUMINANCE", config.uplay.overlay_luminance,
                                                            rb.display_gamut.maxAverageY
           );
         }

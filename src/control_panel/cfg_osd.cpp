@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -102,7 +83,7 @@ SK::ControlPanel::OSD::Draw (void)
     ImGui::GetIO ();
 
   bool bOSDIsOpen =
-    ImGui::CollapsingHeader ("显示 (OSD)");
+    ImGui::CollapsingHeader ("OSD 显示");
 
   if (bOSDIsOpen)
   {
@@ -111,7 +92,7 @@ SK::ControlPanel::OSD::Draw (void)
     ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
     ImGui::TreePush       ("");
 
-    ImGui::Checkbox ("显示 OSD", &config.osd.show);
+    ImGui::Checkbox ("OSD 显示", &config.osd.show);
 
     bool show_banner =
       config.version_banner.duration > 0.0f;
@@ -218,18 +199,18 @@ SK::ControlPanel::OSD::Draw (void)
         SKIF_ImGui_PushDisableState ( );
 
       ImGui::TreePush ("");
-      ImGui::Checkbox (" Simplified View",           &config.cpu.simple);
+      ImGui::Checkbox (" 简化视图",           &config.cpu.simple);
       ImGui::TreePop  (  );
 
       if (! config.cpu.show)
         SKIF_ImGui_PopDisableState ( );
       
-      spawn |= ImGui::Checkbox ("General I/O Stats", &config.io.show);
+      spawn |= ImGui::Checkbox ("普通 I/O 统计数据", &config.io.show);
 
       ImGui::NextColumn (  );
 
-      spawn |= ImGui::Checkbox ("Memory Stats",      &config.mem.show);
-      spawn |= ImGui::Checkbox ("Disk Stats",        &config.disk.show);
+      spawn |= ImGui::Checkbox ("内存统计",      &config.mem.show);
+      spawn |= ImGui::Checkbox ("磁盘统计",        &config.disk.show);
       
       if (! config.disk.show)
         SKIF_ImGui_PushDisableState ( );
@@ -237,22 +218,22 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::TreePush ("");
       bool hovered;
 
-      ImGui::RadioButton (" Logical",                &config.disk.type, 1);
+      ImGui::RadioButton (" 逻辑扇区",                &config.disk.type, 1);
       hovered = ImGui::IsItemHovered ();
       ImGui::SameLine    ( );
-      ImGui::RadioButton (" Physical",               &config.disk.type, 0);
+      ImGui::RadioButton (" 物理扇区",               &config.disk.type, 0);
       hovered |= ImGui::IsItemHovered ();
       ImGui::TreePop  ();
 
       if (config.disk.show && hovered)
-        ImGui::SetTooltip ("Requires Application Restart");
+        ImGui::SetTooltip ("需要重新启动应用程序");
 
       if (! config.disk.show)
         SKIF_ImGui_PopDisableState ( );
 
       ImGui::NextColumn (  );
 
-      spawn |= ImGui::Checkbox ("Pagefile Stats",    &config.pagefile.show);
+      spawn |= ImGui::Checkbox ("页面文件统计",    &config.pagefile.show);
 
       ImGui::NewLine (); ImGui::NewLine ();
 
@@ -265,7 +246,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::Columns     (3, "", false);
       ImGui::NextColumn  ();
       ImGui::NextColumn  ();
-      ImGui::Checkbox    ("Remember These Settings", &config.osd.remember_state);
+      ImGui::Checkbox    ("保存偏好设置", &config.osd.remember_state);
       ImGui::EndColumns  ();
 
       ImGui::EndChild    ();
@@ -274,7 +255,7 @@ SK::ControlPanel::OSD::Draw (void)
       ImGui::TreePop     ();
     }
 
-    if (config.osd.show && ImGui::CollapsingHeader ("Appearance", ImGuiTreeNodeFlags_DefaultOpen))
+    if (config.osd.show && ImGui::CollapsingHeader ("外观", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::TreePush ("");
 
@@ -293,7 +274,7 @@ SK::ControlPanel::OSD::Draw (void)
       if (config.osd.green == (int)MAXDWORD) color [1] = default_g;
       if (config.osd.blue  == (int)MAXDWORD) color [2] = default_b;
 
-      if (ImGui::ColorEdit3 ("OSD Color", color))
+      if (ImGui::ColorEdit3 ("OSD 颜色", color))
       {
         color [0] = std::max (std::min (color [0], 1.0F), 0.0f);
         color [1] = std::max (std::min (color [1], 1.0F), 0.0f);
@@ -311,7 +292,7 @@ SK::ControlPanel::OSD::Draw (void)
              color [2] <= default_b + 0.001F    ) config.osd.blue  = (int)MAXDWORD;
       }
 
-      if (ImGui::SliderFloat ("OSD Scale", &config.osd.scale, 0.5F, 10.0F))
+      if (ImGui::SliderFloat ("OSD 大小", &config.osd.scale, 0.5F, 10.0F))
       {
         SK_SetOSDScale (config.osd.scale, false, nullptr);
       }
@@ -323,10 +304,10 @@ SK::ControlPanel::OSD::Draw (void)
       bool bottom_align = config.osd.pos_y < 0;
 
       bool
-      moved  = ImGui::SliderInt ("X Origin##OSD",       &x_pos, 1, static_cast <int> (io.DisplaySize.x)); ImGui::SameLine ();
-      moved |= ImGui::Checkbox  ("Right-aligned##OSD",  &right_align);
-      moved |= ImGui::SliderInt ("Y Origin##OSD",       &y_pos, 1, static_cast <int> (io.DisplaySize.y)); ImGui::SameLine ();
-      moved |= ImGui::Checkbox  ("Bottom-aligned##OSD", &bottom_align);
+      moved  = ImGui::SliderInt ("X 坐标基准##OSD",       &x_pos, 1, static_cast <int> (io.DisplaySize.x)); ImGui::SameLine ();
+      moved |= ImGui::Checkbox  ("右对齐##OSD",  &right_align);
+      moved |= ImGui::SliderInt ("Y 坐标基准##OSD",       &y_pos, 1, static_cast <int> (io.DisplaySize.y)); ImGui::SameLine ();
+      moved |= ImGui::Checkbox  ("底对齐##OSD", &bottom_align);
 
       if (moved)
       {

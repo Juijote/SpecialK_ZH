@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -44,7 +25,7 @@ SK::ControlPanel::Notifications::Draw (void)
     ImGui::TreePush ("");
 
     ImGui::BeginGroup ();
-    if (ImGui::Checkbox ("Silent Mode", &config.notifications.silent ))
+    if (ImGui::Checkbox ("静音模式", &config.notifications.silent ))
     {
       if (! config.notifications.silent)
       {
@@ -68,15 +49,15 @@ SK::ControlPanel::Notifications::Draw (void)
     ImGui::SameLine    ();
 
     bool bRelocate =
-      ImGui::Combo ( "Display Corner", &config.notifications.location,
-                     "Top-Left\0Top-Right\0"
-                     "Bottom-Left\0Bottom-Right\0\0" );
+      ImGui::Combo ( "展示位置", &config.notifications.location,
+                     "左上\0右上\0"
+                     "左下\0右下\0\0" );
 
     if (bRelocate)
     {
       SK_ImGui_CreateNotification (
         "Notifications.Relocated", SK_ImGui_Toast::Info,
-        "Notifications Will Now Be Displayed Here", nullptr,
+        "通知现在将显示在此处", nullptr,
           3333UL, SK_ImGui_Toast::UseDuration  |
                   SK_ImGui_Toast::ShowCaption  |
                   SK_ImGui_Toast::Unsilencable |
@@ -91,7 +72,7 @@ SK::ControlPanel::Notifications::Draw (void)
     auto notify_ini =
       SK_GetNotifyINI ();
 
-    if (ImGui::Button ("Clear Global Preferences"))
+    if (ImGui::Button ("清除全局设置"))
     {
       iSK_INI::_TSectionMap sections =
         notify_ini->get_sections ();
@@ -111,7 +92,7 @@ SK::ControlPanel::Notifications::Draw (void)
 
         SK_ImGui_CreateNotification (
           "Notifications.Reset", SK_ImGui_Toast::Success,
-          "Notification Preferences Reset", nullptr,
+          "通知设置重置", nullptr,
             2345UL, SK_ImGui_Toast::UseDuration  |
                     SK_ImGui_Toast::ShowCaption  |
                     SK_ImGui_Toast::Unsilencable |
@@ -125,7 +106,7 @@ SK::ControlPanel::Notifications::Draw (void)
       ImGui::SameLine ();
 
       bool bConfigIndividual =
-        ImGui::TreeNode ("Configure Individual Notifications");
+        ImGui::TreeNode ("配置单独的通知");
 
       if (bConfigIndividual)
       { ImGui::TreePop ();
@@ -143,14 +124,14 @@ SK::ControlPanel::Notifications::Draw (void)
 
             if (ImGui::TreeNode (str_id.c_str ()))
             {
-              if (ImGui::Button ("Clear"))
+              if (ImGui::Button ("清除"))
               {
                 section_to_clear = section.first;
               }
 
               ImGui::SameLine ();
 
-              if (ImGui::Button ("Configure"))
+              if (ImGui::Button ("配置"))
               {
                 SK_ImGui_CreateNotification (
                   str_id.c_str (), SK_ImGui_Toast::Other, nullptr, nullptr,

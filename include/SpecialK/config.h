@@ -278,11 +278,11 @@ struct sk_config_t
       struct font_params_s {
         std::string file   = "";
         float       size   = 7.0F;
-      } chinese      { "msyh.ttc",     18.0f },
-        cyrillic     { "arial.ttf",    18.0f },
-        default_font { "arial.ttf",    18.0f },
-        japanese     { "msgothic.ttc", 18.0f },
-        korean       { "malgun.ttf",   18.0f };
+      } chinese      { "msyh.ttc",    18.0f },
+        cyrillic     { "msyh.ttc",    18.0f },
+        default_font { "msyh.ttc",    18.0f },
+        japanese     { "msyh.ttc",    18.0f },
+        korean       { "msyh.ttc",    18.0f };
     } font;
 
     // Per-game (mostly compatibility) settings
@@ -407,7 +407,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
                 toggle_overlay_keybind= {
                     SK_Keybind {
-                      "Toggle ReShade Overlay", L"Shift+Home",
+                      "切换 ReShade 叠加层", L"Shift+Home",
                         true, false, false, VK_HOME
                     }, L"ToggleReShadeOverlay"
     };
@@ -424,7 +424,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          game_mute_keybind = {
       SK_Keybind {
-        "Mute the Game", L"Ctrl+Shift+Home",
+        "游戏静音", L"Ctrl+Shift+Home",
          true, true, false, VK_HOME
       }, L"MuteGame"
     };
@@ -432,7 +432,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          game_volume_up_keybind = {
       SK_Keybind {
-        "Increase Volume 10%", L"Ctrl+Shift+Insert",
+        "增加音量 10%", L"Ctrl+Shift+Insert",
          true, true, false, VK_INSERT
       }, L"VolumePlus10%"
     };
@@ -440,7 +440,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          game_volume_down_keybind = {
       SK_Keybind {
-        "Decrease Volume 10%", L"Ctrl+Shift+Delete",
+        "减少音量 10%", L"Ctrl+Shift+Delete",
          true, true, false, VK_DELETE
       }, L"VolumeMinus10%"
     };
@@ -472,7 +472,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          game_hud_free_keybind = {
       SK_Keybind {
-        "Take Screenshot without Game's HUD", L"Num -",
+        "在没有游戏 HUD 的情况下截取屏幕截图", L"Num -",
          false, false, false, VK_OEM_MINUS
       }, L"HUDFree"
     };
@@ -480,7 +480,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          sk_osd_free_keybind = {
       SK_Keybind {
-        "Take Screenshot without Special K's OSD", L"F9",
+        "在没有 Special K 的 OSD 的情况下截取屏幕截图", L"F9",
          false, false, false, VK_F9
       }, L"WithoutOSD"
     };
@@ -488,7 +488,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          no_3rd_party_keybind = {
       SK_Keybind {
-        "Take Screenshot without Third-Party Overlays", L"",
+        "在没有第三方叠加层的情况下截取屏幕截图", L"",
          false, false, false, 0
       }, L"Without3rdParty"
     };
@@ -496,7 +496,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          sk_osd_insertion_keybind = {
       SK_Keybind {
-        "Take Screenshot and insert Special K's OSD", L"F8",
+        "截屏并插入 Special K 的 OSD", L"F8",
          false, false, false, VK_F8
       }, L"InsertOSD"
     };
@@ -504,7 +504,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          clipboard_only_keybind = {
       SK_Keybind {
-        "Copy a Normal Screenshot to Clipboard Only", L"",
+        "仅将普通屏幕截图复制到剪贴板", L"",
          false, false, false, VK_PRINT
       }, L"ClipboardOnly"
     };
@@ -514,7 +514,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          monitor_primary_keybind = {
       SK_Keybind {
-        "Move Game to Primary Monitor", L"<Not Bound>",
+        "将游戏移至主显示器", L"<Not Bound>",
          false, false, false, 0,
       }, L"MoveToPrimaryMonitor"
     };
@@ -522,7 +522,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          monitor_next_keybind = {
       SK_Keybind {
-        "Move Game to Next Monitor", L"<Not Bound>",
+        "将游戏移至下一个显示器", L"<Not Bound>",
          false, false, false, 0,
       }, L"MoveToNextMonitor"
     };
@@ -530,7 +530,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          monitor_prev_keybind = {
       SK_Keybind {
-        "Move Game to Previous Monitor", L"<Not Bound>",
+        "将游戏移至上一个显示器", L"<Not Bound>",
          false, false, false, 0,
       }, L"MoveToPrevMonitor"
     };
@@ -538,7 +538,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          monitor_toggle_hdr = {
       SK_Keybind {
-        "Toggle HDR on Active Monitor", L"<Not Bound>",
+        "在活动监视器上切换 HDR", L"<Not Bound>",
          false, false, false, 0
       }, L"ToggleHDR"
     };
@@ -548,7 +548,7 @@ struct sk_config_t
     SK_ConfigSerializedKeybind
          hide_all_widgets_keybind = {
       SK_Keybind {
-        "Hide All Widgets", L"Ctrl+Alt+Shift+H",
+        "隐藏所有小组件", L"Ctrl+Alt+Shift+H",
         true, true, true, 'H'
       }, L"HideAllWidgets"
     };
@@ -597,28 +597,28 @@ struct sk_config_t
         SK_ConfigSerializedKeybind
           tearline_move_up_keybind = {
             SK_Keybind {
-              "Move Tear Location Up 5 Scanlines", L"<Not Bound>",
+              "将撕裂位置向上移动 5 条扫描线", L"<Not Bound>",
                false, false, false, 0,
             }, L"MoveTearlineUp"
           };
         SK_ConfigSerializedKeybind
           tearline_move_down_keybind = {
             SK_Keybind {
-              "Move Tear Location Down 5 Scanlines", L"<Not Bound>",
+              "将撕裂位置向下移动 5 条扫描线", L"<Not Bound>",
                false, false, false, 0,
             }, L"MoveTearlineDown"
           };
         SK_ConfigSerializedKeybind
           timing_resync_keybind = {
             SK_Keybind {
-              "Force a Timing Resync", L"<Not Bound>",
+              "强制定时重新同步", L"<Not Bound>",
                false, false, false, 0,
             }, L"ManualResync"
           };
         SK_ConfigSerializedKeybind
           toggle_fcat_bars_keybind = {
             SK_Keybind {
-              "Toggle Tearline Visualizer", L"<Not Bound>",
+              "切换撕裂线可视化工具", L"<Not Bound>",
                false, false, false, 0,
             }, L"ToggleFCATBars"
           };
@@ -746,7 +746,7 @@ struct sk_config_t
       SK_ConfigSerializedKeybind
         hud_toggle = {
           SK_Keybind {
-            "Toggle Game's HUD", L"Alt+Shift+H",
+            "切换游戏的 HUD", L"Alt+Shift+H",
              false, true, true, 'H'
           }, L"HUDToggle"
         };

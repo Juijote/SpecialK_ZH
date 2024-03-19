@@ -1903,29 +1903,29 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
 
       ImGui::BeginTooltip      ();
       ImGui::PushStyleColor    (ImGuiCol_Text, ImVec4 (0.95f, 0.95f, 0.45f, 1.0f));
-      ImGui::TextUnformatted   ("Framebuffer and Presentation Setup");
+      ImGui::TextUnformatted   ("帧缓冲区和演示设置");
       ImGui::PopStyleColor     ();
       ImGui::Separator         ();
 
       ImGui::BeginGroup        ();
       ImGui::PushStyleColor    (ImGuiCol_Text, ImVec4 (0.685f, 0.685f, 0.685f, 1.0f));
-      ImGui::TextUnformatted   ("Color:");
+      ImGui::TextUnformatted   ("色彩:");
     //ImGui::TextUnformatted   ("Depth/Stencil:");
-      ImGui::TextUnformatted   ("Resolution:");
-      ImGui::TextUnformatted   ("Back Buffers:");
+      ImGui::TextUnformatted   ("分辨率:");
+      ImGui::TextUnformatted   ("后台缓冲区:");
       if ((! fullscreen_desc.Windowed) && fullscreen_desc.Scaling          != DXGI_MODE_SCALING_UNSPECIFIED)
-        ImGui::TextUnformatted ("Scaling Mode:");
+        ImGui::TextUnformatted ("缩放模式:");
       if ((! fullscreen_desc.Windowed) && fullscreen_desc.ScanlineOrdering != DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED)
-        ImGui::TextUnformatted ("Scanlines:");
+        ImGui::TextUnformatted ("扫描线:");
       if ((! fullscreen_desc.Windowed) && fullscreen_desc.RefreshRate.Denominator != 0)
-        ImGui::TextUnformatted ("Refresh Rate:");
-      ImGui::TextUnformatted   ("Swap Interval:");
-      ImGui::TextUnformatted   ("Swap Effect:");
+        ImGui::TextUnformatted ("刷新率:");
+      ImGui::TextUnformatted   ("交换间隔:");
+      ImGui::TextUnformatted   ("交换效应:");
       if  (swap_desc.SampleDesc.Count > 1 || uiOriginalBltSampleCount > 1)
-        ImGui::TextUnformatted ("MSAA Samples:");
+        ImGui::TextUnformatted ("MSAA 样例:");
       if (swap_desc.Flags != 0)
       {
-        ImGui::TextUnformatted ("Flags:");
+        ImGui::TextUnformatted ("标记:");
         if (swap_flag_count > 1) { for ( int i = 1; i < swap_flag_count; i++ ) ImGui::TextUnformatted ("\n"); }
       }
       ImGui::PopStyleColor   ();

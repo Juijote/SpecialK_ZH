@@ -56,10 +56,10 @@ SK_ImGui_SelectAudioSessionDlg (void)
 
   SK_WASAPI_AudioSession **pSessions = nullptr;
 
-  if (ImGui::IsPopupOpen ("Audio Session Selector"))
+  if (ImGui::IsPopupOpen ("音频会话选择器"))
   {
     max_width =
-      ImGui::CalcTextSize ("Audio Session Selector").x;
+      ImGui::CalcTextSize ("音频会话选择器").x;
 
     pSessions =
       sessions.getActive (&count);
@@ -92,7 +92,7 @@ SK_ImGui_SelectAudioSessionDlg (void)
                                                   std::max (io.DisplaySize.y * 0.666f,fMinY)) );
   }
 
-  if (ImGui::BeginPopupModal ("Audio Session Selector", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+  if (ImGui::BeginPopupModal ("音频会话选择器", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
                                                                  ImGuiWindowFlags_NoScrollbar      | ImGuiWindowFlags_NoScrollWithMouse))
   {
     ImGui::PushItemWidth (max_width * io.FontGlobalScale);
@@ -259,7 +259,7 @@ SK_ImGui_SelectAudioDeviceDlg (void)
   size_t count =
     SK_WASAPI_EndPointMgr->getNumRenderEndpoints ();
 
-  if (ImGui::IsPopupOpen ("Audio Device Selector"))
+  if (ImGui::IsPopupOpen ("音频设备选择器"))
   {
     ImGui::SetNextWindowSizeConstraints ( ImVec2 (fMinX * io.FontGlobalScale,
                                         std::max (fMinY * io.FontGlobalScale,
@@ -268,7 +268,7 @@ SK_ImGui_SelectAudioDeviceDlg (void)
                                                   std::max (io.DisplaySize.y * 0.666f,fMinY)) );
   }
 
-  if (ImGui::BeginPopupModal ("Audio Device Selector", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
+  if (ImGui::BeginPopupModal ("音频设备选择器", nullptr, ImGuiWindowFlags_AlwaysAutoResize |
                                                                 ImGuiWindowFlags_NoScrollbar      | ImGuiWindowFlags_NoScrollWithMouse))
   {
     std::wstring endpoint_id =
@@ -473,10 +473,10 @@ SK_ImGui_VolumeManager (void)
 
   bool selected = true;
   if (ImGui::Selectable (app_name.c_str (), &selected))
-    ImGui::OpenPopup ("Audio Session Selector");
+    ImGui::OpenPopup ("音频会话选择器");
 
   if (ImGui::IsItemHovered ())
-    ImGui::SetTooltip ("Click Here to Manage Another Application");
+    ImGui::SetTooltip ("单击此处管理另一个程序");
 
   ImGui::SetColumnOffset (1, 530 * io.FontGlobalScale);
   ImGui::NextColumn      (                           );
@@ -587,7 +587,7 @@ SK_ImGui_VolumeManager (void)
     }
   }
 
-  if (ImGui::BeginMenu ("Keybinds###VolumeKeyMenu"))
+  if (ImGui::BeginMenu ("快捷键###VolumeKeyMenu"))
   {
     const auto Keybinding =
     [] (SK_ConfigSerializedKeybind *binding) ->
@@ -737,7 +737,7 @@ SK_ImGui_VolumeManager (void)
       pVolume->GetMasterVolume (&master_vol);
       pVolume->GetMute         (&master_mute);
 
-      static std::string label = "Switch Audio Device";
+      static std::string label = "切换音频设备";
 
       SK_ImGui_SelectAudioDeviceDlg ();
 
@@ -745,7 +745,7 @@ SK_ImGui_VolumeManager (void)
       {
         if (ImGui::Button (label.c_str ()))
         {
-          ImGui::OpenPopup ("Audio Device Selector");
+          ImGui::OpenPopup ("音频设备选择器");
         }
 
         ImGui::SameLine ();
@@ -774,14 +774,13 @@ SK_ImGui_VolumeManager (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip    ();
-            ImGui::Text            ("Your device supports %06.03f dB - %06.03f dB "
-                                    "in %06.03f dB steps", min_dB, max_dB, incr_dB);
+            ImGui::Text            ("你的设备支持 %06.03f dB - %06.03f dB 以 %06.03f dB 步长", min_dB, max_dB, incr_dB);
             ImGui::Separator       ();
-            ImGui::BulletText      ("-dB represents attenuation from reference volume");
-            ImGui::BulletText      ("+dB represents gain (amplification)%s", max_dB > 0.0f ?
-                                             " " : " - your hardware does not support gain." );
+            ImGui::BulletText      ("-dB 表示相对于参考音量的衰减");
+            ImGui::BulletText      ("+dB 表示代表增益（放大倍数）%s", max_dB > 0.0f ?
+                                             " " : " - 你的硬件不支持增益。" );
             ImGui::Separator       ();
-            ImGui::TextUnformatted ("Hold Ctrl for faster +/- adjustment.");
+            ImGui::TextUnformatted ("按住 Ctrl 可以更快地进行 +/-调整。");
             ImGui::EndTooltip      ();
           }
 
@@ -814,7 +813,7 @@ SK_ImGui_VolumeManager (void)
         if (min_lat.frames != cur_lat.frames)
         {
           ImGui::SameLine ();
-          if (ImGui::Button ("Minimize Latency"))
+          if (ImGui::Button ("最小化延迟"))
           {
             auto latency =
               SK_WASAPI_SetLatency (min_lat);
@@ -823,9 +822,9 @@ SK_ImGui_VolumeManager (void)
             {
               SK_ImGui_WarningWithTitle (
                 SK_FormatStringW (
-                  L"Latency changed from %.1f ms to %.1f ms",
+                  L"延迟时间更改为 %.1f ms to %.1f ms",
                     cur_lat.milliseconds, latency.milliseconds).c_str (),
-                  L"Audio Latency Changed"
+                  L"音频延迟已更改"
               );
 
               config.sound.minimize_latency = true;
@@ -838,17 +837,17 @@ SK_ImGui_VolumeManager (void)
               SK_WASAPI_GetDefaultLatency ();
 
             ImGui::BeginTooltip ();
-            ImGui::BulletText   ("Current Latency: %.1f ms", cur_lat        .milliseconds);
-            ImGui::BulletText   ("Minimum Latency: %.1f ms", min_lat        .milliseconds);
-            ImGui::BulletText   ("Default Latency: %.1f ms", default_latency.milliseconds);
+            ImGui::BulletText   ("当前延迟: %.1f ms", cur_lat        .milliseconds);
+            ImGui::BulletText   ("最小延迟: %.1f ms", min_lat        .milliseconds);
+            ImGui::BulletText   ("默认延迟: %.1f ms", default_latency.milliseconds);
             ImGui::Separator    ();
-            ImGui::Text         ("SK will remember to always minimize latency in this game.");
+            ImGui::Text         ("SK 会记住始终尽量减少这次游玩的延迟。");
             ImGui::EndTooltip   ();
           }
         }
 
         else
-          ImGui::Text ( "Latency:\t%.1f ms @ %d kHz",
+          ImGui::Text ( "延迟:\t%.1f ms @ %d kHz",
                           cur_lat.milliseconds,
                           cur_lat.samples_per_sec / 1000UL );
       }
@@ -863,8 +862,8 @@ SK_ImGui_VolumeManager (void)
       ImGui::Spacing ();
 
       const char* szMuteButtonTitle =
-        ( master_mute ? "  Unmute  ###MasterMute" :
-                        "   Mute   ###MasterMute" );
+        ( master_mute ? "  取消静音  ###MasterMute" :
+                        "   静音   ###MasterMute" );
 
       if (ImGui::Button (szMuteButtonTitle))
       {
@@ -884,7 +883,7 @@ SK_ImGui_VolumeManager (void)
       ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV ( 0.15f, 0.0f,
                                                                        0.5f + master_vol * 0.5f) );
 
-      if (ImGui::SliderFloat ("     Session Master Volume   ", &master_vol, 0.0, 1.0, ""))
+      if (ImGui::SliderFloat ("     会话主音量   ", &master_vol, 0.0, 1.0, ""))
       {
         if (master_mute)
         {
@@ -965,7 +964,7 @@ SK_ImGui_VolumeManager (void)
           {
             session_changed = true;
 
-            snprintf (channel_volumes [i].mute_button, 13, "  Mute  ##%u", i);
+            snprintf (channel_volumes [i].mute_button, 13, "  静音  ##%u", i);
             snprintf (channel_volumes [i].slider_label, 7, "##vol%u",      i);
           }
 
@@ -991,7 +990,7 @@ SK_ImGui_VolumeManager (void)
             ImGui::BeginGroup  ();
             ImGui::TextColored (ImVec4 (0.80f, 0.90f, 1.0f,  1.0f), "%-22s", SK_WASAPI_GetChannelName (i));
                                                                                       ImGui::SameLine ( );
-            ImGui::TextColored (ImVec4 (0.7f,  0.7f,  0.7f,  1.0f), "      Volume:"); ImGui::SameLine ( );
+            ImGui::TextColored (ImVec4 (0.7f,  0.7f,  0.7f,  1.0f), "      音量:"); ImGui::SameLine ( );
             ImGui::TextColored (ImColor::HSV (
                                         0.25f, 0.9f,
                                           0.5f + ch_vol.volume * 0.5f),

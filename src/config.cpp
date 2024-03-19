@@ -1516,8 +1516,8 @@ auto DeclKeybind =
     Keybind ( &config.sound.game_volume_up_keybind,      L"Increase Game Volume 10%",                                  osd_ini,         L"Sound.Mixing"),
     Keybind ( &config.sound.game_volume_down_keybind,    L"Decrease Game Volume 10%",                                  osd_ini,         L"Sound.Mixing"),
 
-    Keybind ( &config.widgets.hide_all_widgets_keybind,  L"Temporarily hide all widgets",                              osd_ini,         L"Widgets.Global"),
-    Keybind ( &config.reshade.toggle_overlay_keybind,    L"Toggle ReShade Overlay (Add-On version)",                   osd_ini,         L"ReShade.AddOn"),
+    Keybind ( &config.widgets.hide_all_widgets_keybind,  L"暂时隐藏所有小组件",                              osd_ini,         L"Widgets.Global"),
+    Keybind ( &config.reshade.toggle_overlay_keybind,    L"切换 ReShade 叠加层（附加版本）",                   osd_ini,         L"ReShade.AddOn"),
     Keybind ( &config.reshade.inject_reshade_keybind,    L"将 ReShade (6.0+) 作为全局插件注入",                  osd_ini,         L"ReShade.AddOn"),
 
 

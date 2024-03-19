@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -806,83 +787,83 @@ SK_WASAPI_GetChannelName (int channel_idx)
     switch (DSSPEAKER_CONFIG (dwConfig))
     {
       case DSSPEAKER_HEADPHONE:
-        channel_names.emplace (0, "Headphone Left");
-        channel_names.emplace (1, "Headphone Right");
+        channel_names.emplace (0, "耳机左");
+        channel_names.emplace (1, "耳机右");
         break;
 
       case DSSPEAKER_MONO:
       //case KSAUDIO_SPEAKER_MONO:
-        channel_names.emplace (0, "Center");
+        channel_names.emplace (0, "中间");
         break;
 
       case DSSPEAKER_STEREO:
       //case KSAUDIO_SPEAKER_STEREO:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
         break;
 
        case DSSPEAKER_QUAD:
       //case KSAUDIO_SPEAKER_QUAD:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
-        channel_names.emplace (2, "Back Left");
-        channel_names.emplace (3, "Back Right");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
+        channel_names.emplace (2, "左后方");
+        channel_names.emplace (3, "右后方");
         break;
 
       case DSSPEAKER_SURROUND:
       //case KSAUDIO_SPEAKER_SURROUND:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
         channel_names.emplace (2, "Front Center");
         channel_names.emplace (3, "Back Center");
         break;
 
       case DSSPEAKER_5POINT1:
       //case KSAUDIO_SPEAKER_5POINT1:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
-        channel_names.emplace (2, "Center");
-        channel_names.emplace (3, "Low Frequency Emitter");
-        channel_names.emplace (4, "Back Left");
-        channel_names.emplace (5, "Back Right");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
+        channel_names.emplace (2, "中间");
+        channel_names.emplace (3, "低频振荡器");
+        channel_names.emplace (4, "左后方");
+        channel_names.emplace (5, "右后方");
         break;
 
       case DSSPEAKER_5POINT1_SURROUND:
       //case KSAUDIO_SPEAKER_5POINT1_SURROUND:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
-        channel_names.emplace (2, "Center");
-        channel_names.emplace (3, "Low Frequency Emitter");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
+        channel_names.emplace (2, "中间");
+        channel_names.emplace (3, "低频振荡器");
         channel_names.emplace (4, "Side Left");
         channel_names.emplace (5, "Side Right");
         break;
 
       case DSSPEAKER_7POINT1:
       //case KSAUDIO_SPEAKER_7POINT1:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
-        channel_names.emplace (2, "Center");
-        channel_names.emplace (3, "Low Frequency Emitter");
-        channel_names.emplace (4, "Back Left");
-        channel_names.emplace (5, "Back Right");
-        channel_names.emplace (6, "Front Left of Center");
-        channel_names.emplace (7, "Front Right of Center");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
+        channel_names.emplace (2, "中间");
+        channel_names.emplace (3, "低频振荡器");
+        channel_names.emplace (4, "左后方");
+        channel_names.emplace (5, "右后方");
+        channel_names.emplace (6, "中间左前侧");
+        channel_names.emplace (7, "中间右前侧");
         break;
 
       case DSSPEAKER_7POINT1_SURROUND:
       //case KSAUDIO_SPEAKER_7POINT1_SURROUND:
-        channel_names.emplace (0, "Front Left");
-        channel_names.emplace (1, "Front Right");
-        channel_names.emplace (2, "Center");
-        channel_names.emplace (3, "Low Frequency Emitter");
-        channel_names.emplace (4, "Back Left");
-        channel_names.emplace (5, "Back Right");
-        channel_names.emplace (6, "Side Left");
-        channel_names.emplace (7, "Side Right");
+        channel_names.emplace (0, "左前方");
+        channel_names.emplace (1, "右前方");
+        channel_names.emplace (2, "中间");
+        channel_names.emplace (3, "低频振荡器");
+        channel_names.emplace (4, "左后方");
+        channel_names.emplace (5, "右后方");
+        channel_names.emplace (6, "左侧");
+        channel_names.emplace (7, "右侧");
         break;
 
       default:
-        SK_LOG0 ( ( L" >> UNKNOWN Speaker Config: %x <<", dwConfig ),
+        SK_LOG0 ( ( L" >> 未知的扬声器配置: %x <<", dwConfig ),
                     L"  WASAPI  " );
         break;
     }
@@ -898,7 +879,7 @@ SK_WASAPI_GetChannelName (int channel_idx)
   else
   {
     static char szChannelOrdinal [32] = { };
-    snprintf   (szChannelOrdinal, 31, "Unknown Channel (%02i)", channel_idx);
+    snprintf   (szChannelOrdinal, 31, "未知会话 (%02i)", channel_idx);
 
     if (! init)
       return szChannelOrdinal;
@@ -921,8 +902,8 @@ SK_SetGameMute (bool bMute)
     {
       SK_ImGui_CreateNotification (
         "Sound.Mute", SK_ImGui_Toast::Info,
-          bMute ? "Game has been muted"
-                : "Game has been unmuted",
+          bMute ? "游戏已静音"
+                : "游戏已取消静音",
           nullptr, 3333UL, SK_ImGui_Toast::UseDuration |
                            SK_ImGui_Toast::ShowCaption |
                            SK_ImGui_Toast::ShowNewest
@@ -995,7 +976,7 @@ SK_WASAPI_Init (void)
 
           SK_ImGui_CreateNotification (
             "Sound.Volume", SK_ImGui_Toast::Info,
-              SK_FormatString ("Game Volume: %1.0f%%", volume).c_str (),
+              SK_FormatString ("游戏音量: %1.0f%%", volume).c_str (),
               nullptr, 3333UL, SK_ImGui_Toast::UseDuration |
                                SK_ImGui_Toast::ShowCaption |
                                SK_ImGui_Toast::ShowNewest
@@ -1032,11 +1013,11 @@ SK_WASAPI_Init (void)
   auto min_lat = SK_WASAPI_GetMinimumLatency ();
 
   SK_LOGi0 (
-    L"Current Audio Mixing Latency: %.1f ms @ %d kHz", cur_lat.milliseconds,
+    L"当前音频混合延迟: %.1f ms @ %d kHz", cur_lat.milliseconds,
                                                        cur_lat.samples_per_sec / 1000UL
   );
   SK_LOGi0 (
-    L"Minimum Audio Mixing Latency: %.1f ms @ %d kHz", min_lat.milliseconds,
+    L"最小音频混合延迟: %.1f ms @ %d kHz", min_lat.milliseconds,
                                                        min_lat.samples_per_sec / 1000UL
   );
 
