@@ -1816,10 +1816,10 @@ public:
 
           if (detailed)
           {
-            SK_ImGui::VerticalToggleButton   ( "1", &show_graphs );
+            SK_ImGui::VerticalToggleButton   ( "Graphs", &show_graphs );
 
             if (last_parked_count > 0)
-              SK_ImGui::VerticalToggleButton ( "2", &show_parked );
+              SK_ImGui::VerticalToggleButton ( "Parked", &show_parked );
           }
 
           last_parked_count = 0;
@@ -1841,7 +1841,7 @@ public:
             SK_WinRing0.hMgmtThread =
             SK_Thread_CreateEx ([](LPVOID pWinRingMgr) -> DWORD
             {
-              SetCurrentThreadDescription (L"[SK] CPU 传感器驱动程序");
+              SetCurrentThreadDescription (L"[SK] CPU Sensor Driver");
 
               SK_WinRing0_Mgmt* pMgr =
                 (SK_WinRing0_Mgmt *)pWinRingMgr;
