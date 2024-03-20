@@ -1089,7 +1089,7 @@ SK_ImGui_DrawConfig_Latency ()
 class SKWG_Latency : public SK_Widget
 {
 public:
-  SKWG_Latency () noexcept : SK_Widget ("Latency Analysis")
+  SKWG_Latency () noexcept : SK_Widget ("延迟分析")
   {
     SK_ImGui_Widgets->latency = this;
 

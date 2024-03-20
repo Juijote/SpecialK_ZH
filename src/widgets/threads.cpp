@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/diagnostics/debug_utils.h>
@@ -1127,7 +1108,7 @@ public:
   };
 
 public:
-  SKWG_Thread_Profiler (void) noexcept : SK_Widget ("Thread Profiler")
+  SKWG_Thread_Profiler (void) noexcept : SK_Widget ("线程分析")
   {
     SK_ImGui_Widgets->thread_profiler = this;
 
@@ -1774,7 +1755,7 @@ public:
       SK_MMCS_GetTasks ();
 
     if ( (! tasks.empty ()) &&
-         ImGui::CollapsingHeader ("Multi-Media Class Tasks", ImGuiTreeNodeFlags_DefaultOpen) )
+         ImGui::CollapsingHeader ("多媒体类任务", ImGuiTreeNodeFlags_DefaultOpen) )
     {
       float fSpacingMax = 0.0f;
 
@@ -1827,7 +1808,7 @@ public:
       int prio =
         int (task->priority + 2);
 
-      if (ImGui::Combo ("Priority", &prio, "Very Low\0Low\0Normal\0High\0Critical\0\0"))
+      if (ImGui::Combo ("优先级", &prio, "非常低\0低\0 正常\0高\0重要\0\0"))
       {
         strncpy (task->change.task0, task->task0, 64);
         strncpy (task->change.task1, task->task1, 64);
@@ -1845,7 +1826,7 @@ public:
     }
 
     if ( tasks.empty () ||
-         ImGui::CollapsingHeader ("Normal Win32 Threads", ImGuiTreeNodeFlags_DefaultOpen) )
+         ImGui::CollapsingHeader ("普通 Win32 线程", ImGuiTreeNodeFlags_DefaultOpen) )
     {
       bool clear_counters = false;
 
@@ -1853,21 +1834,21 @@ public:
 
       ImGui::BeginGroup ();
       ImGui::BeginGroup ();
-      ImGui::Checkbox   ("Show Finished", &show_exited_threads);
+      ImGui::Checkbox   ("显示完成", &show_exited_threads);
       extern volatile LONG _SK_TLS_AllocationFailures;
       LONG lAllocFails =
         ReadAcquire (&_SK_TLS_AllocationFailures);
       if (lAllocFails > 0)
       {
-        ImGui::Text ("TLS Allocation Failures: %li", lAllocFails);
-        if (ImGui::IsItemHovered ()) ImGui::SetTooltip ("Thread Local Storage is critical for Special K's thread performance.");
+        ImGui::Text ("TLS 分配失败: %li", lAllocFails);
+        if (ImGui::IsItemHovered ()) ImGui::SetTooltip ("线程本地存储对于 Special K 的线程性能至关重要。");
       }
       ImGui::EndGroup   ();
       ImGui::SameLine   ();
-      ImGui::Checkbox   ("Hide Inactive", &hide_inactive);
+      ImGui::Checkbox   ("隐藏非活动状态", &hide_inactive);
       ImGui::SameLine   ();
-      ImGui::Checkbox   ("Reset Stats Every 30 Seconds", &reset_stats);
-      if (ImGui::Button ("Compact Working Set Memory"))
+      ImGui::Checkbox   ("每 30 秒重置一次统计数据", &reset_stats);
+      if (ImGui::Button ("紧凑工作集内存"))
       {
         //SIZE_T MaximumWorkingSet = -1,
         //       MinimumWorkingSet = -1;
@@ -1903,20 +1884,20 @@ public:
       ImGui::EndGroup   ();
       ImGui::SameLine   ();
       ImGui::BeginGroup ();
-      if (ImGui::Button ("Reset Performance Counters"))
+      if (ImGui::Button ("重置性能计数器"))
         clear_counters = true;
       SK_ImGui_RebalanceThreadButton ();
       ImGui::EndGroup   ();
       ImGui::SameLine   ();
       ImGui::BeginGroup ();
-      ImGui::Checkbox   ("Show Callstack Analysis", &show_callstack);
+      ImGui::Checkbox   ("显示调用堆栈分析", &show_callstack);
 
-      if (ImGui::IsItemHovered ()) ImGui::SetTooltip ("This feature is experimental and may cause hitching while debug symbols are loaded.");
+      if (ImGui::IsItemHovered ()) ImGui::SetTooltip ("此功能是实验性的，在加载调试符号时可能会导致卡顿。");
 
       static bool analytics =
         config.threads.enable_file_io_trace;
 
-      if (ImGui::Checkbox ("Enable File I/O Analytics", &config.threads.enable_file_io_trace))
+      if (ImGui::Checkbox ("启用文件 I/O 分析", &config.threads.enable_file_io_trace))
       {   SK_SaveConfig (); }
       if (analytics != config.threads.enable_file_io_trace)
       {   ImGui::BulletText ("需要重启游戏");    }
@@ -1958,8 +1939,8 @@ public:
 
         if (SK_Thread_GetCurrentId () != GetThreadId (hSelectedThread) )
         {
-          if ( ImGui::Button ( suspended ?  "Resume this Thread" :
-                                            "Suspend this Thread" ) )
+          if ( ImGui::Button ( suspended ?  "恢复此线程" :
+                                            "暂停此线程" ) )
           {
             suspended = (! suspended);
 
@@ -2074,7 +2055,7 @@ public:
 
                             if (thread.frame_requested > (SK_GetFramesDrawn () - MIN_FRAMES))
                             {
-                              SK_ImGui_Warning (L"Unsafe thread suspension detected; thread resumed to prevent deadlock!");
+                              SK_ImGui_Warning (L"检测到不安全的线程挂起；线程恢复以防止死锁！");
                               ResumeThread (hThread.m_h);
                             }
 
@@ -2093,7 +2074,7 @@ public:
                       SK_Thread_CloseSelf ();
 
                       return 0;
-                    }, L"[SK] Thread Profiler Watchdog Timer",
+                    }, L"[SK] 线程分析器看门狗定时器",
                          (LPVOID)data_thread.get ());
                   }
                 }
@@ -2158,7 +2139,7 @@ public:
             }
           }
 
-          ImGui::Checkbox ("Prevent changes to affinity", &pTLS->scheduler->lock_affinity);
+          ImGui::Checkbox ("防止更改亲和性", &pTLS->scheduler->lock_affinity);
         }
         ImGui::EndGroup ();
         ImGui::SameLine ();

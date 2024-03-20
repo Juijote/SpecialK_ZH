@@ -1,23 +1,4 @@
-/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -31,7 +12,7 @@ SK_CountToString (uint64_t count);
 class SKWG_D3D11_Pipeline : public SK_Widget
 {
 public:
-  SKWG_D3D11_Pipeline (void) noexcept : SK_Widget ("D3D1x_Pipeline")
+  SKWG_D3D11_Pipeline (void) noexcept : SK_Widget ("D3D1x_管道")
   {
     SK_ImGui_Widgets->d3d11_pipeline = this;
 
@@ -120,8 +101,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "Vertex Invocations:\n\n\n"
-              "          min: %s Invocations,   max: %s Invocations,   avg: %s Invocations\n",
+              "顶点调用:\n\n\n"
+              "          最小: %s 调用,   最大: %s 调用,   平均: %s 调用\n",
                   SK_CountToString   (static_cast <uint64_t> (pipeline.vertex.verts_invoked.getMin ())).c_str   (),
                     SK_CountToString (max_invoke).c_str                                                         (),
                       SK_CountToString (static_cast <uint64_t> (pipeline.vertex.verts_invoked.getAvg ())).c_str () );
@@ -148,8 +129,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "Vertices Input:\n\n\n"
-              "          min: %s Vertices,   max: %s Vertices,   avg: %s Vertices\n",
+              "顶点输入:\n\n\n"
+              "          最小: %s 顶点,   最大: %s 顶点,   平均: %s 顶点\n",
                   SK_CountToString     (static_cast <uint64_t> (pipeline.vertex.verts_input.getMin ())).c_str (),
                     SK_CountToString   (max_verts).c_str                                                      (),
                       SK_CountToString (static_cast <uint64_t> (pipeline.vertex.verts_input.getAvg ())).c_str () );
@@ -176,8 +157,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "Primitives Assembled:\n\n\n"
-              "          min: %s Triangles,   max: %s Triangles,   avg: %s Triangles\n",
+              "组装基元:\n\n\n"
+              "          最小: %s 三角形,   最大: %s 三角形,   平均: %s 三角形\n",
                   SK_CountToString     (static_cast <uint64_t> (pipeline.vertex.prims_input.getMin ())).c_str (),
                     SK_CountToString   (max_prims).c_str                                                      (),
                       SK_CountToString (static_cast <uint64_t> (pipeline.vertex.prims_input.getAvg ())).c_str () );
@@ -210,8 +191,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "Raster Fill Rate:\n\n\n"
-              "          min: %5.1f%%,   max: %5.1f%%,   avg: %5.1f%%\n",
+              "光栅填充率:\n\n\n"
+              "          最小: %5.1f%%,   最大: %5.1f%%,   平均: %5.1f%%\n",
                 pipeline.raster.fill_ratio.getMin   (), pipeline.raster.fill_ratio.getMax (),
                   pipeline.raster.fill_ratio.getAvg () );
 
@@ -244,8 +225,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "Pixels Shaded:\n\n\n"
-              "          min: %s Pixels,   max: %s Pixels,   avg: %s Pixels\n",
+              "像素着色:\n\n\n"
+              "          最小: %s 像素,   最大: %s 像素,   平均: %s 像素\n",
                 SK_CountToString     (static_cast <uint64_t> (pipeline.raster.pixels_filled.getMin ())).c_str (),
                   SK_CountToString   (max_fill).c_str                                                         (),
                     SK_CountToString (static_cast <uint64_t> (pipeline.raster.pixels_filled.getAvg ())).c_str () );
@@ -278,8 +259,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "Compute Shader Invocations:\n\n\n"
-              "          min: %s Compels,   max: %s Compels,   avg: %s Compels\n",
+              "计算着色器调用:\n\n\n"
+              "          最小: %s 调用,   最大: %s 调用,   平均: %s 调用\n",
                 SK_CountToString     (static_cast <uint64_t> (pipeline.compute.dispatches.getMin ())).c_str (),
                   SK_CountToString   (max_dispatch).c_str                                                   (),
                     SK_CountToString (static_cast <uint64_t> (pipeline.compute.dispatches.getAvg ())).c_str () );

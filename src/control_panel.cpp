@@ -5160,7 +5160,7 @@ SK_ImGui_ControlPanel (void)
   {
     ImGui::PushItemWidth (ImGui::GetWindowWidth () * 0.666f);
 
-    if ( ImGui::CollapsingHeader ("FPS 限制器", ImGuiTreeNodeFlags_CollapsingHeader |
+    if ( ImGui::CollapsingHeader ("FPS 限制", ImGuiTreeNodeFlags_CollapsingHeader |
                                                        ImGuiTreeNodeFlags_DefaultOpen ) )
     {
       SK_ImGui_DrawGraph_FramePacing ();
@@ -5924,14 +5924,14 @@ SK_ImGui_ControlPanel (void)
               if (ImGui::IsItemHovered ())
               {
                 ImGui::BeginTooltip    ();
-                ImGui::TextUnformatted ("检测到 VRR 时 FPS 限制器会自我优化");
+                ImGui::TextUnformatted ("检测到 VRR 时 FPS 限制会自我优化");
                 ImGui::Separator       ();
                 ImGui::BulletText      ("限制将设置为低于刷新以消除 1 FPS 延迟");
                 ImGui::BulletText      ("将阻止游戏使用 1/2、1/3 或 1/4 刷新 VSYNC");
                 if (config.render.framerate.auto_low_latency.policy.ultra_low_latency)
                 {
                   ImGui::BulletText    ("NVIDIA Reflex 将设置为低延迟 + 提升 模式");
-                  ImGui::BulletText    ("FPS 限制器模式将设置为 VRR 优化");
+                  ImGui::BulletText    ("FPS 限制模式将设置为 VRR 优化");
                 }
                 else
                   ImGui::BulletText      ("NVIDIA Reflex 将设置为低延迟模式");
@@ -5941,7 +5941,7 @@ SK_ImGui_ControlPanel (void)
                 ImGui::Separator       ();
                 ImGui::TextColored     (ImVec4 (.6f, .6f, 1.f, 1.f), ICON_FA_INFO_CIRCLE);
                 ImGui::SameLine        ();
-                ImGui::TextUnformatted ("优化 FPS 限制器后，此选项会自行关闭并显示绿色");
+                ImGui::TextUnformatted ("优化 FPS 限制后，此选项会自行关闭并显示绿色");
                 ImGui::EndTooltip      ();
               }
 

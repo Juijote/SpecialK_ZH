@@ -883,7 +883,7 @@ SK::ControlPanel::D3D11::Draw (void)
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip ();
-            ImGui::Text         ("减少 SK FPS 限制器中的输入延迟");
+            ImGui::Text         ("减少 SK FPS 限制中的输入延迟");
             if (rb.api != SK_RenderAPI::D3D12)
             {
               ImGui::Separator  ();

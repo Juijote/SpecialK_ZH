@@ -729,7 +729,7 @@ public:
       ImGui::TreePush  ("");
 
       if ( ImGui::SliderFloat (
-             "Percentile Class 0 Cutoff",
+             "百分位数为 0 的分数线",
                &SK_FramePercentiles->percentile0.cutoff,
                  0.1f, 99.99f, "%3.1f%%" )
          )
@@ -738,7 +738,7 @@ public:
       }
 
       if ( ImGui::SliderFloat (
-             "Percentile Class 1 Cutoff",
+             "百分位数为 1 的分数线",
                &SK_FramePercentiles->percentile1.cutoff,
                  0.1f, 99.99f, "%3.1f%%" )
          )
@@ -752,7 +752,7 @@ public:
     if (changed)
       SK_FramePercentiles->store_percentile_cfg ();
 
-    ImGui::Checkbox ("Framerate Limiter Debug", &debug_limiter);
+    ImGui::Checkbox ("FPS 限制调试", &debug_limiter);
   }
 
   void OnConfig (ConfigEvent event) noexcept override

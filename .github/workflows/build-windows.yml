@@ -10,7 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         config: [Release]
-        platform: [Win32, x64]
+        platform: [x64]
+#        platform: [Win32, x64]
     
     steps:
     - uses: actions/checkout@v3
