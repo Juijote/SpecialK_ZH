@@ -1930,7 +1930,7 @@ public:
           {
             ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.f, 0.f, 1.f, 1.f));
 
-            if (SK_ImGui::VerticalToggleButton ("安装驱动程序", &never))
+            if (SK_ImGui::VerticalToggleButton ("Install Driver", &never))
             {
               SK_ImGui_WarningWithTitle (
                 L"请使用 SKIF 安装驱动程序\r\n\r\n\t\t\t设置 > 高级监测\t",
