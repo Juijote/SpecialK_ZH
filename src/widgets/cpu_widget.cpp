@@ -1588,7 +1588,7 @@ public:
   }
 
 public:
-  SKWG_CPU_Monitor (void) : SK_Widget ("CPU Monitor")
+  SKWG_CPU_Monitor (void) : SK_Widget ("CPU 监测")
   {
     SK_ImGui_Widgets->cpu_monitor = this;
 
@@ -1685,7 +1685,7 @@ public:
 
         if (! bUseNtPower)
         {
-          SK_LOG0 ( ( L"Disabling CallNtPowerInformation (...) due to failed result: %x", ntStatus ),
+          SK_LOG0 ( ( L"由于结果失败而禁用 CallNtPowerInformation (...): %x", ntStatus ),
                       L"CPUMonitor" );
         }
       }
@@ -1841,7 +1841,7 @@ public:
             SK_WinRing0.hMgmtThread =
             SK_Thread_CreateEx ([](LPVOID pWinRingMgr) -> DWORD
             {
-              SetCurrentThreadDescription (L"[SK] CPU Sensor Driver");
+              SetCurrentThreadDescription (L"[SK] CPU 传感器驱动程序");
 
               SK_WinRing0_Mgmt* pMgr =
                 (SK_WinRing0_Mgmt *)pWinRingMgr;
@@ -1930,11 +1930,11 @@ public:
           {
             ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.f, 0.f, 1.f, 1.f));
 
-            if (SK_ImGui::VerticalToggleButton ("Install Driver", &never))
+            if (SK_ImGui::VerticalToggleButton ("安装驱动程序", &never))
             {
               SK_ImGui_WarningWithTitle (
-                L"Please use SKIF to Install the Driver\r\n\r\n\t\t\tSettings > Advanced Monitoring\t",
-                    L"In-Game Driver Install Unsupported" );
+                L"请使用 SKIF 安装驱动程序\r\n\r\n\t\t\t设置 > 高级监测\t",
+                    L"不支持游戏内驱动程序安装" );
             // SetEvent (SK_WinRing0.hInstallEvent);
             }
 
@@ -1945,7 +1945,7 @@ public:
               ImGui::Spacing      (  );
               ImGui::TreePush     ("");
               ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.4f, 0.875f, 0.95f, 1.f));
-              ImGui::Text         ("Special K Uses WinRing0 to Read CPU Model-Specific-Registers");
+              ImGui::Text         ("Special K 使用 WinRing0 读取 CPU 型号特定寄存器");
               ImGui::PopStyleColor(  );
               ImGui::TreePop      (  );
               ImGui::Spacing      (  );
@@ -1953,7 +1953,7 @@ public:
               ImGui::Spacing      (  );
               ImGui::Separator    (  );
               ImGui::Spacing      (  );
-              ImGui::BulletText   ("WinRing0 is a trusted kernel-mode driver used in Open Source software");
+              ImGui::BulletText   ("WinRing0 是开源软件中使用的可信内核模式驱动程序");
               ImGui::Spacing      (  );
               ImGui::Spacing      (  );ImGui::SameLine ();
               ImGui::Spacing      (  );ImGui::SameLine ();
@@ -1961,17 +1961,17 @@ public:
               ImGui::Spacing      (  );
               ImGui::Spacing      (  );
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.57194F, 0.534f, .94f, 1.f));
-              ImGui::Text         ("Additional Sensor Data Available Using WinRing0:");
+              ImGui::Text         ("使用 WinRing0 可获得额外的传感器数据:");
               ImGui::Spacing      (  );
               ImGui::EndGroup     (  );
               ImGui::TreePush     ("");
               ImGui::BeginGroup   (  );
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.3f - (0.3f * 0.805f), 1.0f, 1.0f));
-              ImGui::BulletText   ("Temperature");
+              ImGui::BulletText   ("温度");
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.28F, 1.f, 1.f, 1.f));
-              ImGui::BulletText   ("Frequency");
+              ImGui::BulletText   ("Pin率");
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.13294F, 0.734f, .94f, 1.f));
-              ImGui::BulletText   ("Power");
+              ImGui::BulletText   ("功率");
               ImGui::PopStyleColor( 4);
               ImGui::EndGroup     (  );
               ImGui::SameLine     (0.0f, 25.0f);
@@ -2000,7 +2000,7 @@ public:
               ImGui::Spacing      (  );
               ImGui::PushStyleColor
                                   (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.52F, 0.85f, 0.93f, 1.f));
-              ImGui::Text         ("Most Intel CPUs Pentium 4 or newer and AMD Ryzen(+) are Supported");
+              ImGui::Text         ("支持大多数 Intel CPU Pentium 4 或更新版本以及 AMD Ryzen(+)");
               ImGui::Spacing      (  );
               ImGui::PopStyleColor(  );
               ImGui::TreePop      (  );
@@ -2016,7 +2016,7 @@ public:
           {
             ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.f, 0.f, 1.f, 1.f));
 
-            if (SK_ImGui::VerticalToggleButton ("Uninstall Driver", &never))
+            if (SK_ImGui::VerticalToggleButton ("卸载驱动程序", &never))
               SetEvent            (SK_WinRing0.hUninstallEvent);
 
             ImGui::PopStyleColor  ();
@@ -2079,7 +2079,7 @@ public:
                 ( szAvg,
                     511,
                       "CPU%lu:\n\n"
-                      "          min: %4.1f%%, max: %4.1f%%, avg: %4.1f%%\n",
+                      "          最小: %4.1f%%, 最大: %4.1f%%, 平均: %4.1f%%\n",
                         i-1,
                           cpu_records [i].getMin (), cpu_records [i].getMax (),
                           cpu_records [i].getAvg () );
@@ -2091,7 +2091,7 @@ public:
                 ( szAvg,
                     511,
                       "%s\t\t\n\n"
-                      "          min: %4.1f%%, max: %4.1f%%, avg: %4.1f%%\n",
+                      "          最小: %4.1f%%, 最大: %4.1f%%, 平均: %4.1f%%\n",
                         InstructionSet::Brand ().c_str (),
                         cpu_records [i].getMin (), cpu_records [i].getMax (),
                         cpu_records [i].getAvg () );
@@ -2192,12 +2192,12 @@ public:
                   }
                 }
 
-                ImGui::OpenPopup ("Power Scheme Selector");
+                ImGui::OpenPopup ("电源方案选择器");
               }
 
               ImGui::PopStyleColor   (2);
 
-              if ( ImGui::BeginPopupModal ( "Power Scheme Selector",
+              if ( ImGui::BeginPopupModal ( "电源方案选择器",
                    nullptr,
                    ImGuiWindowFlags_AlwaysAutoResize |
                    ImGuiWindowFlags_NoScrollbar      | ImGuiWindowFlags_NoScrollWithMouse )
