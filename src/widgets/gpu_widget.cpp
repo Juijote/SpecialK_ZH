@@ -1,23 +1,4 @@
-/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -61,7 +42,7 @@ struct sk_sensor_prefs_s
 class SKWG_GPU_Monitor : public SK_Widget
 {
 public:
-  SKWG_GPU_Monitor (void) noexcept : SK_Widget ("GPU Monitor")
+  SKWG_GPU_Monitor (void) noexcept : SK_Widget ("GPU 监测")
   {
     SK_ImGui_Widgets->gpu_monitor = this;
 
@@ -106,17 +87,17 @@ public:
       {
         it->params.enable =
           dynamic_cast <sk::ParameterBool *> (
-            SK_Widget_ParameterFactory->create_parameter <bool> (L"Enable Widget")
+            SK_Widget_ParameterFactory->create_parameter <bool> (L"启用小部件")
           );
 
         it->params.min =
           dynamic_cast <sk::ParameterFloat *> (
-            SK_Widget_ParameterFactory->create_parameter <float> (L"Minimum Value")
+            SK_Widget_ParameterFactory->create_parameter <float> (L"最小值")
           );
 
         it->params.max =
           dynamic_cast <sk::ParameterFloat *> (
-            SK_Widget_ParameterFactory->create_parameter <float> (L"Maximum Value")
+            SK_Widget_ParameterFactory->create_parameter <float> (L"最大值")
           );
 
         it->params.enable->register_to_ini ( osd_ini,
@@ -236,11 +217,11 @@ public:
       ImGui::PushID      (sensor);
       ImGui::TreePush    ("");
       ImGui::BeginGroup  (  );
-      ImGui::Checkbox    ("Enable###EnableWidgetSensor", &sensor->enable);
+      ImGui::Checkbox    ("启用###EnableWidgetSensor", &sensor->enable);
     //ImGui::Text        ("Graph Mode");
     //ImGui::Text        ("Unit of Measure");
-      ImGui::Text        ("Maximum Normal Value");
-      ImGui::Text        ("Minimum Normal Value");
+      ImGui::Text        ("最大正常值");
+      ImGui::Text        ("最小正常值");
       ImGui::EndGroup    (   );
       ImGui::SameLine    (   );
       ImGui::BeginGroup  (   );
@@ -250,7 +231,7 @@ public:
 
       bool bAuto = (sensor->min_val < 0.0f);
 
-      if ( ImGui::Checkbox ("Auto###Auto_MinVal", &bAuto) )
+      if ( ImGui::Checkbox ("自动###Auto_MinVal", &bAuto) )
       {
         if  (sensor->min_val == 0.0f) sensor->min_val = -1.0f;
         else       sensor->min_val = -sensor->min_val;
@@ -259,12 +240,12 @@ public:
       if (sensor->min_val >= 0.0f)
       {
         ImGui::SameLine    ();
-        ImGui::SliderFloat ("Min", &sensor->min_val, 0.0f, 100.0f);
+        ImGui::SliderFloat ("最小", &sensor->min_val, 0.0f, 100.0f);
       }
 
       bAuto = (sensor->max_val < 0.0f);
 
-      if ( ImGui::Checkbox ("Auto###Auto_MaxVal", &bAuto) )
+      if ( ImGui::Checkbox ("自动###Auto_MaxVal", &bAuto) )
       {
         if  (sensor->max_val == 0.0f) sensor->max_val = -1.0f;
         else       sensor->max_val = -sensor->max_val;
@@ -273,7 +254,7 @@ public:
       if (sensor->max_val >= 0.0f)
       {
         ImGui::SameLine    ();
-        ImGui::SliderFloat ("Max", &sensor->max_val, 0.0f, 100.0f);
+        ImGui::SliderFloat ("最大", &sensor->max_val, 0.0f, 100.0f);
       }
 
       ImGui::EndGroup    (   );
@@ -328,8 +309,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "GPU%lu Load %%:\n\n\n"
-              "          min: %3.0f%%, max: %3.0f%%, avg: %4.1f%%\n",
+              "GPU%lu 负载 %%:\n\n\n"
+              "          最小: %3.0f%%, 最大: %3.0f%%, 平均: %4.1f%%\n",
                 0,
                   gpu_load.getMin (), gpu_load.getMax (),
                     gpu_load.getAvg () );
@@ -370,8 +351,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              (const char *)u8"GPU%lu Temp (�C):\n\n\n"
-                            u8"          min: %3.0f�, max: %3.0f�, avg: %4.1f�\n",
+              (const char *)u8"GPU%lu 温度 (�C):\n\n\n"
+                            u8"          最小: %3.0f�, 最大: %3.0f�, 平均: %4.1f�\n",
                 0,
                   gpu_temp_c.getMin   (), gpu_temp_c.getMax (),
                     gpu_temp_c.getAvg () );
@@ -397,7 +378,7 @@ public:
 
       float fy = ImGui::GetCursorPosY ();
 
-      snprintf (szCur, 31, (const char *)u8"%4.1f�", gpu_temp_c.getLastValue ());
+      snprintf (szCur, 31, (const char *)u8"%4.1f�", gpu_temp_c.getLastValue ());
 
       ImGui::SameLine        (  );
       ImGui::SetCursorPosX   (fx                      - item_inner_spacing.x +
@@ -416,8 +397,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "GPU%lu Fan Speed (RPM):\n\n\n"
-              "          min: %3.0f, max: %3.0f, avg: %4.1f\n",
+              "GPU%lu 风扇转速 (RPM):\n\n\n"
+              "          最小: %3.0f, 最大: %3.0f, 平均: %4.1f\n",
                 0,
                   fan_rpm.getMin   (), fan_rpm.getMax (),
                     fan_rpm.getAvg () );
@@ -463,8 +444,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "GPU%lu Core Clock (GHz):\n\n\n"
-              "          min: %4.2f, max: %4.2f, avg: %5.3f\n",
+              "GPU%lu 核心时钟 (GHz):\n\n\n"
+              "          最小: %4.2f, 最大: %4.2f, 平均: %5.3f\n",
                 0,
                   core_clock_ghz.getMin   (), core_clock_ghz.getMax (),
                     core_clock_ghz.getAvg () );
@@ -512,8 +493,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "GPU%lu VRAM Clock (GHz):\n\n\n"
-              "          min: %4.2f, max: %4.2f, avg: %5.3f\n",
+              "GPU%lu 显存时钟 (GHz):\n\n\n"
+              "          最小: %4.2f, 最大: %4.2f, 平均: %5.3f\n",
                 0,
                   vram_clock_ghz.getMin   (), vram_clock_ghz.getMax (),
                     vram_clock_ghz.getAvg () );
@@ -566,8 +547,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              "GPU%lu VRAM Usage (MiB):\n\n\n"
-              "          min: %6.1f, max: %6.1f, avg: %6.1f\n",
+              "GPU%lu 显存使用量 (MiB):\n\n\n"
+              "          最小: %6.1f, 最大: %6.1f, 平均: %6.1f\n",
                 0,
                   vram_used_mib.getMin   (), max_use,
                     vram_used_mib.getAvg () );
@@ -633,22 +614,22 @@ private:
   SK_Stat_DataHistory <uint64_t, 96> vram_shared    = { };
   SK_Stat_DataHistory <float,    96> fan_rpm        = { };
 
-  sk_sensor_prefs_s core_clock_prefs { false, "GPU Core Clock (GHz)",
+  sk_sensor_prefs_s core_clock_prefs { false, "GPU 核心时钟 (GHz)",
                                                L"CoreClock",
                                        &core_clock_ghz, -1.0f, -1.0f };
-  sk_sensor_prefs_s vram_clock_prefs { false, "GPU VRAM Clock (GHz)",
+  sk_sensor_prefs_s vram_clock_prefs { false, "GPU 显存时钟 (GHz)",
                                                 L"VRAMClock",
                                        &vram_clock_ghz, -1.0f, -1.0f };
-  sk_sensor_prefs_s gpu_load_prefs   { true, "GPU Load (%)",
+  sk_sensor_prefs_s gpu_load_prefs   { true, "GPU 负载 (%)",
                                               L"Load",
                                        &gpu_load,       0.0f, 100.0f };
-  sk_sensor_prefs_s gpu_temp_prefs   { true, (const char *)u8"GPU Temperature (�C)",
+  sk_sensor_prefs_s gpu_temp_prefs   { true, (const char *)u8"GPU 温度 (�C)",
                                               L"Temperature",
                                        &gpu_temp_c,    40.0f, 94.0f  };
-  sk_sensor_prefs_s gpu_fan_prefs    { true, "GPU Fan Speed (RPM)",
+  sk_sensor_prefs_s gpu_fan_prefs    { true, "GPU 风扇转速 (RPM)",
                                               L"FanSpeed",
                                        &fan_rpm,        0.0f, 0.0f   };
-  sk_sensor_prefs_s vram_used_prefs  { true, "GPU VRAM in Use (MiB)",
+  sk_sensor_prefs_s vram_used_prefs  { true, "GPU 显存使用量(MiB)",
                                               L"VRAMInUse",
                                        &vram_used_mib, -1.0f, -1.0f  };
 

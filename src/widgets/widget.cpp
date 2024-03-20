@@ -1,23 +1,4 @@
-/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+//汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -685,7 +666,7 @@ SK_Widget::config_base (void)
   const  float font_size_multiline = font_size + ImGui::GetStyle ().ItemSpacing.y + ImGui::GetStyle ().ItemInnerSpacing.y;
 #endif
 
-  if (ImGui::Checkbox ("Movable", &movable))
+  if (ImGui::Checkbox ("活动", &movable))
   {
     setMovable (movable);
     changed = true;
@@ -693,7 +674,7 @@ SK_Widget::config_base (void)
 
   ImGui::SameLine ();
 
-  if (ImGui::Checkbox ("Resizable", &resizable))
+  if (ImGui::Checkbox ("可调整大小", &resizable))
   {
     setResizable (resizable);
     changed = true;
@@ -703,7 +684,7 @@ SK_Widget::config_base (void)
   {
     ImGui::SameLine ();
 
-    if (ImGui::Checkbox ("Auto-Fit", &autofit))
+    if (ImGui::Checkbox ("自动适配", &autofit))
     {
       setAutoFit (autofit);
       changed = true;
@@ -715,7 +696,7 @@ SK_Widget::config_base (void)
 
   ImGui::SameLine ();
 
-  if (ImGui::Checkbox ("Click-Through", &click_through))
+  if (ImGui::Checkbox ("通过点击", &click_through))
   {
     setClickThrough (click_through);
     changed = true;
@@ -723,7 +704,7 @@ SK_Widget::config_base (void)
 
   ImGui::SameLine ();
 
-  if (ImGui::Checkbox ("Draw Border", &border))
+  if (ImGui::Checkbox ("绘制边框", &border))
   {
     setBorder (border);
     changed = true;
@@ -735,13 +716,13 @@ SK_Widget::config_base (void)
              w = ( static_cast <int> (docking) & static_cast <int> (DockAnchor::West ) ) != 0;
 
   const char* anchors =
-    "Undocked\0North\0South\0\0";
+    "未连接\0北\0南\0\0";
 
           int dock = 0;
        if (n) dock = 1;
   else if (s) dock = 2;
 
-  if (ImGui::Combo ("Vertical Docking Anchor", &dock, anchors, 3))
+  if (ImGui::Combo ("垂直连接", &dock, anchors, 3))
   {
     const int mask = ( dock == 1 ? static_cast <int> (DockAnchor::North) : 0x0 ) |
                      ( dock == 2 ? static_cast <int> (DockAnchor::South) : 0x0 );
@@ -756,13 +737,13 @@ SK_Widget::config_base (void)
   }
 
   anchors =
-    "Undocked\0West\0East\0\0";
+    "未连接\0西\0东\0\0";
 
               dock = 0;
        if (w) dock = 1;
   else if (e) dock = 2;
 
-  if (ImGui::Combo ("Horizontal Docking Anchor", &dock, anchors, 3))
+  if (ImGui::Combo ("水平连接", &dock, anchors, 3))
   {
     const int mask = (dock == 1 ? static_cast <int> (DockAnchor::West) : 0x0) |
                      (dock == 2 ? static_cast <int> (DockAnchor::East) : 0x0);
@@ -812,16 +793,16 @@ SK_Widget::config_base (void)
       return false;
     };
 
-  ImGui::Text       ("Key Bindings");
+  ImGui::Text       ("按键绑定");
   ImGui::TreePush   ("");
   ImGui::BeginGroup (  );
 
   if (toggle_key_val != nullptr)
-    ImGui::Text     ("Widget Toggle");
+    ImGui::Text     ("小组件切换");
   if (flash_key_val != nullptr)
-    ImGui::Text     ("Widget Flash");
+    ImGui::Text     ("小组件闪烁");
   if (focus_key_val != nullptr)
-    ImGui::Text     ("Widget Focus");
+    ImGui::Text     ("小组件焦点");
 
   ImGui::EndGroup   (  );
   ImGui::SameLine   (  );
@@ -839,14 +820,14 @@ SK_Widget::config_base (void)
   ImGui::TreePop    (  );
   ImGui::Separator  (  );
 //changed |= ImGui::SliderFloat("Alpha Scale", &alpha, 0.01f, 1.0f);
-  changed |= ImGui::SliderFloat("Flash Time",  &flash_duration,
+  changed |= ImGui::SliderFloat("闪烁时间",  &flash_duration,
                                                        0.10f, 15.0f,
-                                                   "%.3f (Seconds)");
-  changed |= ImGui::SliderFloat("Widget Scale", &scale, 0.25f, 2.0f);
+                                                   "%.3f (秒)");
+  changed |= ImGui::SliderFloat("小组件比例", &scale, 0.25f, 2.0f);
   ImGui::Separator  (  );
 
   const bool done =
-    ImGui::Button   ("  Save  ");
+    ImGui::Button   ("  保存  ");
 
   if (done)      {
     if (changed) { save (osd_ini);
