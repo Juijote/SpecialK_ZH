@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <imgui/font_awesome.h>
@@ -1835,10 +1816,10 @@ public:
 
           if (detailed)
           {
-            SK_ImGui::VerticalToggleButton   ( "Graphs", &show_graphs );
+            SK_ImGui::VerticalToggleButton   ( "TuBiao", &show_graphs );
 
             if (last_parked_count > 0)
-              SK_ImGui::VerticalToggleButton ( "Parked", &show_parked );
+              SK_ImGui::VerticalToggleButton ( "XiuMian", &show_parked );
           }
 
           last_parked_count = 0;
@@ -1988,7 +1969,7 @@ public:
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.3f - (0.3f * 0.805f), 1.0f, 1.0f));
               ImGui::BulletText   ("温度");
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.28F, 1.f, 1.f, 1.f));
-              ImGui::BulletText   ("频率");
+              ImGui::BulletText   ("Pin率");
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.13294F, 0.734f, .94f, 1.f));
               ImGui::BulletText   ("功率");
               ImGui::PopStyleColor( 4);
