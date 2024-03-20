@@ -67,7 +67,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName",     "https://juij.eu.org [汉化 & 编译优化]"
-            VALUE "FileDescription", "Special K 代码注入"
+            VALUE "FileDescription", "Special K 功能强大的游戏注入调整优化插件框架"
             VALUE "FileVersion",     SK_VERSION_STR_A
 #ifdef _WIN64
             VALUE "InternalName",    "SpecialK64.dll"
@@ -75,7 +75,7 @@ BEGIN
             VALUE "InternalName",    "SpecialK32.dll"
 #endif
             VALUE "LegalCopyright",  "Copyleft © 2015-2024"
-            VALUE "ProductName",     "Special K 代码注入"
+            VALUE "ProductName",     "Special K 功能强大的游戏注入调整优化插件框架"
             VALUE "ProductVersion",  SK_VERSION_STR_A
         END
     END
