@@ -1,4 +1,23 @@
-﻿//汉化相关
+﻿/**
+ * This file is part of Special K.
+ *
+ * Special K is free software : you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License
+ * as published by The Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * Special K is distributed in the hope that it will be useful,
+ *
+ * But WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Special K.
+ *
+ *   If not, see <http://www.gnu.org/licenses/>.
+ *
+**/
 
 #include <SpecialK/stdafx.h>
 #include <imgui/font_awesome.h>
@@ -1588,7 +1607,7 @@ public:
   }
 
 public:
-  SKWG_CPU_Monitor (void) : SK_Widget ("CPU 监测")
+  SKWG_CPU_Monitor (void) : SK_Widget ("CPU Monitor")
   {
     SK_ImGui_Widgets->cpu_monitor = this;
 
@@ -1685,7 +1704,7 @@ public:
 
         if (! bUseNtPower)
         {
-          SK_LOG0 ( ( L"由于结果失败而禁用 CallNtPowerInformation (...): %x", ntStatus ),
+          SK_LOG0 ( ( L"Disabling CallNtPowerInformation (...) due to failed result: %x", ntStatus ),
                       L"CPUMonitor" );
         }
       }
@@ -1816,10 +1835,10 @@ public:
 
           if (detailed)
           {
-            SK_ImGui::VerticalToggleButton   ( "TuBiao", &show_graphs );
+            SK_ImGui::VerticalToggleButton   ( "Graphs", &show_graphs );
 
             if (last_parked_count > 0)
-              SK_ImGui::VerticalToggleButton ( "XiuMian", &show_parked );
+              SK_ImGui::VerticalToggleButton ( "Parked", &show_parked );
           }
 
           last_parked_count = 0;
@@ -1841,7 +1860,7 @@ public:
             SK_WinRing0.hMgmtThread =
             SK_Thread_CreateEx ([](LPVOID pWinRingMgr) -> DWORD
             {
-              SetCurrentThreadDescription (L"[SK] CPU 传感器驱动程序");
+              SetCurrentThreadDescription (L"[SK] CPU Sensor Driver");
 
               SK_WinRing0_Mgmt* pMgr =
                 (SK_WinRing0_Mgmt *)pWinRingMgr;
@@ -1930,11 +1949,11 @@ public:
           {
             ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.f, 0.f, 1.f, 1.f));
 
-            if (SK_ImGui::VerticalToggleButton ("安装驱动程序", &never))
+            if (SK_ImGui::VerticalToggleButton ("Install Driver", &never))
             {
               SK_ImGui_WarningWithTitle (
-                L"请使用 SKIF 安装驱动程序\r\n\r\n\t\t\t设置 > 高级监测\t",
-                    L"不支持游戏内驱动程序安装" );
+                L"Please use SKIF to Install the Driver\r\n\r\n\t\t\tSettings > Advanced Monitoring\t",
+                    L"In-Game Driver Install Unsupported" );
             // SetEvent (SK_WinRing0.hInstallEvent);
             }
 
@@ -1945,7 +1964,7 @@ public:
               ImGui::Spacing      (  );
               ImGui::TreePush     ("");
               ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.4f, 0.875f, 0.95f, 1.f));
-              ImGui::Text         ("Special K 使用 WinRing0 读取 CPU 型号特定寄存器");
+              ImGui::Text         ("Special K Uses WinRing0 to Read CPU Model-Specific-Registers");
               ImGui::PopStyleColor(  );
               ImGui::TreePop      (  );
               ImGui::Spacing      (  );
@@ -1953,7 +1972,7 @@ public:
               ImGui::Spacing      (  );
               ImGui::Separator    (  );
               ImGui::Spacing      (  );
-              ImGui::BulletText   ("WinRing0 是开源软件中使用的可信内核模式驱动程序");
+              ImGui::BulletText   ("WinRing0 is a trusted kernel-mode driver used in Open Source software");
               ImGui::Spacing      (  );
               ImGui::Spacing      (  );ImGui::SameLine ();
               ImGui::Spacing      (  );ImGui::SameLine ();
@@ -1961,17 +1980,17 @@ public:
               ImGui::Spacing      (  );
               ImGui::Spacing      (  );
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.57194F, 0.534f, .94f, 1.f));
-              ImGui::Text         ("使用 WinRing0 可获得额外的传感器数据:");
+              ImGui::Text         ("Additional Sensor Data Available Using WinRing0:");
               ImGui::Spacing      (  );
               ImGui::EndGroup     (  );
               ImGui::TreePush     ("");
               ImGui::BeginGroup   (  );
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.3f - (0.3f * 0.805f), 1.0f, 1.0f));
-              ImGui::BulletText   ("温度");
+              ImGui::BulletText   ("Temperature");
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.28F, 1.f, 1.f, 1.f));
-              ImGui::BulletText   ("Pin率");
+              ImGui::BulletText   ("Frequency");
               ImGui::PushStyleColor(ImGuiCol_Text,(ImVec4&&)ImColor::HSV (0.13294F, 0.734f, .94f, 1.f));
-              ImGui::BulletText   ("功率");
+              ImGui::BulletText   ("Power");
               ImGui::PopStyleColor( 4);
               ImGui::EndGroup     (  );
               ImGui::SameLine     (0.0f, 25.0f);
@@ -2000,7 +2019,7 @@ public:
               ImGui::Spacing      (  );
               ImGui::PushStyleColor
                                   (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.52F, 0.85f, 0.93f, 1.f));
-              ImGui::Text         ("支持大多数 Intel CPU Pentium 4 或更新版本以及 AMD Ryzen(+)");
+              ImGui::Text         ("Most Intel CPUs Pentium 4 or newer and AMD Ryzen(+) are Supported");
               ImGui::Spacing      (  );
               ImGui::PopStyleColor(  );
               ImGui::TreePop      (  );
@@ -2016,7 +2035,7 @@ public:
           {
             ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.f, 0.f, 1.f, 1.f));
 
-            if (SK_ImGui::VerticalToggleButton ("卸载驱动程序", &never))
+            if (SK_ImGui::VerticalToggleButton ("Uninstall Driver", &never))
               SetEvent            (SK_WinRing0.hUninstallEvent);
 
             ImGui::PopStyleColor  ();
@@ -2079,7 +2098,7 @@ public:
                 ( szAvg,
                     511,
                       "CPU%lu:\n\n"
-                      "          最小: %4.1f%%, 最大: %4.1f%%, 平均: %4.1f%%\n",
+                      "          min: %4.1f%%, max: %4.1f%%, avg: %4.1f%%\n",
                         i-1,
                           cpu_records [i].getMin (), cpu_records [i].getMax (),
                           cpu_records [i].getAvg () );
@@ -2091,7 +2110,7 @@ public:
                 ( szAvg,
                     511,
                       "%s\t\t\n\n"
-                      "          最小: %4.1f%%, 最大: %4.1f%%, 平均: %4.1f%%\n",
+                      "          min: %4.1f%%, max: %4.1f%%, avg: %4.1f%%\n",
                         InstructionSet::Brand ().c_str (),
                         cpu_records [i].getMin (), cpu_records [i].getMax (),
                         cpu_records [i].getAvg () );
@@ -2192,12 +2211,12 @@ public:
                   }
                 }
 
-                ImGui::OpenPopup ("电源方案选择器");
+                ImGui::OpenPopup ("Power Scheme Selector");
               }
 
               ImGui::PopStyleColor   (2);
 
-              if ( ImGui::BeginPopupModal ( "电源方案选择器",
+              if ( ImGui::BeginPopupModal ( "Power Scheme Selector",
                    nullptr,
                    ImGuiWindowFlags_AlwaysAutoResize |
                    ImGuiWindowFlags_NoScrollbar      | ImGuiWindowFlags_NoScrollWithMouse )
