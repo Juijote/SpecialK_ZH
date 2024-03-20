@@ -1607,7 +1607,7 @@ public:
   }
 
 public:
-  SKWG_CPU_Monitor (void) : SK_Widget ("CPU Monitor")
+  SKWG_CPU_Monitor (void) : SK_Widget ("CPU 监测")
   {
     SK_ImGui_Widgets->cpu_monitor = this;
 
@@ -1704,7 +1704,7 @@ public:
 
         if (! bUseNtPower)
         {
-          SK_LOG0 ( ( L"Disabling CallNtPowerInformation (...) due to failed result: %x", ntStatus ),
+          SK_LOG0 ( ( L"由于结果失败而禁用 CallNtPowerInformation (...): %x", ntStatus ),
                       L"CPUMonitor" );
         }
       }
@@ -1831,14 +1831,14 @@ public:
       {
         ImGui::BeginGroup   ();
         {
-          SK_ImGui::VerticalToggleButton     ( "All CPUs", &detailed  );
+          SK_ImGui::VerticalToggleButton     ( "全部核心", &detailed  );
 
           if (detailed)
           {
-            SK_ImGui::VerticalToggleButton   ( "Graphs", &show_graphs );
+            SK_ImGui::VerticalToggleButton   ( "图表", &show_graphs );
 
             if (last_parked_count > 0)
-              SK_ImGui::VerticalToggleButton ( "Parked", &show_parked );
+              SK_ImGui::VerticalToggleButton ( "停放", &show_parked );
           }
 
           last_parked_count = 0;
