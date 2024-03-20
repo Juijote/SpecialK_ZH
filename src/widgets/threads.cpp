@@ -540,7 +540,7 @@ SK_ImGui_RebalanceThreadButton (void)
 {
   if (! rebalance)
   {
-    if (ImGui::Button ("Rebalance Threads"))
+    if (ImGui::Button ("重新平衡线程"))
     {
       SK_Thread_RebalanceThreads ();
     }
@@ -1808,7 +1808,7 @@ public:
       int prio =
         int (task->priority + 2);
 
-      if (ImGui::Combo ("优先级", &prio, "非常低\0低\0 正常\0高\0重要\0\0"))
+      if (ImGui::Combo ("优先级", &prio, "非常低\0低\0正常\0高\0重要\0\0"))
       {
         strncpy (task->change.task0, task->task0, 64);
         strncpy (task->change.task1, task->task1, 64);

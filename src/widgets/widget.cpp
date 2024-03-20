@@ -800,7 +800,7 @@ SK_Widget::config_base (void)
   if (toggle_key_val != nullptr)
     ImGui::Text     ("小组件切换");
   if (flash_key_val != nullptr)
-    ImGui::Text     ("小组件闪烁");
+    ImGui::Text     ("小组件闪动");
   if (focus_key_val != nullptr)
     ImGui::Text     ("小组件焦点");
 
@@ -820,7 +820,7 @@ SK_Widget::config_base (void)
   ImGui::TreePop    (  );
   ImGui::Separator  (  );
 //changed |= ImGui::SliderFloat("Alpha Scale", &alpha, 0.01f, 1.0f);
-  changed |= ImGui::SliderFloat("闪烁时间",  &flash_duration,
+  changed |= ImGui::SliderFloat("闪动时间",  &flash_duration,
                                                        0.10f, 15.0f,
                                                    "%.3f (秒)");
   changed |= ImGui::SliderFloat("小组件比例", &scale, 0.25f, 2.0f);

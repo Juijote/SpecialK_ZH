@@ -3000,10 +3000,10 @@ SK_FrameCallback ( SK_RenderBackend& rb,
                                             wcslen ( wszDescription )
          )
       {
-        if (StrStrIW (wszDescription, L"[游戏] 绘制主线程") == nullptr)
+        if (StrStrIW (wszDescription, L"[游戏] 主绘制线程") == nullptr)
         {
           SetCurrentThreadDescription (
-            SK_FormatStringW ( L"[游戏] 绘制主线程 < %s >",
+            SK_FormatStringW ( L"[游戏] 主绘制线程 < %s >",
                        wszDescription ).c_str ()
                                       );
         }
@@ -3011,7 +3011,7 @@ SK_FrameCallback ( SK_RenderBackend& rb,
 
       else
       {
-        SetCurrentThreadDescription (L"[游戏] 绘制主线程");
+        SetCurrentThreadDescription (L"[游戏] 主绘制线程");
       }
 
       SK_LocalFree (wszDescription);
@@ -3278,8 +3278,8 @@ SK_MMCS_BeginBufferSwap (void)
     static bool first = true;
                 task  =
       SK_MMCS_GetTaskForThreadIDEx ( tid,                       first ?
-                                       "[GAME] Primary Render Thread" :
-                                       "[GAME] Ancillary Render Thread",
+                                       "[游戏] 主绘制线程" :
+                                       "[游戏] 辅助绘制线程",
                                         "Games", "DisplayPostProcessing" );
 
     if ( task != nullptr )

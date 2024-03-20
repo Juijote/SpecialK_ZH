@@ -147,7 +147,7 @@ SK::ControlPanel::OSD::Draw (void)
         ImGui::Checkbox ("VRR", &config.fps.compact_vrr);
         ImGui::SameLine ();
       }
-      ImGui::Checkbox   ("累计 FPS 生成", &config.fps.framenumber);
+      ImGui::Checkbox   ("累计 Frame 生成", &config.fps.framenumber);
       ImGui::EndGroup   ();
 
       // New line

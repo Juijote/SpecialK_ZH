@@ -5116,7 +5116,7 @@ SK_ImGui_ControlPanel (void)
       ImGui::Checkbox        ("禁用透明度", &config.imgui.render.disable_alpha);
 
       if (ImGui::IsItemHovered ())
-        ImGui::SetTooltip ("解决部分游戏中的 UI 闪烁问题");
+        ImGui::SetTooltip ("解决部分游戏中的 UI 闪动问题");
 
       ImGui::TextUnformatted ("抗锯齿:  ");                                          ImGui::SameLine ();
       ImGui::Checkbox        ("线条",             &config.imgui.render.antialias_lines);   ImGui::SameLine ();
@@ -6219,7 +6219,7 @@ SK_ImGui_ControlPanel (void)
 
     ImGui::TreePush ("");
 
-    if (ImGui::Checkbox ("FPS 生成", &framepacing))
+    if (ImGui::Checkbox ("Frame 生成", &framepacing))
     {
       SK_ImGui_Widgets->frame_pacing->setVisible (framepacing).
                                       setActive  (framepacing);
