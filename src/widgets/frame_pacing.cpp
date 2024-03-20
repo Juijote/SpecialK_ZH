@@ -60,35 +60,35 @@ struct SK_ImGui_FramePercentiles
       percentile_cfg.display =
         dynamic_cast <sk::ParameterBool *> (
           SK_Widget_ParameterFactory->create_parameter <bool> (
-            L"Show Statistics"
+            L"显示统计数据"
           )
         );
 
       percentile_cfg.display_above =
         dynamic_cast <sk::ParameterBool *> (
           SK_Widget_ParameterFactory->create_parameter <bool> (
-            L"Draw Statistics Above Line Graph"
+            L"在图上方绘制统计数据"
           )
         );
 
       percentile_cfg.display_most_recent =
         dynamic_cast <sk::ParameterBool *> (
           SK_Widget_ParameterFactory->create_parameter <bool> (
-            L"Limit sample dataset to the past ~30 seconds at most."
+            L"将样本数据集限制为最近约 30 秒。"
           )
         );
 
       percentile_cfg.percentile0_cutoff =
         dynamic_cast <sk::ParameterFloat *> (
           SK_Widget_ParameterFactory->create_parameter <float> (
-            L"Boundary that defines the percentile being profiled."
+            L"定义所分析的百分比边界。"
           )
         );
 
       percentile_cfg.percentile1_cutoff =
         dynamic_cast <sk::ParameterFloat *> (
           SK_Widget_ParameterFactory->create_parameter <float> (
-            L"Boundary that defines the percentile being profiled."
+            L"定义所分析的百分比边界"
           )
         );
 
@@ -371,7 +371,7 @@ float fExtraData     = 0.0f;
 class SKWG_FramePacing : public SK_Widget
 {
 public:
-  SKWG_FramePacing (void) : SK_Widget ("Frame Pacing")
+  SKWG_FramePacing (void) : SK_Widget ("Frame 监测")
   {
     SK_ImGui_Widgets->frame_pacing = this;
 
@@ -383,14 +383,14 @@ public:
     meter_cfg.display_battery =
       dynamic_cast <sk::ParameterBool *> (
         SK_Widget_ParameterFactory->create_parameter <bool> (
-          L"Display Battery Info (When running on battery)"
+          L"显示电池信息（使用电池运行时）"
         )
       );
 
     meter_cfg.display_vram =
       dynamic_cast <sk::ParameterBool *> (
         SK_Widget_ParameterFactory->create_parameter <bool> (
-          L"Draw VRAM Gauge below Framepacing Widget"
+          L"在Frame 监测下方绘制显存监测"
         )
       );
 
@@ -703,10 +703,10 @@ public:
 
     bool changed = false;
 
-    changed |= ImGui::Checkbox ("Show VRAM Gauge",    &display_vram);
-    changed |= ImGui::Checkbox ("Show CPU/GPU Load",  &display_load);
-    changed |= ImGui::Checkbox ("Show Disk Activity", &display_disk);
-    changed |= ImGui::Checkbox ("Show Battery State", &display_battery);
+    changed |= ImGui::Checkbox ("显示显存监测",    &display_vram);
+    changed |= ImGui::Checkbox ("显示 CPU / GPU 负载",  &display_load);
+    changed |= ImGui::Checkbox ("显示磁盘活动", &display_disk);
+    changed |= ImGui::Checkbox ("显示电池状态", &display_battery);
 
     if (changed)
       save (osd_ini);
@@ -714,7 +714,7 @@ public:
          changed = false;
     bool display = SK_FramePercentiles->display;
 
-        changed |= ImGui::Checkbox  ("Show Percentile Analysis", &display);
+        changed |= ImGui::Checkbox  ("以百分比分析显示", &display);
     if (changed)
     {
       SK_FramePercentiles->toggleDisplay ();
@@ -722,8 +722,8 @@ public:
 
     if (SK_FramePercentiles->display)
     {
-      changed |= ImGui::Checkbox ("Draw Percentiles Above Graph",         &SK_FramePercentiles->display_above);
-      changed |= ImGui::Checkbox ("Use Short-Term (~15-30 seconds) Data", &SK_FramePercentiles->display_most_recent);
+      changed |= ImGui::Checkbox ("在图表上方以百分比绘制显示",         &SK_FramePercentiles->display_above);
+      changed |= ImGui::Checkbox ("使用短期（~15-30 秒）数据", &SK_FramePercentiles->display_most_recent);
 
       ImGui::Separator ();
       ImGui::TreePush  ("");
