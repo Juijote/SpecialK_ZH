@@ -1816,10 +1816,10 @@ public:
 
           if (detailed)
           {
-            SK_ImGui::VerticalToggleButton   ( "TuBiao", &show_graphs );
+            SK_ImGui::VerticalToggleButton   ( "1", &show_graphs );
 
             if (last_parked_count > 0)
-              SK_ImGui::VerticalToggleButton ( "XiuMian", &show_parked );
+              SK_ImGui::VerticalToggleButton ( "2", &show_parked );
           }
 
           last_parked_count = 0;
