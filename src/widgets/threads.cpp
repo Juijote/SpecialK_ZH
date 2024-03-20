@@ -1620,7 +1620,7 @@ public:
 
           ImGui::BeginGroup ();
           ImGui::TextUnformatted
-                            ("Frames Submitted:\t");
+                            ("Frames 提交:\t");
           ImGui::EndGroup   ();
 
           ImGui::SameLine   ();
@@ -1636,7 +1636,7 @@ public:
 
           ImGui::BeginGroup ();
           ImGui::TextUnformatted
-                            ("Steam Callbacks: \t");
+                            ("Steam 回调: \t");
           ImGui::EndGroup   ();
 
           ImGui::SameLine   ();
@@ -1653,7 +1653,7 @@ public:
           ImGui::Separator       ();
 
           ImGui::BeginGroup      ();
-          ImGui::TextUnformatted ("Exceptions Raised:");
+          ImGui::TextUnformatted ("引发异常:");
           ImGui::EndGroup        ();
 
           ImGui::SameLine        ();
@@ -1669,7 +1669,7 @@ public:
 
           ImGui::BeginGroup ();
           ImGui::TextUnformatted
-                            ("Win32 Error Code:");
+                            ("Win32 错误代码:");
           ImGui::EndGroup   ();
 
           ImGui::SameLine   ();
@@ -1706,7 +1706,7 @@ public:
 
 #if 0
         ImGui::Separator ();
-        ImGui::Text      ("Alertable Waits (APC): %lu", ReadAcquire (&pTLS->scheduler->alert_waits));
+        ImGui::Text      ("警报等待 (APC): %lu", ReadAcquire (&pTLS->scheduler->alert_waits));
         ImGui::TreePush  ("");
 
         std::map <HANDLE, SK_Sched_ThreadContext::wait_record_s>
@@ -1716,21 +1716,21 @@ public:
         ImGui::BeginGroup ();
         for ( auto& it : objects_waited )
         {
-          ImGui::Text ("Wait Object: %x", it.first);
+          ImGui::Text ("等待对象: %x", it.first);
         }
         ImGui::EndGroup   ();
         ImGui::SameLine   ();
         ImGui::BeginGroup ();
         for ( auto& it : objects_waited )
         {
-          ImGui::Text ("Waits Issued: %lu", it.second.calls);
+          ImGui::Text ("等待发出: %lu", it.second.calls);
         }
         ImGui::EndGroup   ();
         ImGui::SameLine   ();
         ImGui::BeginGroup ();
         for ( auto& it : objects_waited )
         {
-          ImGui::Text ("Time Spent Waiting: %lu ms", ReadAcquire64 (&it.second.time_blocked));
+          ImGui::Text ("等待时间: %lu ms", ReadAcquire64 (&it.second.time_blocked));
         }
         ImGui::EndGroup   ();
         ImGui::TreePop    ();
@@ -2172,8 +2172,8 @@ public:
         if (sel < 7)
         {
           if (ImGui::Combo ( "Thread Priority", &sel,
-                             "Idle\0Lowest\0Below Normal\0Normal\0"
-                             "Above Normal\0Highest\0Time Critical\0\0" ))
+                             "闲置\0最低\0低于正常\0正常\0"
+                             "高于正常\0最高\0实时\0\0" ))
           {
             switch (sel)
             {
@@ -2196,7 +2196,7 @@ public:
         if (GetThreadPriorityBoost (hSelectedThread, &bDisableBoost))
         {
           bool boost = (bDisableBoost == FALSE);
-          if (ImGui::Checkbox ("Enable Dynamic Boost", &boost))
+          if (ImGui::Checkbox ("启用动态增强", &boost))
           {
             SetThreadPriorityBoost (hSelectedThread, ! boost);
           }
@@ -2240,7 +2240,7 @@ public:
         if (! throttle)
           if (contains_thread) SKWG_Threads [dwSelectedTid]->orig_prio = dwPrio;
 
-        if (ImGui::Checkbox ("Enable Power Throttling", &throttle))
+        if (ImGui::Checkbox ("启用功率节流", &throttle))
         {
           SetThreadPriority ( hSelectedThread, throttle ? THREAD_MODE_BACKGROUND_BEGIN | THREAD_PRIORITY_IDLE :
                                                           THREAD_MODE_BACKGROUND_END );
@@ -2364,7 +2364,7 @@ public:
 
       if (ImGui::IsItemHovered ())
       { if (                           NO_ERROR == dwErrorCode ) ThreadMemTooltip (it.second->dwTid);
-        else ImGui::SetTooltip ("Error Code: %lu", dwErrorCode);
+        else ImGui::SetTooltip ("错误代码: %lu", dwErrorCode);
       }
 
     }

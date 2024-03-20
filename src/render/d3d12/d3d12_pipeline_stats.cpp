@@ -1,4 +1,4 @@
-//汉化相关
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <../depends/include/DirectXTex/d3dx12.h>

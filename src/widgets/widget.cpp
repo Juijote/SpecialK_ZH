@@ -716,7 +716,7 @@ SK_Widget::config_base (void)
              w = ( static_cast <int> (docking) & static_cast <int> (DockAnchor::West ) ) != 0;
 
   const char* anchors =
-    "未连接\0北\0南\0\0";
+    "未连接\0上\0下\0\0";
 
           int dock = 0;
        if (n) dock = 1;
@@ -737,7 +737,7 @@ SK_Widget::config_base (void)
   }
 
   anchors =
-    "未连接\0西\0东\0\0";
+    "未连接\0左\0右\0\0";
 
               dock = 0;
        if (w) dock = 1;

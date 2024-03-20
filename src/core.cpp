@@ -3000,10 +3000,10 @@ SK_FrameCallback ( SK_RenderBackend& rb,
                                             wcslen ( wszDescription )
          )
       {
-        if (StrStrIW (wszDescription, L"[GAME] Primary Render Thread") == nullptr)
+        if (StrStrIW (wszDescription, L"[游戏] 绘制主线程") == nullptr)
         {
           SetCurrentThreadDescription (
-            SK_FormatStringW ( L"[GAME] Primary Render < %s >",
+            SK_FormatStringW ( L"[游戏] 绘制主线程 < %s >",
                        wszDescription ).c_str ()
                                       );
         }
@@ -3011,7 +3011,7 @@ SK_FrameCallback ( SK_RenderBackend& rb,
 
       else
       {
-        SetCurrentThreadDescription (L"[GAME] Primary Render Thread");
+        SetCurrentThreadDescription (L"[游戏] 绘制主线程");
       }
 
       SK_LocalFree (wszDescription);
