@@ -7667,7 +7667,7 @@ SK_ImGui_StageNextFrame (void)
           ImGui::Text         ("不强制窗口模式的场景:");
           ImGui::BulletText   ("桌面和游戏以不同的分辨率运行");
           ImGui::BulletText   ("桌面和游戏以不同的刷新率运行");
-          ImGui::BulletText   ("游戏不允许 硬件：独立绘制");
+          ImGui::BulletText   ("游戏不允许 硬件：独立翻转");
           ImGui::EndTooltip   ();
         }
 
