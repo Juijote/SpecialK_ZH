@@ -1,6 +1,13 @@
 name: Builds
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - zh
+  pull_request:
+    branches:
+      - zh
+  workflow_dispatch: 
 
 jobs:
   Build:
