@@ -1,3 +1,4 @@
+//汉化相关
 #pragma once
 
 #include <algorithm>
@@ -496,7 +497,7 @@ inline void ImGui::FileBrowser::Display()
                 }
                 else
                 {
-                    statusStr_ = "failed to create " +
+                    statusStr_ = "创建失败 " +
                                  std::string(newDirNameBuf_->data());
                 }
             }
@@ -510,22 +511,22 @@ inline void ImGui::FileBrowser::Display()
       BeginGroup (  );
       ImGui::Separator ();
       Text       ("");
-      Text       (" Quick Links");
+      Text       (" 快速链接");
       Text       ("");
       TreePush   ("");
 
-      if (Button (" " ICON_FA_WRENCH  " SK Config")  )
+      if (Button (" " ICON_FA_WRENCH  " SK 配置")  )
       {
         SetPwd (SK_GetConfigPath ());
       }
-      if (Button (" " ICON_FA_PLUG   "  SK Plug-Ins"))
+      if (Button (" " ICON_FA_PLUG   "  SK 插件"))
       {
         SetPwd (
           SK_FormatString ( R"(%ws\PlugIns\ThirdParty\)",
                                 SK_GetInstallPath () )
         );
       };
-      if (Button (    ICON_FA_GAMEPAD " Game Folder"))
+      if (Button (    ICON_FA_GAMEPAD " 游戏文件夹"))
       {
         wchar_t    wszFullApp              [MAX_PATH + 2] = { };
         wcsncpy_s (wszFullApp,
@@ -679,7 +680,7 @@ inline void ImGui::FileBrowser::Display()
     }
     else
     {
-        if(Button(" ok "))
+        if(Button(" 好的 "))
         {
             ok_ = true;
             CloseCurrentPopup();
@@ -689,7 +690,7 @@ inline void ImGui::FileBrowser::Display()
     SameLine();
 
     bool shouldExit =
-        Button("cancel") || closeFlag_ ||
+        Button("取消") || closeFlag_ ||
         ((flags_ & ImGuiFileBrowserFlags_CloseOnEsc) &&
         IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
         IsKeyPressed(ImGuiKey_Escape));
