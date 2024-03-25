@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/render/dxgi/dxgi_hdr.h>
@@ -616,12 +597,12 @@ SK_HDR_DisplayProfilerDialog (bool draw = true)
            __SK_HDR_AdaptiveToneMap;
 
   bool bOpen =
-    ImGui::IsPopupOpen ("HDR Display Profiler");
+    ImGui::IsPopupOpen ("HDR 显示分析器");
 
   if (bOpen)
   {
     auto pHDRWidget          =
-      ImGui::FindWindowByName ("HDR Configuration##Widget_DXGI_HDR");
+      ImGui::FindWindowByName ("HDR 配置##Widget_DXGI_HDR");
     auto pControlPanelWindow =
       ImGui::FindWindowByName (SK_ImGui_ControlPanelTitle ());
 
@@ -654,7 +635,7 @@ SK_HDR_DisplayProfilerDialog (bool draw = true)
     if (bLastOpen)
     { 
       auto pHDRWidget          =
-        ImGui::FindWindowByName ("HDR Configuration##Widget_DXGI_HDR");
+        ImGui::FindWindowByName ("HDR 配置##Widget_DXGI_HDR");
       auto pControlPanelWindow =
         ImGui::FindWindowByName (SK_ImGui_ControlPanelTitle ());
 
@@ -803,7 +784,7 @@ extern iSK_INI* osd_ini;
 class SKWG_HDR_Control : public SK_Widget, SK_IVariableListener
 {
 public:
-  SKWG_HDR_Control (void) : SK_Widget ("HDR Configuration")
+  SKWG_HDR_Control (void) : SK_Widget ("HDR 配置")
   {
     SK_ImGui_Widgets->hdr_control = this;
 
@@ -1637,7 +1618,7 @@ public:
           {
           if (! bHDR10Passthrough)
           {
-            if (ImGui::Checkbox ("Enable FULL HDR Luminance###SK_HDR_ShowFullRange", &__SK_HDR_FullRange))
+            if (ImGui::Checkbox ("启用全 HDR 亮度###SK_HDR_ShowFullRange", &__SK_HDR_FullRange))
             {
               _SK_HDR_FullRange->store (__SK_HDR_FullRange);
             }
@@ -1645,9 +1626,9 @@ public:
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    (  );
-              ImGui::TextUnformatted ("Brighter HDR highlights are possible when enabled (or by Ctrl-Clicking for manual data input)");
+              ImGui::TextUnformatted ("启用后可以实现更亮的 HDR 高光（或通过按住 Ctrl 键单击手动输入数值）");
               ImGui::Separator       (  );
-              ImGui::BulletText      ("Local contrast behavior may be more consistent with fewer crushed shadow details / highlights when this range is limited.");
+              ImGui::BulletText      ("如果限制这一范围，局部对比度的表现可能会更加一致，减少阴影细节/高光部分的破碎。");
               ImGui::EndTooltip      (  );
             }
 
@@ -1658,7 +1639,7 @@ public:
 
           bool pboost = (preset.pq_boost0 > 0.0f);
 
-          if (ImGui::Checkbox ("Perceptual Boost", &pboost))
+          if (ImGui::Checkbox ("感知提升", &pboost))
           {
             if (pboost)
             {
@@ -1677,8 +1658,8 @@ public:
 
           if (ImGui::IsItemHovered ())
           {
-            ImGui::SetTooltip ("NOTE: When active, the luminance slider does not measure physical brightness.\r\n\r\n\t"
-                               ">> Use HDR Tonemap Curve / Grayscale Visualization (first Profile Display Capabilities) to ensure valid (unclipped) dynamic range.");
+            ImGui::SetTooltip ("注意：亮度滑块激活时，并不测量物理亮度。\r\n\r\n\t"
+                               ">> 使用 HDR 色调图曲线/灰度可视化（第一个配置文件显示功能）来确保有效（未剪切）的动态范围。");
           }
 
           if (! bHDR10Passthrough)
@@ -1693,7 +1674,7 @@ public:
             // We won't know slider width until the first frame, so clamp size to 0.0f and simply hide this option until we draw
             //   at least one slider.
             ImGui::PushItemWidth (
-              std::max (0.0f, fSliderWidth - fUsedWidth - ImGui::GetStyle ().ItemSpacing.x - ImGui::CalcTextSize ("Content EOTF").x)
+              std::max (0.0f, fSliderWidth - fUsedWidth - ImGui::GetStyle ().ItemSpacing.x - ImGui::CalcTextSize ("内容 EOTF").x)
             );
 
             enum {
@@ -1729,7 +1710,7 @@ public:
             }
 
             std::string
-              list = "Linear";
+              list = "线性";
               list += '\0';
 
               list += "sRGB";
@@ -1754,9 +1735,9 @@ public:
             list += '\0';
             list += '\0';
 
-            if (ImGui::BeginPopup ("Gamma Selector"))
+            if (ImGui::BeginPopup ("伽马选择"))
             {
-              if (ImGui::SliderFloat ("Custom EOTF", &__SK_HDR_Content_EOTF, 1.01f, 2.8f, "%4.2f"))
+              if (ImGui::SliderFloat ("自定义 EOTF", &__SK_HDR_Content_EOTF, 1.01f, 2.8f, "%4.2f"))
               {
                 _SK_HDR_ContentEOTF->store (__SK_HDR_Content_EOTF);
               }
@@ -1764,7 +1745,7 @@ public:
               ImGui::EndPopup ();
             }
 
-            if ( ImGui::Combo ( "Content EOTF###SDR_EOTF_COMBO", &eotf_sel,
+            if ( ImGui::Combo ( "内容 EOTF###SDR_EOTF_COMBO", &eotf_sel,
                                 list.c_str () ) )
             {
               if (eotf_sel <= _MAX_SEL)
@@ -1775,7 +1756,7 @@ public:
                   case ContentEotf_sRGB:   __SK_HDR_Content_EOTF = -2.2f;       break;
                   case ContentEotf_2_2:    __SK_HDR_Content_EOTF =  2.2f;       break;
                   case ContentEotf_2_4:    __SK_HDR_Content_EOTF =  2.4f;       break;
-                  case ContentEotf_Custom: ImGui::OpenPopup ("Gamma Selector"); break;
+                  case ContentEotf_Custom: ImGui::OpenPopup ("伽玛选择"); break;
                 }
 
                 _SK_HDR_ContentEOTF->store (__SK_HDR_Content_EOTF);
@@ -1785,7 +1766,7 @@ public:
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    ();
-              ImGui::TextUnformatted ("scRGB native HDR and some Unity/Unreal engine games require Linear or they will be too dark.");
+              ImGui::TextUnformatted ("scRGB 原生 HDR 和某些 Unity / 虚幻 引擎游戏需要使用线性，否则画面会太暗。");
               ImGui::Separator       ();
               ImGui::BulletText      ("For most other games try sRGB or 2.2.");
               ImGui::EndTooltip      ();
@@ -1806,7 +1787,7 @@ public:
                 ImGui::SliderFloat ( "###SK_HDR_LUMINANCE", &peak_nits, 80.0f,
                                           __SK_HDR_FullRange  ?  rb.display_gamut.maxLocalY
                                                               :  rb.display_gamut.maxAverageY,
-                "Peak White Luminance: %.1f cd/m²" );
+                "峰值白色亮度: %.1f cd/m²" );
 
             else
             {
@@ -1849,7 +1830,7 @@ public:
                       bDefaultPB_v1 );
 
               static std::string slider_desc =
-                "Brightness Scale: %.2fx";
+                "亮度等级: %.2fx";
 
               float fPQBoostScale = 160.0f;
 
@@ -1861,7 +1842,7 @@ public:
 
                 slider_desc =
                   SK_FormatString (
-                    "Brightness Scale: %%.2fx  (~%.1f cd/m²)",
+                    "亮度等级: %%.2fx  (~%.1f cd/m²)",
                       peak_nits * fPQBoostScale
                   );
               }
@@ -1869,7 +1850,7 @@ public:
               else
               {
                 slider_desc =
-                  "Brightness Scale: %.2fx";
+                  "亮度等级: %.2fx";
               }
 
               bSliderChanged =
@@ -1882,10 +1863,10 @@ public:
               {
                 ImGui::BeginTooltip ();
               //ImGui::Text  ("~%.1f cd/m²", (peak_adjusted * 80.0f) * (peak_nits * 80.0f));
-                ImGui::TextUnformatted ("Use the Tonemap Curve HDR Visualization to confirm unclipped dynamic range.");
+                ImGui::TextUnformatted ("使用色调图曲线 HDR 可视化来确认未剪切的动态范围。");
                 ImGui::Separator    ();
-                ImGui::BulletText   ("Older versions (pre-23.4.23) referred to this as Peak White Luminance.");
-                ImGui::BulletText   ("A value of 1.0x for Brightness Scale is equivalent to 80.0 Peak White Luminance.");
+                ImGui::BulletText   ("旧版本（23.4.23 之前）将此称为峰值白色亮度。");
+                ImGui::BulletText   ("亮度等级的 1.0x 值相当于 80.0 峰值白色亮度。");
                 ImGui::EndTooltip   ();
               }
 
@@ -1914,7 +1895,7 @@ public:
           }
           else
           {
-            ImGui::BulletText ("Luminance Control Unsupported by Current Tonemap");
+            ImGui::BulletText ("当前色调图不支持亮度控制");
             ImGui::SameLine   (0.0f, 135.0f); ImGui::Spacing ();
           }
 
@@ -1953,7 +1934,7 @@ public:
           {
             if (ImGui::SliderFloat ("###SK_HDR_MIDDLE_GRAY", &fMidGray, bHDR10Passthrough ? -2.5f : -5.0f,
                                                                         bHDR10Passthrough ?  2.5f :  5.0f,
-                              "Middle Gray Contrast: %+.3f%%"))// %.3f cd/m²"))
+                              "中灰色对比度: %+.3f%%"))// %.3f cd/m²"))
             {
               __SK_HDR_user_sdr_Y =
                 100.0f + fMidGray;
@@ -1967,19 +1948,19 @@ public:
               ImGui::BeginTooltip    (  );
               //ImGui::TextUnformatted ("Technically, 80.0 cd/m² and 100.0 cd/m² are Reference SDR Mid-Grays");
               //ImGui::Separator       (  );
-              ImGui::BulletText      ("SK boosts mid-gray for improved visibility; mid-gray can balance a game's UI luminance levels.");
-              ImGui::BulletText      ("If unhappy with available slider range, Ctrl + Click to override.");
+              ImGui::BulletText      ("SK 可增强中间灰度，提高可视性；中间灰度可平衡游戏用户界面的亮度水平。");
+              ImGui::BulletText      ("如果对可用滑块范围不满意，请按住 Ctrl 键并单击以覆盖。");
               ImGui::EndTooltip      (  );
             }
           }
           else
-            ImGui::BulletText ("Middle-Gray Contrast Unsupported by Current Tonemap");
+            ImGui::BulletText ("当前色调图不支持中灰色对比度");
 
           float fGamut =
             __SK_HDR_Gamut * 100.0f;
 
           if (ImGui::SliderFloat ( "###SK_HDR_GAMUT_EXPANSION", &fGamut, 0.0f, 10.0f,
-                                   "Gamut Expansion: +%.3f%%"))
+                                   "色域扩展: +%.3f%%"))
           {
             __SK_HDR_Gamut =
               std::max (0.0f, std::min (1.0f, fGamut / 100.0f));
@@ -1991,25 +1972,25 @@ public:
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip    (  );
-            ImGui::TextUnformatted ("Increases Color Saturation on HDR Highlights");
+            ImGui::TextUnformatted ("提高 HDR 高光的色彩饱和度");
             ImGui::Separator       (  );
-            ImGui::BulletText      ("Effect is subtle and should be preferable to the traditional Saturation adjustment");
+            ImGui::BulletText      ("效果很微妙，应该优于传统的饱和度调整");
             ImGui::EndTooltip      (  );
           }
           }
           else
           {
-            ImGui::BulletText ("No Image Processing is Implemented by the Current Tonemap");
+            ImGui::BulletText ("当前色调图未实现任何图像处理");
 
             if (preset.preset_idx >= 2)
             {
-              ImGui::BulletText ("To adjust native HDR using SK, click 'Enable Processing'");
+              ImGui::BulletText ("要使用 SK 调整原生 HDR，请单击“启用处理”'");
 
               ImGui::Spacing  ();
               ImGui::Spacing  ();
               ImGui::SameLine (); ImGui::SameLine ();
 
-              if (ImGui::Button ("Enable Processing"))
+              if (ImGui::Button ("启用处理"))
               {
                 if (preset.preset_idx == 2)
                 {
@@ -2082,11 +2063,11 @@ public:
                   ImGui::BeginGroup      ();
                   ImGui::TextColored     (ImVec4 (0.333f, 0.666f, 0.999f, 1.f), ICON_FA_INFO_CIRCLE);
                   ImGui::SameLine        ();
-                  ImGui::TextUnformatted (" Try Linear Content EOTF");
+                  ImGui::TextUnformatted (" 尝试线性内容 EOTF");
                   ImGui::EndGroup        ();
 
                   if (ImGui::IsItemHovered ())
-                    ImGui::SetTooltip ("Linear gamma may be necessary if scRGB-native games are too dim.");
+                    ImGui::SetTooltip ("如果 scRGB 原生游戏画面太暗，可能需要线性伽玛。");
                 }
                 else
                   ImGui::Text ("-");
@@ -2097,13 +2078,13 @@ public:
                 // Perceptual Boost
                 if (it.pq_boost0 > 0.0f)
                 {
-                  ImGui::Text ( "Brightness: %.2fx",
+                  ImGui::Text ( "亮度: %.2fx",
                                 it.peak_white_nits );
                 }
 
                 else
                 {
-                  ImGui::Text ( "Peak White: %5.1f cd/m²",
+                  ImGui::Text ( "白色峰值: %5.1f cd/m²",
                                 it.peak_white_nits / 1.0_Nits );
                 }
               }
@@ -2137,7 +2118,7 @@ public:
 
               else
               {
-                ImGui::Text ( "Middle Gray: %+5.1f%%",// cd/m²",
+                ImGui::Text ( "中灰色: %+5.1f%%",// cd/m²",
                               (it.middle_gray_nits / 1.0_Nits) - 100.0 );
               }
             }
@@ -2163,11 +2144,11 @@ public:
             );
 
           bool bReset  =
-            ImGui::Button ("Reset");
+            ImGui::Button ("重置");
 
           ImGui::SameLine ();
 
-          if (ImGui::Button ("Export"))
+          if (ImGui::Button ("导出"))
           {
             auto guid =
               SK_Display_GetDeviceNameAndGUID (rb.displays [rb.active_display].path_name);
@@ -2214,17 +2195,17 @@ public:
 
           if (ImGui::IsItemHovered ())
           {
-            ImGui::SetTooltip ("Exporting a preset allows loading it in another game using the \"Import\" button.");
+            ImGui::SetTooltip ("导出预设允许使用“导入”按钮将其加载到另一个游戏中。");
           }
 
           ImGui::SameLine ();
 
           bool bImport =
-            ImGui::Button ("Import");
+            ImGui::Button ("导入");
           
           if (ImGui::IsItemHovered ())
           {
-            ImGui::SetTooltip ("If no profile has been exported, this will reset to default.");
+            ImGui::SetTooltip ("如果没有导出配置文件，这将重置为默认值。");
           }
 
           if (bReset || bImport)
@@ -2328,28 +2309,28 @@ public:
           ImGui::SameLine ();
 
           bool bProfile =
-            ImGui::Button ("Profile Display Capabilities");
+            ImGui::Button ("配置文件显示");
 
           if (bProfile && preset.colorspace.tonemap != SK_HDR_TONEMAP_NONE)
           {
             SK_RunOnce (
               SK_ImGui_Warning (
-                L"Profile Display Capabilities must be performed in scRGB Tonemap Mode"
+                L"配置文件显示功能必须在 scRGB 色调图模式下执行"
               )
             );
           }
 
           if (ImGui::IsItemHovered ())
-              ImGui::SetTooltip ("Improve HDR results by validating luminance capabilities reported by Windows.");
+              ImGui::SetTooltip ("通过验证 Windows 报告的亮度功能来改进 HDR 结果。");
 
           if (bProfile)
-            ImGui::OpenPopup ("HDR Display Profiler");
+            ImGui::OpenPopup ("HDR 显示分析器");
 
           ImGui::EndGroup  ();
           ImGui::Separator ();
 
           const bool cfg_quality =
-            ImGui::CollapsingHeader ( "Performance / Quality",
+            ImGui::CollapsingHeader ( "性能 / 质量",
                                         ImGuiTreeNodeFlags_DefaultOpen );
 
           static bool bDetails = false;
@@ -2364,11 +2345,11 @@ public:
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    ();
-              ImGui::TextUnformatted ("Remastering may improve HDR highlights, but requires more VRAM and GPU horsepower.");
+              ImGui::TextUnformatted ("重制可能会改善 HDR 高光，但需要更多显存和 GPU 算力。");
               ImGui::Separator       ();
-              ImGui::BulletText      ("Some games need remastering for their UI to work correctly (usually 8-bit remastering)");
-              ImGui::BulletText      ("Some games crash when remastering, so troubleshooting should start with enabling/disabling these");
-              ImGui::BulletText      ("Remastering can eliminate banding not caused by texture compression (#1 enemy of HDR!)");
+              ImGui::BulletText      ("有些游戏需要重制才能使其 UI 正常工作（通常是 8 位重新制作）)");
+              ImGui::BulletText      ("有些游戏在重制时会崩溃，因此故障排除应先从启用/禁用这些游戏开始");
+              ImGui::BulletText      ("重制可以消除不是由纹理压缩引起的条带（HDR 的第一大敌人！）");
               ImGui::EndTooltip      ();
             }
           }
@@ -2384,7 +2365,7 @@ public:
             {
               if (! bRawImageMode)
               {
-                if (ImGui::Checkbox ("Adaptive Tone Mapping",
+                if (ImGui::Checkbox ("自适应色调映射",
                                                  &__SK_HDR_AdaptiveToneMap))
                 { _SK_HDR_AdaptiveToneMap->store (__SK_HDR_AdaptiveToneMap);
                    config.utility.save_async ();
@@ -2392,11 +2373,11 @@ public:
 
                 if (ImGui::IsItemHovered ())
                 {   ImGui::BeginTooltip  ();
-                    ImGui::Text          ("Extra Processing to Keep Average Light Level within HGIG range");
+                    ImGui::Text          ("额外处理以将平均光照水平保持在 HGIG 范围内");
                     ImGui::Separator     ();
-                    ImGui::BulletText    ("User-calibrated MaxCLL is enforced");
-                    ImGui::BulletText    ("Tonemap keeps Average Frame Light Level from exceeding 1/3 MaxCLL");
-                    ImGui::BulletText    ("Has 2-3x perf. overhead of normal HDR; consider disabling if unneeded");
+                    ImGui::BulletText    ("强制执行用户校准的 MaxCLL");
+                    ImGui::BulletText    ("色调映射使平均 Frames 亮度不超过 1/3 MaxCLL");
+                    ImGui::BulletText    ("性能开销是普通 HDR 的 2-3 倍，如果不需要，可考虑禁用");
                     ImGui::EndTooltip    ();
                 }
 
@@ -2415,9 +2396,9 @@ public:
                          promoted / candidates     : 0.0f;
 
                 ImGui::ProgressBar ( ratio, ImVec2 (-1, 0),
-                  SK_FormatString ( "%lu/%lu Candidates Remastered", dwPromoted, dwCandidates ).c_str ()
+                  SK_FormatString ( "%lu/%lu 重制候选", dwPromoted, dwCandidates ).c_str ()
                                    );
-                ImGui::BulletText  ("%+.2f MiB Additional VRAM Used",
+                ImGui::BulletText  ("%+.2f MiB 额外使用的显存",
                   static_cast <float> ( ullBytesExtra ) / (1024.0f * 1024.0f));
 
               };
@@ -2426,12 +2407,12 @@ public:
               {
                 ImGui::BeginGroup        ();
 
-                changed |= ImGui::Checkbox ("Remaster 8-bit Render Passes",  &SK_HDR_RenderTargets_8bpc->PromoteTo16Bit);
+                changed |= ImGui::Checkbox ("重制 8 位绘制通道",  &SK_HDR_RenderTargets_8bpc->PromoteTo16Bit);
 
                 if (ImGui::IsItemHovered ())
                 {
                   ImGui::BeginTooltip    ();
-                  ImGui::TextUnformatted ("May Break FMV in Unreal Engine Games");
+                  ImGui::TextUnformatted ("可能会破坏虚幻引擎游戏中的 FMV");
                   ImGui::Separator       ();
                   _SummarizeTargets      (ReadULongAcquire (&SK_HDR_RenderTargets_8bpc->TargetsUpgraded),
                                           ReadULongAcquire (&SK_HDR_RenderTargets_8bpc->CandidatesSeen),
@@ -2441,7 +2422,7 @@ public:
 
                 if (bDetails)
                 {
-                  changed |= ImGui::Checkbox ("Remaster 8-bit Compute Passes", &SK_HDR_UnorderedViews_8bpc->PromoteTo16Bit);
+                  changed |= ImGui::Checkbox ("重制 8 位计算通道", &SK_HDR_UnorderedViews_8bpc->PromoteTo16Bit);
 
                   if (ImGui::IsItemHovered ())
                   {
@@ -2457,12 +2438,12 @@ public:
                 ImGui::SameLine          ();
                 ImGui::BeginGroup        ();
 
-                changed |= ImGui::Checkbox ("Remaster 10-bit Render Passes", &SK_HDR_RenderTargets_10bpc->PromoteTo16Bit);
+                changed |= ImGui::Checkbox ("重制 10 位绘制通道", &SK_HDR_RenderTargets_10bpc->PromoteTo16Bit);
 
                 if (ImGui::IsItemHovered ())
                 {
                   ImGui::BeginTooltip    ();
-                  ImGui::TextUnformatted ("May Strengthen Atmospheric Bloom");
+                  ImGui::TextUnformatted ("可能增强大气效果的光晕");
                   ImGui::Separator       ();
                   _SummarizeTargets      (ReadULongAcquire (&SK_HDR_RenderTargets_10bpc->TargetsUpgraded),
                                           ReadULongAcquire (&SK_HDR_RenderTargets_10bpc->CandidatesSeen),
@@ -2472,7 +2453,7 @@ public:
 
                 if (bDetails)
                 {
-                  changed |= ImGui::Checkbox ("Remaster 10-bit Compute Passes", &SK_HDR_UnorderedViews_10bpc->PromoteTo16Bit);
+                  changed |= ImGui::Checkbox ("重制 10 位计算通道", &SK_HDR_UnorderedViews_10bpc->PromoteTo16Bit);
 
                   if (ImGui::IsItemHovered ())
                   {
@@ -2488,12 +2469,12 @@ public:
                 ImGui::SameLine          ();
                 ImGui::BeginGroup        ();
 
-                changed |= ImGui::Checkbox ("Remaster 11-bit Render Passes", &SK_HDR_RenderTargets_11bpc->PromoteTo16Bit);
+                changed |= ImGui::Checkbox ("重制 11 位绘制通道", &SK_HDR_RenderTargets_11bpc->PromoteTo16Bit);
 
                 if (ImGui::IsItemHovered ())
                 {
                   ImGui::BeginTooltip    ();
-                  ImGui::TextUnformatted ("May Cause -or- Correct Blue / Yellow Hue Shifting");
+                  ImGui::TextUnformatted ("可能导致或纠 正蓝色/ 黄色 色调偏移");
                   ImGui::Separator       ();
                   _SummarizeTargets      (ReadULongAcquire (&SK_HDR_RenderTargets_11bpc->TargetsUpgraded),
                                           ReadULongAcquire (&SK_HDR_RenderTargets_11bpc->CandidatesSeen),
@@ -2503,7 +2484,7 @@ public:
 
                 if (bDetails)
                 {
-                  changed |= ImGui::Checkbox ("Remaster 11-bit Compute Passes", &SK_HDR_UnorderedViews_11bpc->PromoteTo16Bit);
+                  changed |= ImGui::Checkbox ("重制 11 位计算通道", &SK_HDR_UnorderedViews_11bpc->PromoteTo16Bit);
 
                   if (ImGui::IsItemHovered ())
                   {
@@ -2538,14 +2519,14 @@ public:
                 if (std::exchange (lastDetails, bDetails) != bDetails)
                 {
                   auto id =
-                    ImGui::GetCurrentWindow ()->GetID ("Details");
+                    ImGui::GetCurrentWindow ()->GetID ("详细");
 
                   ImGui::TreeNodeSetOpen (id, bDetails);
                 }
               }
 
               bDetails =
-                ImGui::TreeNode ("Details");
+                ImGui::TreeNode ("详细");
 
               if (bDetails)
               {
@@ -2557,13 +2538,13 @@ public:
                   bool boost_changed = false;
 
                   boost_changed |=
-                    ImGui::SliderFloat ("Perceptual Boost 0", &preset.pq_boost0, 3.0f, 20.0f);
+                    ImGui::SliderFloat ("感知提升 0", &preset.pq_boost0, 3.0f, 20.0f);
                   boost_changed |=
-                    ImGui::SliderFloat ("Perceptual Boost 1", &preset.pq_boost1, 3.0f, 20.0f);
+                    ImGui::SliderFloat ("感知提升 1", &preset.pq_boost1, 3.0f, 20.0f);
                   boost_changed |=                                                              
-                    ImGui::SliderFloat ("Perceptual Boost 2", &preset.pq_boost2, 0.5f, 1.5f);
+                    ImGui::SliderFloat ("感知提升 2", &preset.pq_boost2, 0.5f, 1.5f);
                   boost_changed |=                                                              
-                    ImGui::SliderFloat ("Perceptual Boost 3", &preset.pq_boost3, 0.5f, 1.5f);
+                    ImGui::SliderFloat ("感知提升 3", &preset.pq_boost3, 0.5f, 1.5f);
 
                   if (boost_changed)
                   {
@@ -2589,7 +2570,7 @@ public:
                 {
 #ifdef SK_SHOW_DEBUG_OPTIONS
                   if ( ImGui::Checkbox (
-                         "Enable 32-bpc HDR Remastering",
+                         "启用 32-bpc HDR 重制",
                            &config.render.hdr.enable_32bpc
                      )                 ) config.utility.save_async ();
 #endif
@@ -2598,19 +2579,19 @@ public:
                   {
                     ImGui::SameLine (); ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
                     ImGui::SameLine ();
-                    ImGui::BulletText ("Gamut Visualizer Requires Adaptive Tone Mapping");
+                    ImGui::BulletText ("色域可视化工具需要自适应色调映射");
                   }
                 }
 
 #if 0
                 extern UINT filterFlags;
-                ImGui::InputInt ("Filter Flags", (int *)&filterFlags, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+                ImGui::InputInt ("筛选标志", (int *)&filterFlags, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 
                 extern float _cSdrPower;
                 extern float _cLerpScale;
 
-                ImGui::InputFloat ("Sdr Power",  &_cSdrPower);
-                ImGui::InputFloat ("Lerp Scale", &_cLerpScale);
+                ImGui::InputFloat ("Sdr 功率",  &_cSdrPower);
+                ImGui::InputFloat ("线性插值比例", &_cLerpScale);
 #endif
 
                 ImGui::EndGroup ();
@@ -2685,7 +2666,7 @@ public:
           }
 
           if (
-            ImGui::CollapsingHeader ( "Advanced###HDR_Widget_Advaced",
+            ImGui::CollapsingHeader ( "高级###HDR_Widget_Advaced",
                                         ImGuiTreeNodeFlags_DefaultOpen )
           )
           {
@@ -2697,7 +2678,7 @@ public:
               __SK_HDR_ColorSpaceMap [      (unsigned char&)preset.colorspace.tonemap] :
                           0;;
 
-            if ( ImGui::Combo ( "Tonemap Mode##SK_HDR_GAMUT_IN",
+            if ( ImGui::Combo ( "色调图模式##SK_HDR_GAMUT_IN",
                                                &tonemap_idx,
                   __SK_HDR_ColorSpaceComboStr)                        )
             { if (__SK_HDR_ColorSpaceMap.count (tonemap_idx))
@@ -2725,7 +2706,7 @@ public:
                 float fSat =
                   __SK_HDR_Saturation * 100.0f;
 
-                if (ImGui::SliderFloat ("Saturation", &fSat, 0.0f, 125.0f, "%.3f%%"))
+                if (ImGui::SliderFloat ("饱和度", &fSat, 0.0f, 125.0f, "%.3f%%"))
                 {
                   __SK_HDR_Saturation =
                     std::max (0.0f, std::min (2.0f, fSat / 100.0f));
@@ -2735,7 +2716,7 @@ public:
                 }
               }
               else
-                ImGui::BulletText ("Color Saturation Unsupported for Current Tonemap");
+                ImGui::BulletText ("当前色调图不支持色彩饱和度");
             }
 
             ImGui::EndGroup ();
@@ -2744,8 +2725,8 @@ public:
             {
               if (! bHDR10Passthrough)
               {
-                if (ImGui::SliderFloat ("SDR Gamma Boost###SK_HDR_GAMMA", &__SK_HDR_Exp,
-                                0.476f, 1.524f, "SDR -> HDR Gamma: %.3f"))
+                if (ImGui::SliderFloat ("SDR 伽玛增强###SK_HDR_GAMMA", &__SK_HDR_Exp,
+                                0.476f, 1.524f, "SDR -> HDR 伽玛: %.3f"))
                 {
                   preset.eotf =
                     __SK_HDR_Exp;
@@ -2757,7 +2738,7 @@ public:
                 bool bKill22 =
                   ( __SK_HDR_Exp != 1.0 );
 
-                if (ImGui::Checkbox ("Fix SDR/HDR Black Level Mismatch", &bKill22))
+                if (ImGui::Checkbox ("修复 SDR / HDR 黑电平不匹配", &bKill22))
                 {
                     __SK_HDR_Exp = ( bKill22 ?
                                          2.2f : 1.0f );
@@ -2766,17 +2747,17 @@ public:
                   preset.cfg_eotf->store (preset.eotf);
                 }
                 if (ImGui::IsItemHovered ())
-                  ImGui::SetTooltip ((const char *)u8"Ubisoft games (e.g. Watch Dogs Legions) use 0.34 cd/m² as SDR black for video and UI, which is gray in HDR...");
+                  ImGui::SetTooltip ((const char *)u8"育碧游戏（例如《看门狗军团》）使用 0.34 cd/m² 作为视频和 UI 的 SDR 黑色，在 HDR 中为灰色...");
                 //ImGui::BulletText ("Gamma Correction Unsupported for Current Tonemap");
               }
 
               //ImGui::SameLine    ();
               ImGui::BeginGroup  ();
-              ImGui::SliderFloat ("X-Axis HDR/SDR Splitter", &__SK_HDR_HorizCoverage, 0.0f, 100.f);
-              ImGui::SliderFloat ("Y-Axis HDR/SDR Splitter", &__SK_HDR_VertCoverage,  0.0f, 100.f);
+              ImGui::SliderFloat ("X 轴 HDR / SDR 分离器", &__SK_HDR_HorizCoverage, 0.0f, 100.f);
+              ImGui::SliderFloat ("Y 轴 HDR / SDR 分离器", &__SK_HDR_VertCoverage,  0.0f, 100.f);
               ImGui::EndGroup    ();
 
-              ImGui::Combo       ("HDR Visualization##SK_HDR_VIZ",  &__SK_HDR_visualization, "None\0Luminance (vs EDID Max-Avg-Y)\0"
+              ImGui::Combo       ("HDR 可视化##SK_HDR_VIZ",  &__SK_HDR_visualization, "None\0Luminance (vs EDID Max-Avg-Y)\0"
                                                                                                    "Luminance (vs EDID Max-Local-Y)\0"
                                                                                                    "Luminance (Exposure)\0"
                                                                                                    "HDR Overbright Bits\0"
@@ -2833,7 +2814,7 @@ public:
                      rb.scanout.getEOTF () != SK_RenderBackend::scan_out_s::SMPTE_2084 ) ) )
           {
             ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.05f, .8f, .9f).Value);
-            ImGui::BulletText     ("HDR May Not be Working Correctly Until you Restart the Game...");
+            ImGui::BulletText     ("在重启游戏之前，HDR 可能无法正常工作...");
             ImGui::PopStyleColor  ();
           }
 
@@ -3260,7 +3241,7 @@ SK_ImGui_DrawGamut (void)
                                  { space_pts [label_idx].x + label_line2.x,
                                    space_pts [label_idx].y + label_line2.y },
                                                 ImColor::HSV ( fIdx, 0.35f, 0.98f ),
-              SK_FormatString ( "Relative Coverage: %s", space.summary.text.c_str () ).c_str () );
+              SK_FormatString ( "相对覆盖范围: %s", space.summary.text.c_str () ).c_str () );
         }
       }
     }
