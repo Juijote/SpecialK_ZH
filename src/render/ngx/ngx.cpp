@@ -1,23 +1,4 @@
-﻿/**
-* This file is part of Special K.
-*
-* Special K is free software : you can redistribute it
-* and/or modify it under the terms of the GNU General Public License
-* as published by The Free Software Foundation, either version 3 of
-* the License, or (at your option) any later version.
-*
-* Special K is distributed in the hope that it will be useful,
-*
-* But WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Special K.
-*
-*   If not, see <http://www.gnu.org/licenses/>.
-*
-**/
+﻿//汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -1222,22 +1203,22 @@ SK_NGX_DLSS_ControlPanel (void)
         if (restart_required)
         {
           ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
-          ImGui::BulletText     ("Game Restart (or Alt+Enter) May Be Required");
+          ImGui::BulletText     ("可能需要重启游戏（或 Alt+Enter）");
           ImGui::PopStyleColor  ();
         }
         if (SK_NGX_DLSSG_LateInject && SK_NGX_IsUsingDLSS_G ())
         {
           ImGui::TextColored     (ImVec4 (1.f, 1.f, 0.f, 1.f), ICON_FA_EXCLAMATION_TRIANGLE);
           ImGui::SameLine        ();
-          ImGui::TextUnformatted (" Possible Frame Generation Conflict Detected");
+          ImGui::TextUnformatted (" 检测到可能的 Frame 生成冲突");
           if (ImGui::IsItemHovered ())
           {
             ImGui::BeginTooltip    ();
-            ImGui::TextUnformatted ("Streamline Interposer was loaded before Special K");
+            ImGui::TextUnformatted ("Streamline Interposer 在 Special K 之前加载");
             ImGui::Separator       ();
-            ImGui::BulletText      ("SK's UI may be drawn as part of DLSS Frame Generation and full of artifacts.");
-            ImGui::BulletText      ("Framepacing and FPS counting may be inaccurate (raw FPS), but limiting will work.");
-            ImGui::BulletText      ("Try setting GlobalInjectDelay=0.01 or higher, or using Local Injection to fix.");
+            ImGui::BulletText      ("SK 的 UI 可能是作为 DLSS 帧生成的一部分绘制的，并且充满了伪影。");
+            ImGui::BulletText      ("Frame 调速和 FPS 计数可能不准确（原始 FPS），但限制会起作用。");
+            ImGui::BulletText      ("尝试设置 GlobalInjectDelay=0.01 或更高，或使用本地注入来修复。");
             ImGui::EndTooltip      ();
           }
         }

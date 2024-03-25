@@ -3144,9 +3144,9 @@ SK_FrameCallback ( SK_RenderBackend& rb,
         {
           SK_ImGui_CreateNotification (
             "EOSOVH.Warning", SK_ImGui_Toast::Warning,
-            "If the game crashes while turning on HDR or switching display modes, consider "
-            "deleting EOSOVH-Win64-Shipping.dll from Epic Games\\Launcher\\Portal\\Extras\\Overlay",
-            "Known Incompatibility Detected", 5000UL, SK_ImGui_Toast::UseDuration |
+            "如果游戏在打开 HDR 或切换显示模式时崩溃，请考虑 "
+            "从 Epic Games\\Launcher\\Portal\\Extras\\Overlay 中删除 EOSOVH-Win64-Shipping.dll",
+            "检测到已知的不兼容性", 5000UL, SK_ImGui_Toast::UseDuration |
                                                       SK_ImGui_Toast::ShowTitle   |
                                                       SK_ImGui_Toast::ShowCaption );
         }
