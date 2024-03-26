@@ -800,7 +800,7 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K [v ";
     title += SK_GetVersionStrA ();
-    title += "] [Juij 汉化] [2024-03-26]";
+    title += "] [Juij 汉化] [2024-03-27]";
   }
 
   title += "  控制面板";
