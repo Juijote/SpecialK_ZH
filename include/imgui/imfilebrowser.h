@@ -1,4 +1,4 @@
-//汉化相关
+﻿//汉化相关
 #pragma once
 
 #include <algorithm>
