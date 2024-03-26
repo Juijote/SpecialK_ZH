@@ -524,7 +524,7 @@ SK_ImGui_ProcessWarnings (void)
     ImGui::Spacing     ();
     ImGui::SameLine    ();
 
-    if (ImGui::Button ("好的"))
+    if (ImGui::Button ("确定"))
     {
       SK_ImGuiEx_Visible = false;
       SK_ReShadeAddOn_ActivateOverlay (false);

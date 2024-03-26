@@ -672,7 +672,7 @@ inline void ImGui::FileBrowser::Display()
 
     if(!(flags_ & ImGuiFileBrowserFlags_SelectDirectory))
     {
-        if(Button(" ok ") && !selectedFilenames_.empty())
+        if(Button(" 确定 ") && !selectedFilenames_.empty())
         {
             ok_ = true;
             CloseCurrentPopup();
@@ -680,7 +680,7 @@ inline void ImGui::FileBrowser::Display()
     }
     else
     {
-        if(Button(" 好的 "))
+        if(Button(" 确定 "))
         {
             ok_ = true;
             CloseCurrentPopup();
