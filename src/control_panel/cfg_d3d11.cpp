@@ -419,21 +419,6 @@ SK::ControlPanel::D3D11::Draw (void)
 
         if (bUncollapsedDirectStorage)
         {
-          if (SK_GetCurrentGameID () == SK_GAME_ID::RatchetAndClank_RiftApart)
-          {
-            if (config.system.global_inject_delay != 0.0f)
-            {
-              bUncollapsedDirectStorage = false;
-
-              ImGui::TextUnformatted ("除非在 SK 的 INI 中将 GlobalInjectDelay 设置为 0.0，否则这些选项将不起作用。");
-              ImGui::Separator       ();
-              ImGui::BulletText      ("将 GlobalInjectDelay 设置为 0.0 将破坏游戏的 DLSS3 Frame 生成实现。");
-            }
-          }
-        }
-
-        if (bUncollapsedDirectStorage)
-        {
           ImGui::BeginGroup ();
           ImGui::
             TextUnformatted ("GDeflate 支持: ");
