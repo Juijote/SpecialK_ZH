@@ -1,6 +1,20 @@
-﻿24.3.26.1
+﻿24.3.27
+=======
+ + Fixed Plug-In install path tooltip only printing first character in a path
+     because std::filesystem::path (path).c_str () returns wchar_t*
+
+24.3.26.3
 =========
- + Fixed Reflex breaking in Horizon Zero Dawn and various other Nixxes games
+ + Fixed various issues with the keyboard and gamepad control panel directions
+     in the startup banner depending on the current input devices present
+
+24.3.26.2
+=========
+ + Added 2 pixel DLAA compat hack default settings for Dragon's Dogma 2
+
+24.3.26.1
+=========
+ + Fixed Reflex breaking in Horizon Forbidden West and various Nixxes games
 
 24.3.26
 =======
