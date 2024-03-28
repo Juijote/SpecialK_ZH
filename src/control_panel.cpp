@@ -800,7 +800,7 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K [v ";
     title += SK_GetVersionStrA ();
-    title += "] [Juij 汉化] [2024-03-27]";
+    title += "] [Juij 汉化] [2024-03-28]";
   }
 
   title += "  控制面板";
@@ -4235,7 +4235,7 @@ SK_ImGui_ControlPanel (void)
                              )
            )
         {
-          SK_SteamOverlay_GoToURL ("https://juij.eu.org/#SpecialK",
+          SK_SteamOverlay_GoToURL ("https://juij.fun/#SpecialK",
               true
           );
         }
@@ -7187,11 +7187,11 @@ SK_ImGui_StageNextFrame (void)
     {
       ImGui::Text            ("你好，");                                                            ImGui::SameLine ();
       ImGui::TextColored     (ImColor::HSV (0.075f, 1.0f, 1.0f), "%s", szName);                      ImGui::SameLine ();
-      ImGui::TextUnformatted ("插件发布及汉化请参阅 [控制面板 - 帮助 - 汉化更新] 或访问 https://juij.eu.org/#SpecialK");                      ImGui::SameLine ();
+      ImGui::TextUnformatted ("插件发布及汉化请参阅 [控制面板 - 帮助 - 汉化更新] 或访问 https://juij.fun/#SpecialK 以及 公众号 “非线性列车”");                      ImGui::SameLine ();
     }
     else
     {
-      ImGui::TextUnformatted ("插件发布及汉化请参阅 [控制面板 - 帮助 - 汉化更新] 或访问 https://juij.eu.org/#SpecialK");                    ImGui::SameLine ();
+      ImGui::TextUnformatted ("插件发布及汉化请参阅 [控制面板 - 帮助 - 汉化更新] 或访问 https://juij.fun/#SpecialK 以及 公众号 “非线性列车”");                    ImGui::SameLine ();
     }
     ImGui::TextColored       (ImColor::HSV (.52f, 1.f, 1.f),  "");                    ImGui::SameLine ();
     ImGui::TextUnformatted   ("");
