@@ -672,7 +672,7 @@ SK_ImGui_ProcessGamepadStatusBar (bool bDraw)
 
         SK_ImGui_CreateNotification (
           label.c_str (), SK_ImGui_Toast::Warning,
-            SK_FormatString ("游戏手柄 %d 的电池电量严重不足", gamepad.slot).c_str (),
+            SK_FormatString ("游戏控制器 %d 的电池电量严重不足", gamepad.slot).c_str (),
             nullptr, 10000UL, SK_ImGui_Toast::UseDuration |
                               SK_ImGui_Toast::ShowCaption |
                               SK_ImGui_Toast::ShowOnce

@@ -305,7 +305,7 @@ SK::ControlPanel::Input::Draw (void)
         for ( int i = 0 ; i < XUSER_MAX_COUNT ; ++i )
         {
           if (xinput.reads [i] > 0)
-            ImGui::Text     ("游戏手柄 %d     %lu", i, xinput.reads [i]);
+            ImGui::Text     ("游戏控制器 %d     %lu", i, xinput.reads [i]);
         }
         ImGui::EndGroup     ();
         ImGui::SameLine     ();
@@ -336,7 +336,7 @@ SK::ControlPanel::Input::Draw (void)
       if (ImGui::IsItemHovered ( ))
       {
         ImGui::BeginTooltip ( );
-        ImGui::Text ("游戏手柄     %lu", wgi.reads);
+        ImGui::Text ("游戏控制器     %lu", wgi.reads);
         ImGui::EndTooltip ( );
       }
     }
@@ -369,7 +369,7 @@ SK::ControlPanel::Input::Draw (void)
         if (hid.mouse_reads > 0)
           ImGui::Text       ("鼠标       %lu", hid.mouse_reads);
         if (hid.gamepad_reads > 0)
-          ImGui::Text       ("游戏手柄     %lu", hid.gamepad_reads);
+          ImGui::Text       ("游戏控制器     %lu", hid.gamepad_reads);
 
         ImGui::EndTooltip   ();
       }
@@ -388,7 +388,7 @@ SK::ControlPanel::Input::Draw (void)
       {
         ImGui::BeginTooltip ();
         if (winmm.reads > 0)
-          ImGui::Text       ("游戏手柄     %lu", winmm.reads);
+          ImGui::Text       ("游戏控制器     %lu", winmm.reads);
         ImGui::EndTooltip   ();
       }
     }
@@ -408,7 +408,7 @@ SK::ControlPanel::Input::Draw (void)
       {
         ImGui::BeginTooltip ();
         if (messagebus.reads > 0)
-          ImGui::Text       ("游戏手柄     %lu", messagebus.reads);
+          ImGui::Text       ("游戏控制器     %lu", messagebus.reads);
         ImGui::EndTooltip   ();
       }
     }
@@ -434,7 +434,7 @@ SK::ControlPanel::Input::Draw (void)
           ImGui::Text       ("鼠标     %lu", di7.mouse_reads);
         }
         if (di7.gamepad_reads > 0) {
-          ImGui::Text       ("游戏手柄   %lu", di7.gamepad_reads);
+          ImGui::Text       ("游戏控制器   %lu", di7.gamepad_reads);
         };
 
         ImGui::EndTooltip   ();
@@ -461,7 +461,7 @@ SK::ControlPanel::Input::Draw (void)
           ImGui::Text       ("鼠标     %lu", di8.mouse_reads);
         }
         if (di8.gamepad_reads > 0) {
-          ImGui::Text       ("游戏手柄   %lu", di8.gamepad_reads);
+          ImGui::Text       ("游戏控制器   %lu", di8.gamepad_reads);
         };
 
         ImGui::EndTooltip   ();
@@ -548,7 +548,7 @@ SK::ControlPanel::Input::Draw (void)
           ImGui::Text       ("鼠标      %lu", raw_input.mouse_reads);
         }
         if (raw_input.gamepad_reads > 0) {
-          ImGui::Text       ("游戏手柄    %lu", raw_input.gamepad_reads);
+          ImGui::Text       ("游戏控制器    %lu", raw_input.gamepad_reads);
         }
 
         ImGui::EndTooltip   ();
@@ -591,12 +591,12 @@ SK::ControlPanel::Input::Draw (void)
         ImGui::Checkbox ( "键盘激活",
                                           &config.input.cursor.keys_activate );
 #if 1
-        ImGui::Checkbox ( "游戏手柄停用",
+        ImGui::Checkbox ( "游戏控制器停用",
                                     &config.input.cursor.gamepad_deactivates );
         if (ImGui::IsItemHovered ())
         {
           ImGui::SetTooltip (
-            "使用 XInput 或 HID (PlayStation) 自动隐藏游戏手柄输入上的指针。"
+            "使用 XInput 或 HID (PlayStation) 自动隐藏游戏控制器输入上的指针。"
           );
         }
 #endif
@@ -698,7 +698,7 @@ SK::ControlPanel::Input::Draw (void)
       ImGui::SetNextItemOpen (true, ImGuiCond_Once);
 
     bool uncollapsed_gamepads =
-      ImGui::CollapsingHeader ("游戏手柄", ImGuiTreeNodeFlags_AllowOverlap);
+      ImGui::CollapsingHeader ("游戏控制器", ImGuiTreeNodeFlags_AllowOverlap);
 
   //SK_ImGui_ProcessGamepadStatusBar (true);
 
@@ -714,9 +714,9 @@ SK::ControlPanel::Input::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("使用游戏手柄与 SK 控制面板交互时发出声音反馈");
+          ImGui::TextUnformatted ("使用游戏控制器与 SK 控制面板交互时发出声音反馈");
           ImGui::Separator       ();
-          ImGui::BulletText      ("快速识别游戏何时因控制面板而无法接收游戏手柄输入。");
+          ImGui::BulletText      ("快速识别游戏何时因控制面板而无法接收游戏控制器输入。");
           ImGui::EndTooltip      ();
         }
 
@@ -728,7 +728,7 @@ SK::ControlPanel::Input::Draw (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("防止游戏利用手柄振动");
+          ImGui::TextUnformatted ("防止游戏利用控制器振动");
           ImGui::Separator       ();
           ImGui::BulletText      ("在某些游戏中，声音反馈可能会降低性能，并且无法在游戏中关闭...");
           ImGui::EndTooltip      ();
@@ -759,7 +759,7 @@ SK::ControlPanel::Input::Draw (void)
       ImGui::TextColored   (ImVec4 (1.f, 0.f, 0.f, 1.f), ICON_FA_BAN);
       ImGui::SameLine      ();
 
-      if (ImGui::BeginMenu ("阻止游戏手柄输入 API###Input_API_Select"))
+      if (ImGui::BeginMenu ("阻止游戏控制器输入 API###Input_API_Select"))
       {
         static bool _need_restart = false;
 
@@ -835,7 +835,7 @@ SK::ControlPanel::Input::Draw (void)
         {
           ImGui::SetTooltip (
             "正在运行进行中:   "
-            "如果 Steam 输入处于活动状态并被阻止，可能根本无法获得游戏手柄输入。"
+            "如果 Steam 输入处于活动状态并被阻止，可能根本无法获得游戏控制器输入。"
           );
         }
         ImGui::EndGroup   ();
@@ -889,7 +889,7 @@ SK::ControlPanel::Input::Draw (void)
           ImGui::Checkbox ("动态 XInput " ICON_FA_GAMEPAD " 0", &config.input.gamepad.xinput.auto_slot_assign);
 
           if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("自动重新分配串口 0 以响应游戏手柄输入");
+            ImGui::SetTooltip ("自动重新分配串口 0 以响应游戏控制器输入");
         }
 
         else
@@ -904,10 +904,10 @@ SK::ControlPanel::Input::Draw (void)
           SK_ImGui_HasXboxController ();
 
         const char* szChordLabel =
-          ( bHasPlayStation && bHasXbox ) ? "启用游戏手柄和弦  (" ICON_FA_XBOX " / " ICON_FA_PLAYSTATION ")" :
-          ( bHasPlayStation             ) ? "启用游戏手柄和弦  ("                    ICON_FA_PLAYSTATION ")" :
-          ( bHasXbox                    ) ? "启用游戏手柄和弦  (" ICON_FA_XBOX ")"                           :
-                                            "使用虚拟按键启用游戏手柄和弦";
+          ( bHasPlayStation && bHasXbox ) ? "启用游戏控制器和弦  (" ICON_FA_XBOX " / " ICON_FA_PLAYSTATION ")" :
+          ( bHasPlayStation             ) ? "启用游戏控制器和弦  ("                    ICON_FA_PLAYSTATION ")" :
+          ( bHasXbox                    ) ? "启用游戏控制器和弦  (" ICON_FA_XBOX ")"                           :
+                                            "使用虚拟按键启用游戏控制器和弦";
 
         ImGui::Checkbox (szChordLabel, &config.input.gamepad.scepad.enhanced_ps_button);
 
@@ -973,7 +973,7 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::BeginGroup  ();
               ImGui::TextUnformatted ("打开 / 关闭控制面板");
               ImGui::Separator   ();
-              ImGui::TextUnformatted ("关闭无线游戏手柄");
+              ImGui::TextUnformatted ("关闭无线游戏控制器");
               ImGui::TextUnformatted ("Alt + Tab App1（按下时设置游戏程序）");
               ImGui::TextUnformatted ("Alt + Tab App2（按下时设置游戏程序）");
               ImGui::TextUnformatted ("游戏音量调高 10%");
@@ -1422,7 +1422,7 @@ SK::ControlPanel::Input::Draw (void)
                     ImGui::EndGroup        ( );
                     ImGui::SameLine        ( );
                     ImGui::BeginGroup      ( );
-                    ImGui::TextUnformatted ( " 关闭游戏手柄电源" );
+                    ImGui::TextUnformatted ( " 关闭游戏控制器电源" );
                     ImGui::TextUnformatted ( " 蓝牙设置" );
                     ImGui::EndGroup        ( );
                     ImGui::EndTooltip      ( );
@@ -1634,7 +1634,7 @@ SK::ControlPanel::Input::Draw (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip    ();
-              ImGui::TextUnformatted ("减少游戏手柄上的输入缓冲区队列（延迟）");
+              ImGui::TextUnformatted ("减少游戏控制器上的输入缓冲区队列（延迟）");
               ImGui::Separator       ();
               ImGui::BulletText      (
                 "适用于 DualSense/Shock4 原生游戏和 SK 的 XInput 模式");
@@ -1805,7 +1805,7 @@ extern float SK_ImGui_PulseNav_Strength;
 
         bool expanded = ImGui::CollapsingHeader (SK_FormatString ("%ws##JOYSTICK_DEBUG", joy_caps.szPname).c_str ());
 
-        ImGui::Combo    ("游戏手柄类型", &config.input.gamepad.predefined_layout, "PlayStation 4\0Steam\0\0", 2);
+        ImGui::Combo    ("游戏控制器类型", &config.input.gamepad.predefined_layout, "PlayStation 4\0Steam\0\0", 2);
 
         if (ImGui::IsItemHovered ())
         {
@@ -2264,7 +2264,7 @@ extern float SK_ImGui_PulseNav_Strength;
             config.input.gamepad.hook_windows_gaming ||   config.input.gamepad.hook_winmm )
       {
         bool changed =
-          ImGui::Combo ("游戏手柄输入", &config.input.gamepad.disabled_to_game,
+          ImGui::Combo ("游戏控制器输入", &config.input.gamepad.disabled_to_game,
                         "启用\0禁用（始终）\0已禁用（后台）\0\0");
 
         if (changed)
@@ -2281,11 +2281,11 @@ extern float SK_ImGui_PulseNav_Strength;
                           (ImGuiCol_Text, ImVec4 (0.75f, 0.75f, 0.75f, 1.f));
       ImGui::PushItemWidth(
         ImGui::GetFont ()->CalcTextSizeA (
-          1.0f, FLT_MAX, 0.0f, "如果启用“继续运行”和游戏手柄输入, "
+          1.0f, FLT_MAX, 0.0f, "如果启用“继续运行”和游戏控制器输入, "
         ).x
       );
-      ImGui::TextWrapped  ("如果启用“继续运行”和游戏手柄输入， "
-                           "当其他应用程序使用键盘和鼠标时，您可以继续使用游戏手柄玩此游戏。");
+      ImGui::TextWrapped  ("如果启用“继续运行”和游戏控制器输入， "
+                           "当其他应用程序使用键盘和鼠标时，您可以继续使用游戏控制器玩此游戏。");
       ImGui::PopItemWidth (  );
       ImGui::PopStyleColor(  );
       ImGui::EndGroup     (  );

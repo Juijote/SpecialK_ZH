@@ -491,7 +491,7 @@ SK_TVFix_PlugInCfg (void)
     ImGui::EndGroup ();
 #if 0
     ImGui::SameLine        (             );
-    ImGui::TextUnformatted ("游戏手柄:   ");
+    ImGui::TextUnformatted ("游戏控制器:   ");
     ImGui::SameLine        (             );
 
     static int buttons = 0;

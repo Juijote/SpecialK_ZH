@@ -3148,7 +3148,7 @@ SK_ImGui_ControlPanel (void)
         io.ConfigFlags & ImGuiConfigFlags_NavEnableSetMousePos;
 
       if (
-        ImGui::MenuItem ("显示 游戏手柄 / 键盘鼠标", "", &nav_moves_mouse)
+        ImGui::MenuItem ("显示 游戏控制器 / 键盘鼠标", "", &nav_moves_mouse)
       )
       {
         io.ConfigFlags = nav_moves_mouse ?
