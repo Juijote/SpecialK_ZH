@@ -502,6 +502,13 @@ struct {
     sk::ParameterBool*    show                    = nullptr;
     sk::ParameterFloat*   interval                = nullptr;
   } pagefile;
+
+  struct {
+    sk::ParameterBool*    show                    = nullptr;
+    sk::ParameterBool*    show_quality            = nullptr;
+    sk::ParameterBool*    show_preset             = nullptr;
+    sk::ParameterBool*    show_fg                 = nullptr;
+  } dlss;
 } monitoring;
 
 struct {
@@ -1462,6 +1469,11 @@ auto DeclKeybind =
     ConfigEntry (monitoring.pagefile.show,               L"Show Pagefile Monitoring",                                  osd_ini,         L"Monitor.Pagefile",      L"Show"),
     ConfigEntry (monitoring.pagefile.interval,           L"Pagefile Monitoring INterval (seconds)",                    osd_ini,         L"Monitor.Pagefile",      L"Interval"),
 
+    ConfigEntry (monitoring.dlss.show,                   L"Show DLSS Resolution Information",                          osd_ini,         L"Monitor.DLSS",          L"Show"),
+    ConfigEntry (monitoring.dlss.show_quality,           L"Print DLSS Quality Level",                                  osd_ini,         L"Monitor.DLSS",          L"ShowQuality"),
+    ConfigEntry (monitoring.dlss.show_preset,            L"Print DLSS Preset",                                         osd_ini,         L"Monitor.DLSS",          L"ShowPreset"),
+    ConfigEntry (monitoring.dlss.show_fg,                L"Print DLSS Frame Generation Status",                        osd_ini,         L"Monitor.DLSS",          L"ShowFrameGeneration"),
+
     ConfigEntry (monitoring.memory.show,                 L"Show Memory Monitoring",                                    osd_ini,         L"Monitor.Memory",        L"Show"),
     ConfigEntry (monitoring.fps.show,                    L"Show Framerate Monitoring",                                 osd_ini,         L"Monitor.FPS",           L"Show"),
     ConfigEntry (monitoring.fps.frametime,               L"Show Frametime in Framerate Counter",                       osd_ini,         L"Monitor.FPS",           L"DisplayFrametime"),
@@ -2185,7 +2197,8 @@ auto DeclKeybind =
                         L"Ctrl+Alt+Shift+D=OSD.Disk.Show toggle\n"
                         L"Ctrl+Alt+Shift+P=OSD.Pagefile.Show toggle\n"
                         L"Ctrl+Alt+Shift+S=OSD.SLI.Show toggle\n"
-                        L"Ctrl+Shift+C=OSD.CPU.Show toggle\n\n"
+                        L"Ctrl+Shift+C=OSD.CPU.Show toggle\n"
+                        L"Alt+Shift+D=OSD.DLSS.Show toggle\n\n"
                       );
                         //L"[Macro.SpecialK_CommandConsole]\n"
                         //L"Ctrl+Shift+Tab=Console.Show toggle\n\n" );
@@ -3464,6 +3477,7 @@ auto DeclKeybind =
         config.apis.dxgi.d3d12.hook = false;
         break;
 
+      // Pain in the ass Nixxes port
       case SK_GAME_ID::RatchetAndClank_RiftApart:
         break;
 
@@ -3696,6 +3710,11 @@ auto DeclKeybind =
                          monitoring.disk.type->load      (config.disk.type);
 
   monitoring.pagefile.interval->load (config.pagefile.interval);
+
+  monitoring.dlss.show->load         (config.dlss.show);
+  monitoring.dlss.show_quality->load (config.dlss.show_quality);
+  monitoring.dlss.show_preset->load  (config.dlss.show_preset);
+  monitoring.dlss.show_fg->load      (config.dlss.show_fg);
 
   monitoring.title.show->load (config.title.show);
   monitoring.time.show->load  (config.time.show);
@@ -5530,6 +5549,11 @@ SK_SaveConfig ( std::wstring name,
 
   monitoring.pagefile.show->set_value         (config.pagefile.show);
   monitoring.pagefile.interval->store         (config.pagefile.interval);
+
+  monitoring.dlss.show->store                 (config.dlss.show);
+  monitoring.dlss.show_quality->store         (config.dlss.show_quality);
+  monitoring.dlss.show_preset->store          (config.dlss.show_preset);
+  monitoring.dlss.show_fg->store              (config.dlss.show_fg);
 
   if (! (nvapi_init && sk::NVAPI::nv_hardware && sk::NVAPI::CountSLIGPUs () > 1))
     config.sli.show = false;

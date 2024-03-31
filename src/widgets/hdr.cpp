@@ -1317,7 +1317,7 @@ public:
     }
 
     static const bool bStreamline =
-      SK_IsModuleLoaded (L"sl.interposer.dll");
+      SK_IsModuleLoaded (L"sl.dlss_g.dll");
 
     if (bStreamline && ImGui::IsItemHovered ())
     {
