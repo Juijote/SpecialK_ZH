@@ -260,6 +260,7 @@ public:
       float               white_level          = 80.0f;
       DISPLAYCONFIG_COLOR_ENCODING             
                           encoding             = DISPLAYCONFIG_COLOR_ENCODING_RGB;
+      bool                applied_sdr_white    = false;
     } hdr;                                     
     bool                  attached             = false;
     wchar_t               name      [64]       =  { };
@@ -293,6 +294,7 @@ public:
           NvU32           head                 =   0;
           ULONG64         last_frame_sampled   =   0;
           float           last_average         =0.0f;
+          NvU32           last_polled_time     =   0;
           void  addRecord   (NvDisplayHandle nv_disp, NvU32 tNow) noexcept;
           float getVBlankHz (                         NvU32 tNow) noexcept;
       } vblank_counter;
@@ -334,6 +336,9 @@ public:
     struct audio_s {
       wchar_t             paired_device [128]  = L"{*}##No Preference";
     } audio;
+
+    // nits = 0.0 will read the OS preference and apply it
+    bool setSDRWhiteLevel (float nits);
   } displays [_MAX_DISPLAYS];
 
   int                     active_display       =  0;
@@ -448,8 +453,12 @@ public:
     };
 
     SK_HDR_TRANSFER_FUNC
-    getEOTF (void);
+    getEOTF (void) const;
   } scanout;
+
+  struct nvapi_s {
+    bool rebar = false;
+  } nvapi;
 
   // Set of displays that SK has enabled HDR on, so we can turn it back
   //   off if user wants
@@ -468,7 +477,7 @@ public:
     return
       hdr_capable;
   }
-  __inline bool isHDRActive (void) noexcept
+  __inline bool isHDRActive (void) const noexcept
   {
     return
       framebuffer_flags & SK_FRAMEBUFFER_FLAG_HDR;
@@ -516,7 +525,7 @@ public:
     LONGLONG lastFrame =  0LL;
     ULONG64  lastDelta = 0ULL;
 
-    ULONG64 getDeltaTime (void) noexcept
+    ULONG64 getDeltaTime (void) const noexcept
     {
       return
         lastDelta;
@@ -555,8 +564,8 @@ public:
     void setFocus  (HWND hWndFocus);
     void setDevice (HWND hWndRender);
 
-    HWND getFocus  (void);
-    HWND getDevice (void);
+    HWND getFocus  (void) const;
+    HWND getDevice (void) const;
   } windows;
 
   // Pass Reserved to detect the API, pass an actual API
@@ -598,10 +607,21 @@ public:
     SK_ComPtr <ID3D12CommandQueue> command_queue = nullptr;
   } d3d12;
 
+  struct game_traits_s
+  {
+    bool  bFlipMode               = false;
+    bool  bWait                   = false;
+    bool  bOriginallyFlip         = false;
+    bool  bOriginallysRGB         = false;
+    bool  bImplicitlyWaitable     = false;
+    bool  bMisusingDXGIScaling    = false; // Game doesn't understand the purpose of Centered/Stretched
+    UINT uiOriginalBltSampleCount = 0UL;
+  } active_traits;
+
 
           HRESULT       setDevice (IUnknown* pDevice);
   template <typename Q>
-          SK_ComPtr <Q> getDevice (void)
+          SK_ComPtr <Q> getDevice (void) const
           {
             REFIID riid =
               __uuidof (Q);
@@ -665,35 +685,35 @@ public:
   volatile ULONG64         most_frames  =  0;
   SK_Thread_HybridSpinlock res_lock;
 
-  bool canEnterFullscreen    (void);
+  bool canEnterFullscreen    (void) const;
 
   void requestFullscreenMode (bool override = false);
   void requestWindowedMode   (bool override = false);
 
-  double getActiveRefreshRate (HMONITOR hMonitor = 0 /*Default to HWND's nearest*/);
+  double getActiveRefreshRate (HMONITOR hMonitor = 0 /*Default to HWND's nearest*/) const;
 
-  HANDLE getSwapWaitHandle   (void);
-  void releaseOwnedResources (void);
+  HANDLE getSwapWaitHandle     (void) const;
+  void   releaseOwnedResources (void);
 
   void            queueUpdateOutputs   (void);
   void            updateOutputTopology (void);
-  const output_s* getContainingOutput  (const RECT& rkRect);
-  void            updateWDDMCaps       (output_s *pOutput);
+  const output_s* getContainingOutput  (const RECT& rkRect) const;
+  bool            routeAudioForDisplay (const output_s *pOutput, bool force_update = false) const;
+  void            updateWDDMCaps       (      output_s *pOutput);
   bool            assignOutputFromHWND (HWND hWndContainer);
-  bool            routeAudioForDisplay (output_s *pOutput, bool force_update = false);
 
-  bool isReflexSupported  (void);
-  bool setLatencyMarkerNV (NV_LATENCY_MARKER_TYPE    marker);
-  bool getLatencyReportNV (NV_LATENCY_RESULT_PARAMS *pGetLatencyParams);
-  void driverSleepNV      (int site);
+  bool isReflexSupported  (void)                                        const;
+  bool setLatencyMarkerNV (NV_LATENCY_MARKER_TYPE    marker)            const;
+  bool getLatencyReportNV (NV_LATENCY_RESULT_PARAMS *pGetLatencyParams) const;
+  void driverSleepNV      (int site)                                    const;
 
-  std::string parseEDIDForName      (uint8_t* edid, size_t length);
-  POINT       parseEDIDForNativeRes (uint8_t* edid, size_t length);
+  std::string parseEDIDForName      (uint8_t* edid, size_t length) const;
+  POINT       parseEDIDForNativeRes (uint8_t* edid, size_t length) const;
 
   bool resetTemporaryDisplayChanges (void);
 
-  bool isFakeFullscreen (void);
-  bool isTrueFullscreen (void);
+  bool isFakeFullscreen (void) const;
+  bool isTrueFullscreen (void) const;
 
   bool update_outputs = false;
 };
@@ -711,11 +731,20 @@ SK_ChangeDisplaySettingsEx ( _In_ LPCWSTR   lpszDeviceName,
                              _In_ DWORD     dwFlags,
                              _In_ LPVOID    lParam );
 
+using  ChangeDisplaySettingsA_pfn = LONG (WINAPI *)(
+                                     _In_opt_ DEVMODEA *lpDevMode,
+                                     _In_     DWORD     dwFlags );
+extern ChangeDisplaySettingsA_pfn
+       ChangeDisplaySettingsA_Original;
+
 using SK_RenderBackend = SK_RenderBackend_V2;
+
+extern                                 SK_RenderBackend*  g_pRenderBackend;
+#define SK_GetCurrentRenderBackend() ((SK_RenderBackend&)*g_pRenderBackend)
 
 SK_RenderBackend&
 __stdcall
-SK_GetCurrentRenderBackend (void) noexcept;
+SK_WarmupRenderBackends (void) noexcept;
 
 void
 __stdcall
@@ -773,18 +802,31 @@ ComputeIntersectionArea ( int ax1, int ay1, int ax2, int ay2,
 }
 
 
-DPI_AWARENESS
-SK_GetThreadDpiAwareness (void);
+bool SK_RenderBackendUtil_IsFullscreen          (void);
+void SK_D3D_SetupShaderCompiler                 (void);
+void SK_Display_DisableDPIScaling               (void);
+DPI_AWARENESS SK_GetThreadDpiAwareness          (void);
+bool SK_Display_IsDPIAwarenessUsingAppCompat    (void);
+void SK_Display_ForceDPIAwarenessUsingAppCompat (bool set);
+void SK_Display_SetMonitorDPIAwareness          (bool bOnlyIfWin10);
+bool SK_Display_ApplyDesktopResolution          (MONITORINFOEX& mi);
+void SK_Display_ResolutionSelectUI              (bool bMarkDirty = false);
+void SK_Display_EnableHDR                       (SK_RenderBackend_V2::output_s *pDisplay);
+void SK_HDR_UpdateMaxLuminanceForActiveDisplay  (bool forced = false);
 
-bool SK_RenderBackendUtil_IsFullscreen (void);
-void SK_D3D_SetupShaderCompiler        (void);
-void SK_Display_DisableDPIScaling      (void);
+extern bool SK_HDR_PromoteUAVsTo16Bit;
+
+extern ID3D11ShaderResourceView*
+ SK_HDR_GetUnderlayResourceView (void);
 
 interface
 SK_ICommandProcessor;
 SK_ICommandProcessor*
      SK_Render_InitializeSharedCVars   (void);
 void SK_Display_HookModeChangeAPIs     (void);
+
+extern DWORD        __stdcall HookD3D11 (LPVOID user);
+extern unsigned int __stdcall HookD3D12 (LPVOID user);
 
 HMODULE
 SK_D3D_GetShaderCompiler (void);
@@ -820,7 +862,20 @@ SK_D3D_Compile (
   _Out_                                   ID3DBlob**        ppCode,
   _Always_(_Outptr_opt_result_maybenull_) ID3DBlob**        ppErrorMsgs);
 
-bool SK_Display_ApplyDesktopResolution (MONITORINFOEX& mi);
+#define DISPLAYCONFIG_DEVICE_INFO_SET_SDR_WHITE_LEVEL (DISPLAYCONFIG_DEVICE_INFO_TYPE)0xFFFFFFEE
+
+typedef struct __declspec(align(4)) _DISPLAYCONFIG_SET_SDR_WHITE_LEVEL
+{
+  DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+  ULONG                            SDRWhiteLevel;
+  BYTE                             finalValue;
+} DISPLAYCONFIG_SET_SDR_WHITE_LEVEL;
+
+LONG WINAPI SK_DisplayConfigSetDeviceInfo (_In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *setPacket);
+LONG WINAPI SK_DisplayConfigGetDeviceInfo (_In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *getPacket) ;
+
+// PresentMon
+bool SK_ETW_EndTracing (void);
 
 uint32_t
 SK_Render_GetVulkanInteropSwapChainType (IUnknown *swapchain);
@@ -835,5 +890,7 @@ bool __stdcall SK_DXVK_CheckForInterop (void);
 extern int  SK_GL_ContextCount;
 extern bool SK_GL_OnD3D11;
 extern bool SK_GL_OnD3D11_Reset; // This one especially, this has a signal
+
+extern volatile LONG __SK_NVAPI_UpdateGSync;
 
 #endif /* __SK__RENDER_BACKEND__H__ */

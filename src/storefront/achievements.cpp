@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file is part of Special K.
  *
  * Special K is free software : you can redistribute it
@@ -24,6 +24,7 @@
 #include <SpecialK/storefront/epic.h>
 #include <SpecialK/resource.h>
 #include <imgui/backends/imgui_d3d12.h> // For D3D12 Texture Mgmt
+#include <imgui/backends/imgui_d3d11.h> // For D3D11 Texture Mgmt
 
 #include <imgui/font_awesome.h>
 
@@ -220,13 +221,13 @@ SK_Network_EnqueueDownload (sk_download_request_s&& req, bool high_prio)
   if (! high_prio)
   {
     download_queue.push (
-        std::move (req) );
+                    req );
   }
 
   else
   {
     download_queueX.push (
-      std::move (req));
+                     req );
   }
 
   SetEvent (hFetchEvent.m_h);
@@ -474,12 +475,11 @@ SK_HTTP_BundleArgs =
    for ( auto& entry : list_ )
    {
      bundle.push_back (
-       std::move (entry)
+            entry
      );
    }
 
-   return
-     std::move (bundle);
+   return bundle;
  };
 
 kvpair_s
@@ -686,7 +686,7 @@ SK_AchievementManager::Achievement::Achievement (int idx, const char* szName, IS
     else
     {
       SK_Network_EnqueueDownload (
-      sk_download_request_s (schema, url.c_str (),
+      sk_download_request_s (friend_stats, url.c_str (),
       []( const std::vector <uint8_t>&& data,
           const std::wstring_view       file )
       {
@@ -1136,7 +1136,7 @@ SK_AchievementManager::Achievement::Achievement ( int                           
                        buffer.size (), DirectX::WIC_FLAGS_NONE, nullptr, img ) )
        )
     {
-      const auto metadata =
+      const auto& metadata =
         img.GetMetadata ();
 
       // > 256x256 should be converted to JPEG for space savings
@@ -1578,10 +1578,19 @@ SK_AchievementManager::drawPopups (void)
           auto text =
             it->achievement->unlocked_ ? &it->achievement->text_.unlocked
                                        : &it->achievement->text_.locked;
-          ImGui::BeginPopup    (szPopupName,
-                                ImGuiWindowFlags_AlwaysAutoResize |
-                                ImGuiWindowFlags_NoCollapse       |
-                                ImGuiWindowFlags_NoInputs         );
+          ImGui::BeginPopup (szPopupName, ImGuiWindowFlags_AlwaysAutoResize      |
+                                          ImGuiWindowFlags_NoDecoration          |
+                                          ImGuiWindowFlags_NoNav                 |
+                                          ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                          ImGuiWindowFlags_NoFocusOnAppearing    |
+                                          ImGuiWindowFlags_NoInputs              |
+                                          ImGuiWindowFlags_NoCollapse);
+
+          //char         window_id [64] = { };
+          //_snprintf_s (window_id, 63, "##TOAST%d", (int)i++);
+
+          ImGui::BeginGroup ();
+          ImGui::BringWindowToDisplayFront (ImGui::GetCurrentWindow ());
 
           float fTopY = ImGui::GetCursorPosY ();
 
@@ -1680,6 +1689,7 @@ SK_AchievementManager::drawPopups (void)
                     y_loc + y_offset + io.DisplaySize.y * 0.025f * y_dir),
                       ImGuiCond_Always
           );
+          ImGui::EndGroup      (  );
           ImGui::EndPopup      (  );
 
           if (it->achievement->global_percent_ < 10.0f)
@@ -1716,6 +1726,12 @@ SK_AchievementManager::drawPopups (void)
       {
         if (SK_GetCurrentRenderBackend ().api != SK_RenderAPI::D3D12)
         {
+          if ( _d3d11_rbk.getPtr ()    != nullptr &&
+               _d3d11_rbk->_pDeviceCtx != nullptr )
+          {
+            _d3d11_rbk->_pDeviceCtx->Flush ();
+          }
+
           std::exchange (
               it->icon_texture, nullptr)->Release ();
         }
@@ -1724,8 +1740,11 @@ SK_AchievementManager::drawPopups (void)
         {
           if (it->d3d12_tex != nullptr)
           {
-            std::exchange (
-              it->d3d12_tex, nullptr)->Release ();
+            if (_d3d12_rbk->drain_queue ())
+            {
+              std::exchange (
+                it->d3d12_tex, nullptr)->Release ();
+            }
           }
         }
       }
@@ -1795,7 +1814,7 @@ SK_AchievementManager::createPopupWindow (SK_AchievementPopup* popup)
                                    : L"Locked",
             achievement->name_.c_str () );
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   const bool bIsNativeOrLayeredD3D11 =

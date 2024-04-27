@@ -97,8 +97,6 @@ void SK_Screenshot_ProcessQueue ( SK_ScreenshotStage stage,
 bool
 SK_Screenshot_IsCapturingHUDless (void)
 {
-  extern volatile
-               LONG __SK_ScreenShot_CapturingHUDless;
   if (ReadAcquire (&__SK_ScreenShot_CapturingHUDless))
   {
     return true;
@@ -257,30 +255,41 @@ SK_ScreenshotManager::copyToClipboard (const DirectX::Image& image) const
         static_cast <size_t> (_height )
            );
 
-    HDC  hdcSrc  = CreateCompatibleDC (GetDC (nullptr));
-    HDC  hdcDst  = CreateCompatibleDC (GetDC (nullptr));
+    HDC hdcSrc = CreateCompatibleDC (GetDC (nullptr));
+    HDC hdcDst = CreateCompatibleDC (GetDC (nullptr));
 
-    auto hbmpSrc = (HBITMAP)SelectObject (hdcSrc, hBitmap);
-    auto hbmpDst = (HBITMAP)SelectObject (hdcDst, hBitmapCopy);
+    if ( hBitmap    != nullptr &&
+        hBitmapCopy != nullptr )
+    {
+      auto hbmpSrc = (HBITMAP)SelectObject (hdcSrc, hBitmap);
+      auto hbmpDst = (HBITMAP)SelectObject (hdcDst, hBitmapCopy);
 
-    BitBlt (hdcDst, 0, 0, _width,
-                          _height, hdcSrc, 0, 0, SRCCOPY);
+      BitBlt (hdcDst, 0, 0, _width,
+                            _height, hdcSrc, 0, 0, SRCCOPY);
 
-    SelectObject     (hdcSrc, hbmpSrc);
-    SelectObject     (hdcDst, hbmpDst);
+      SelectObject     (hdcSrc, hbmpSrc);
+      SelectObject     (hdcDst, hbmpDst);
 
-    EmptyClipboard   ();
-    SetClipboardData (CF_BITMAP, hBitmapCopy);
+      EmptyClipboard   ();
+      SetClipboardData (CF_BITMAP, hBitmapCopy);
+    }
+
     CloseClipboard   ();
 
     DeleteDC         (hdcSrc);
     DeleteDC         (hdcDst);
     DeleteDC         (hdcDIB);
 
-    DeleteBitmap     (hBitmap);
-    DeleteBitmap     (hBitmapCopy);
+    if ( hBitmap     != nullptr &&
+         hBitmapCopy != nullptr )
+    {
+      DeleteBitmap   (hBitmap);
+      DeleteBitmap   (hBitmapCopy);
 
-    return true;
+      return true;
+    }
+
+    return false;
   }
 
   return false;
@@ -407,7 +416,6 @@ SK_TriggerHudFreeScreenshot (void) noexcept
   {
     if (ReadAcquire (&SK_D3D11_TrackingCount->Conditional) > 0)
     {
-      extern volatile LONG   __SK_D3D11_QueuedShots;
       InterlockedIncrement (&__SK_D3D11_QueuedShots);
     }
   }
@@ -416,7 +424,6 @@ SK_TriggerHudFreeScreenshot (void) noexcept
   {
     //if (ReadAcquire (&SK_D3D11_TrackingCount->Conditional) > 0)
     //{
-      extern volatile LONG   __SK_D3D12_QueuedShots;
       InterlockedIncrement (&__SK_D3D12_QueuedShots);
     //}
   }
@@ -672,7 +679,8 @@ SK_Screenshot_SaveAVIF (DirectX::ScratchImage &src_image, const wchar_t *wszFile
 
           for (size_t j = 0; j < width; ++j)
           {
-            DirectX::XMVECTOR v = *pixels++;
+            DirectX::XMVECTOR v =
+              XMVectorClamp (*pixels++, g_XMZero, g_XMOne);
 
             *(rgb_pixels++) = static_cast <uint16_t> (v.m128_f32 [0] * 1023.0f);
             *(rgb_pixels++) = static_cast <uint16_t> (v.m128_f32 [1] * 1023.0f);
@@ -703,10 +711,10 @@ SK_Screenshot_SaveAVIF (DirectX::ScratchImage &src_image, const wchar_t *wszFile
 #if 1
         static const XMMATRIX c_from709to2020 =
         {
-          { 0.627225305694944,  0.329476882715808,  0.0432978115892484, 0.0 },
-          { 0.0690418812810714, 0.919605681354755,  0.0113524373641739, 0.0 },
-          { 0.0163911702607078, 0.0880887513437058, 0.895520078395586,  0.0 },
-          { 0.0,                0.0,                0.0,                1.0 }
+          { 0.627225305694944f,  0.329476882715808f,  0.0432978115892484f, 0.0f },
+          { 0.0690418812810714f, 0.919605681354755f,  0.0113524373641739f, 0.0f },
+          { 0.0163911702607078f, 0.0880887513437058f, 0.895520078395586f,  0.0f },
+          { 0.0f,                0.0f,                0.0f,                1.0f }
         };
 
         auto LinearToPQ = [](XMVECTOR N)
@@ -739,9 +747,11 @@ SK_Screenshot_SaveAVIF (DirectX::ScratchImage &src_image, const wchar_t *wszFile
           for (size_t j = 0; j < width; ++j)
           {
             XMVECTOR  value = pixels [j];
-            XMVECTOR nvalue = XMVectorDivide (value, PQ.MaxPQ);
+            XMVECTOR nvalue = XMVectorDivide ( XMVectorMax (XMVectorReplicate (0.0f),
+                                               XMVectorMin (value, PQ.MaxPQ)),
+                                                                   PQ.MaxPQ);
 
-                      value = LinearToPQ (nvalue);//XMVectorClamp (nvalue, g_XMZero, g_XMOne));
+                      value = XMVectorClamp (LinearToPQ (nvalue), g_XMZero, g_XMOne);
 
             *(rgb_pixels++) = static_cast <uint16_t> (value.m128_f32 [0] * 65535.0f);
             *(rgb_pixels++) = static_cast <uint16_t> (value.m128_f32 [1] * 65535.0f);
@@ -849,8 +859,6 @@ SK_WIC_SetMetadataTitle (IWICMetadataQueryWriter *pMQW, std::string& title)
 void
 SK_WIC_SetBasicMetadata (IWICMetadataQueryWriter *pMQW)
 {
-  extern std::string SK_GetFriendlyAppName (void);
-
   PROPVARIANT       value;
   PropVariantInit (&value);
 

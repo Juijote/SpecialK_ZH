@@ -98,14 +98,6 @@ volatile HANDLE hMapShared                   = INVALID_HANDLE_VALUE;
 volatile HANDLE hMapRecords                  = INVALID_HANDLE_VALUE;
          HANDLE hWhitelistChangeNotification = INVALID_HANDLE_VALUE;
 
-
-extern void SK_Process_Snapshot    (void);
-extern bool SK_Process_IsSuspended (DWORD dwPid);
-extern bool SK_Process_Suspend     (DWORD dwPid);
-extern bool SK_Process_Resume      (DWORD dwPid);
-
-extern volatile LONG  __SK_HookContextOwner;
-
 SK_InjectionRecord_s* __stdcall  SK_Inject_GetRecord32      (DWORD dwPid);
 SK_InjectionRecord_s* __stdcall  SK_Inject_GetRecord32ByIdx (int   idx);
 
@@ -202,8 +194,6 @@ SK_Inject_AuditRecord ( DWORD                 dwPid,
          __SK_InjectionHistory [idx].platform.steam_appid = __SK_InjectionHistory_AppId  [idx];
 
 #ifndef _M_AMD64
-        extern LPVOID SK_Inject_GetViewOf32BitRecords (void);
-
         auto   *pRecords = (SK_InjectionRecord_s *)SK_Inject_GetViewOf32BitRecords ();
         memcpy (pRecords, __SK_InjectionHistory, sizeof (__SK_InjectionHistory));
 #endif
@@ -1065,7 +1055,6 @@ SK_Inject_RenameProcess (void)
   //RtlReleasePebLock ();
 }
 
-#include <winternl.h>                   //PROCESS_BASIC_INFORMATION
 bool
 ReadMem (void *addr, void *buf, int size)
 {
@@ -1167,11 +1156,11 @@ GetModuleLoadCount (HMODULE hDll)
       //
       //  http://www.geoffchappell.com/studies/windows/win32/ntdll/structs/ldr_data_table_entry.htm
       //
-      int offDdagNode =
-        (0x14 - BITNESS) * sizeof(void*);   // See offset on LDR_DDAG_NODE *DdagNode;
+      unsigned long long offDdagNode =
+        (0x14 - BITNESS) * sizeof (void *);   // See offset on LDR_DDAG_NODE *DdagNode;
 
       ULONG count        = 0;
-      char* addrDdagNode = ((char*)pLdrEntry) + offDdagNode;
+      char* addrDdagNode = ((char *)pLdrEntry) + offDdagNode;
 
       //
       //  http://www.geoffchappell.com/studies/windows/win32/ntdll/structs/ldr_ddag_node.htm
@@ -1183,7 +1172,7 @@ GetModuleLoadCount (HMODULE hDll)
           return 0;
 
       return
-        (int)count;
+        static_cast <int> (count);
     } //if
 
     head = LdrEntry.InMemoryOrderLinks.Flink;
@@ -1231,9 +1220,6 @@ SK_IsImmersiveProcess (HANDLE hProcess = SK_GetCurrentProcess ())
 void
 SK_Inject_SpawnUnloadListener (void)
 {
-  if (StrStrIW (SK_GetHostApp (), L"Steam"))
-    LoadLibraryW (L"ValvePlug.dll");
-
   if (! InterlockedCompareExchangePointer ((void **)&g_hModule_CBT, (void *)1, nullptr))
   {
     static SK_AutoHandle hHookTeardown (
@@ -1260,7 +1246,6 @@ SK_Inject_SpawnUnloadListener (void)
       });
     }
 
-#if 1
     g_hPacifierThread = (HANDLE)
       CreateThread (nullptr, 0, [](LPVOID) ->
       DWORD
@@ -1348,11 +1333,10 @@ SK_Inject_SpawnUnloadListener (void)
 
       else
       {
-        TerminateThread            (g_hPacifierThread, 0x0);
+        SetEvent                   (hHookTeardown);
         SK_CloseHandle             (g_hPacifierThread);
       }
     }
-#endif
   }
 }
 
@@ -1794,43 +1778,6 @@ SK_Inject_SwitchToRenderWrapperEx (DLL_ROLE role)
   }
 
 
-  //std::queue <DWORD> suspended =
-  //  SK_SuspendAllOtherThreads ();
-  //
-  //extern volatile LONG   SK_bypass_dialog_active;
-  //InterlockedIncrement (&SK_bypass_dialog_active);
-  //
-  //int mb_ret =
-  //       SK_MessageBox ( L"Link the Installed Wrapper to the Global DLL?\r\n"
-  //                       L"\r\n"
-  //                       L"Linked installs allow you to update wrapped games the same way "
-  //                       L"as global injection, but require administrator privileges to setup.",
-  //                         L"Perform a Linked Wrapper Install?",
-  //                           MB_YESNO | MB_ICONQUESTION
-  //                     );
-  //
-  //InterlockedIncrement (&SK_bypass_dialog_active);
-  //
-  //SK_ResumeThreads (suspended);
-
-  //if ( mb_ret == IDYES )
-  //{
-  //  wchar_t   wszCmd [MAX_PATH * 3] = { };
-  //  swprintf (wszCmd, L"/c mklink \"%s\" \"%s\"", wszOut, wszIn);
-  //
-  //  ShellExecuteW ( GetActiveWindow (),
-  //                    L"runas",
-  //                      L"cmd.exe",
-  //                        wszCmd,
-  //                          nullptr,
-  //                            SW_HIDE );
-  //
-  //  SK_Inject_EnableCentralizedConfig ();
-  //
-  //  return true;
-  //}
-
-
   if (CopyFile (wszIn, wszOut, TRUE) != FALSE)
   {
     SK_Inject_EnableCentralizedConfig ();
@@ -1935,43 +1882,6 @@ SK_Inject_SwitchToRenderWrapper (void)
       //lstrcatW (wszOut, L"\\vk-1.dll");
       //break;
   }
-
-
-  //std::queue <DWORD> suspended =
-  //  SK_SuspendAllOtherThreads ();
-  //
-  //extern volatile LONG   SK_bypass_dialog_active;
-  //InterlockedIncrement (&SK_bypass_dialog_active);
-  //
-  //int mb_ret =
-  //       SK_MessageBox ( L"Link the Installed Wrapper to the Global DLL?\r\n"
-  //                       L"\r\n"
-  //                       L"Linked installs allow you to update wrapped games the same way "
-  //                       L"as global injection, but require administrator privileges to setup.",
-  //                         L"Perform a Linked Wrapper Install?",
-  //                           MB_YESNO | MB_ICONQUESTION
-  //                     );
-  //
-  //InterlockedIncrement (&SK_bypass_dialog_active);
-  //
-  //SK_ResumeThreads (suspended);
-  //
-  //if ( mb_ret == IDYES )
-  //{
-  //  wchar_t   wszCmd [MAX_PATH * 3] = { };
-  //  swprintf (wszCmd, L"/c mklink \"%s\" \"%s\"", wszOut, wszIn);
-  //
-  //  ShellExecuteW ( GetActiveWindow (),
-  //                    L"runas",
-  //                      L"cmd.exe",
-  //                        wszCmd,
-  //                          nullptr,
-  //                            SW_HIDE );
-  //
-  //  SK_Inject_EnableCentralizedConfig ();
-  //
-  //  return true;
-  //}
 
 
   if (CopyFile (wszIn, wszOut, TRUE))
@@ -2315,7 +2225,7 @@ SKX_GetInjectedPIDs ( DWORD* pdwList,
 BOOL
 SK_IsWindowsVersionOrGreater (DWORD dwMajorVersion, DWORD dwMinorVersion, DWORD dwBuildNumber)
 {
-  NTSTATUS(WINAPI *RtlGetVersion)(LPOSVERSIONINFOEXW);
+  NTSTATUS(WINAPI *RtlGetVersion)(LPOSVERSIONINFOEXW) = nullptr;
 
   OSVERSIONINFOEXW
     osInfo                     = { };
@@ -2645,4 +2555,10 @@ SK_Inject_GetInjectionDelayInSeconds (void)
     return 0.0f;
 
   return config.system.global_inject_delay;
+}
+
+SK_SharedMemory_v1::SK_SharedMemory_v1 (void)
+{
+  HighDWORD = { sizeof (SK_SharedMemory_v1) -
+                sizeof (uint32_t) };
 }

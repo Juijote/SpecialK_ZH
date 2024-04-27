@@ -67,33 +67,7 @@ DWORD D3D11_GetFrameTime (void)
 bool
 SK_D3D11_DrawCallFilter (int elem_cnt, int vtx_cnt, uint32_t vtx_shader);
 
-extern HRESULT
-  SK_D3D11_InjectSteamHDR ( _In_ ID3D11DeviceContext *pDevCtx,
-                            _In_ UINT                 VertexCount,
-                            _In_ UINT                 StartVertexLocation,
-                            _In_ D3D11_Draw_pfn       pfnD3D11Draw );
 
-extern HRESULT
-  SK_D3D11_InjectGenericHDROverlay ( _In_ ID3D11DeviceContext *pDevCtx,
-                                     _In_ UINT                 VertexCount,
-                                     _In_ UINT                 StartVertexLocation,
-                                     _In_ uint32_t             crc32,
-                                     _In_ D3D11_Draw_pfn       pfnD3D11Draw );
-extern HRESULT
-  SK_D3D11_Inject_uPlayHDR ( _In_ ID3D11DeviceContext  *pDevCtx,
-                             _In_ UINT                  IndexCount,
-                             _In_ UINT                  StartIndexLocation,
-                             _In_ INT                   BaseVertexLocation,
-                             _In_ D3D11_DrawIndexed_pfn pfnD3D11DrawIndexed );
-
-extern HRESULT
-  SK_D3D11_Inject_EpicHDR ( _In_ ID3D11DeviceContext  *pDevCtx,
-                            _In_ UINT                  IndexCount,
-                            _In_ UINT                  StartIndexLocation,
-                            _In_ INT                   BaseVertexLocation,
-                            _In_ D3D11_DrawIndexed_pfn pfnD3D11DrawIndexed );
-
-extern bool SK_D3D11_ShowShaderModDlg (void);
 
 LPVOID pfnD3D11CreateDevice             = nullptr;
 LPVOID pfnD3D11CreateDeviceAndSwapChain = nullptr;
@@ -189,11 +163,6 @@ SK_D3D11_CleanupMutexes (void)
     cs_render_view.reset ();
   }
 }
-
-extern std::pair <BOOL*, BOOL>
-SK_ImGui_FlagDrawing_OnD3D11Ctx (UINT dev_idx);
-extern bool
-SK_ImGui_IsDrawing_OnD3D11Ctx   (UINT dev_idx, ID3D11DeviceContext* pDevCtx);
 
 SK_LazyGlobal <
    std::array < SK_D3D11_ContextResources,
@@ -570,33 +539,64 @@ SK_D3D11_SetDeviceContextHandle ( ID3D11DeviceContext *pDevCtx,
   return TRUE;
 }
 
+static constexpr LONG RESOLVE_MAX = 16;
+
+std::pair <ID3D11DeviceContext*, LONG> last_resolve;
+std::pair <ID3D11DeviceContext*, LONG> prev_resolves [RESOLVE_MAX];
+volatile LONG                               resolve_idx   = 0;
+volatile LONG                               resolve_mutex = 0;
+
 LONG
 SK_D3D11_GetDeviceContextHandle ( ID3D11DeviceContext *pDevCtx )
 {
   if (pDevCtx == nullptr) return SK_D3D11_MAX_DEV_CONTEXTS;
 
-  static constexpr LONG RESOLVE_MAX = 16;
+  while (InterlockedCompareExchange (&resolve_mutex, 1, 0) != 0)
+    YieldProcessor ();
 
-  static std::pair <ID3D11DeviceContext*, LONG>
-    last_resolve [RESOLVE_MAX];
-  static volatile LONG
-         resolve_idx = 0;
-
-  const auto early_out =
-    &last_resolve [std::min (RESOLVE_MAX, ReadAcquire (&resolve_idx))];
+  auto early_out =
+    &last_resolve;
 
   if (early_out->first == pDevCtx)
-    return early_out->second;
+  {
+    LONG ret =
+      early_out->second;
+
+    WriteRelease (&resolve_mutex, 0);
+
+    return ret;
+  }
+
+  early_out =
+    &prev_resolves [std::min (RESOLVE_MAX, ReadAcquire (&resolve_idx) - 1)];
+
+  if (early_out->first == pDevCtx)
+  {
+    LONG ret =
+      early_out->second;
+
+    WriteRelease (&resolve_mutex, 0);
+
+    return ret;
+  }
+
+  WriteRelease (&resolve_mutex, 0);
 
   auto _CacheResolution =
     [&](LONG idx, ID3D11DeviceContext* pCtx, LONG handle) ->
     void
     {
-      auto new_pair ( std::make_pair (pCtx, handle) );
-          std::swap ( last_resolve   [idx],
-                      new_pair );
+      while (InterlockedCompareExchange (&resolve_mutex, 1, 0) != 0) YieldProcessor ();
+      {
+        auto new_pair ( std::make_pair (pCtx, handle) );
+            std::swap ( prev_resolves  [idx],
+                        new_pair );
 
-      InterlockedExchange (&resolve_idx, std::min (RESOLVE_MAX, idx));
+        InterlockedExchange (&resolve_idx, std::min (RESOLVE_MAX, idx));
+
+        last_resolve = std::make_pair (pCtx, handle);
+      }
+      WriteRelease (&resolve_mutex, 0);
     };
 
 
@@ -771,9 +771,6 @@ void
 SK_D3D11_SetDevice ( ID3D11Device           **ppDevice,
                      D3D_FEATURE_LEVEL        FeatureLevel )
 {
-  static SK_RenderBackend_V2& rb =
-    SK_GetCurrentRenderBackend ();
-
   if (ppDevice != nullptr)
   {
     if (*ppDevice != g_pD3D11Dev)
@@ -785,8 +782,8 @@ SK_D3D11_SetDevice ( ID3D11Device           **ppDevice,
                                                    ).c_str ()
                   ), __SK_SUBSYSTEM__ );
 
-      // We ARE technically holding a reference, but we never make calls to this
-      //   interface - it's just for tracking purposes.
+      // No references are held to this object, we just want to track the pointer
+      //   as a means of identifying additional devices the game/overlays may create
       g_pD3D11Dev = *ppDevice;
     }
 
@@ -1148,9 +1145,7 @@ SK_D3D11Dev_CreateRenderTargetView_Impl (
                                SKID_DXGI_SwapChainBackbufferFormat, &size,
                                  &internalSwapChainFormat ) ) )
             { // Yep
-              //extern bool
-              //    bOriginallysRGB;
-              //if (bOriginallysRGB && (! __SK_HDR_16BitSwap)) {
+              //if (rb.active_traits.bOriginallysRGB && (! __SK_HDR_16BitSwap)) {
               //  //desc.Format = DirectX::MakeSRGB (tex_desc.Format);
               //} // Game expects sRGB
 
@@ -1410,9 +1405,7 @@ SK_D3D11Dev_CreateRenderTargetView1_Impl (
                                SKID_DXGI_SwapChainBackbufferFormat, &size,
                                  &internalSwapChainFormat ) ) )
             { // Yep
-              //extern bool
-              //    bOriginallysRGB;
-              //if (bOriginallysRGB && (! __SK_HDR_16BitSwap)) {
+              //if (rb.active_traits.bOriginallysRGB && (! __SK_HDR_16BitSwap)) {
               //  //desc.Format = DirectX::MakeSRGB (tex_desc.Format);
               //} // Game expects sRGB
 
@@ -2956,9 +2949,6 @@ SK_LazyGlobal <concurrency::concurrent_vector <d3d11_shader_tracking_s::cbuffer_
 
 bool SK_D3D11_KnownShaders::reshade_triggered;
 
-// Indicates whether the shader mod window is tracking render target refs
-extern bool live_rt_view;
-
 bool
 SK_D3D11_DrawCallFilter (int elem_cnt, int vtx_cnt, uint32_t vtx_shader)
 {
@@ -3009,7 +2999,7 @@ SK_D3D11_DrawHandler ( ID3D11DeviceContext  *pDevCtx,
   std::ignore = draw_type;
   std::ignore = num_verts;
 
-  static SK_RenderBackend& rb =
+  SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   static auto game_type = SK_GetCurrentGameID ();
@@ -4180,10 +4170,10 @@ SK_D3D11_IgnoreWrappedOrDeferred ( bool                 bWrapped,
       return true;
   }
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
-  if ((! bWrapped) && ( pDevCtx != rb.d3d11.immediate_ctx && !config.reshade.is_addon)) [[unlikely]]
+  if ((! bWrapped) && ( rb.d3d11.immediate_ctx == nullptr || (pDevCtx != rb.d3d11.immediate_ctx && !config.reshade.is_addon))) [[unlikely]]
   {
     if ( rb.d3d11.immediate_ctx == nullptr ||
          rb.device.p            == nullptr )
@@ -4477,7 +4467,6 @@ SK_D3D11_Draw_Impl (ID3D11DeviceContext* pDevCtx,
     //  return;
     //}
 
-    ////extern volatile LONG __SK_SHENMUE_FullAspectCutscenes;
     ////if (ReadAcquire (&__SK_SHENMUE_FullAspectCutscenes))
     ////{
     ////  if (SK_D3D11_Shaders->pixel.current.shader [dev_idx] == 0x29b11b07)
@@ -4499,8 +4488,6 @@ SK_D3D11_Draw_Impl (ID3D11DeviceContext* pDevCtx,
     {
       case SK_GAME_ID::Tales_of_Vesperia:
       {
-        extern bool SK_TVFix_SharpenShadows (void);
-
         if (    SK_TVFix_SharpenShadows   (       ) &&
              (! SK_D3D11_IsDevCtxDeferred (pDevCtx)    )
            )
@@ -4547,7 +4534,7 @@ SK_D3D11_Draw_Impl (ID3D11DeviceContext* pDevCtx,
 #endif
     // -------------------------------------------------------
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   SK_TLS *pTLS  = nullptr;
@@ -4759,7 +4746,7 @@ SK_D3D11_DrawIndexed_Impl (
     return _Finish ();
   }
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static auto& shaders =
@@ -4772,7 +4759,6 @@ SK_D3D11_DrawIndexed_Impl (
 
   if (bIsShenmue)
   {
-    extern volatile LONG  __SK_SHENMUE_FinishedButNotPresented;
     InterlockedExchange (&__SK_SHENMUE_FinishedButNotPresented, 1L);
   }
 #endif
@@ -5157,7 +5143,6 @@ SK_D3D11_OMSetRenderTargetsAndUnorderedAccessViews_Impl (
                          SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami ||
                          SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami2 ||
                          SK_GetCurrentGameID () == SK_GAME_ID::YakuzaUnderflow );
-  extern bool __SK_Yakuza_TrackRTVs;
 #endif
 
   // ImGui gets to pass-through without invoking the hook
@@ -5296,7 +5281,6 @@ _In_opt_ ID3D11DepthStencilView        *pDepthStencilView,
                          SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami ||
                          SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami2 ||
                          SK_GetCurrentGameID () == SK_GAME_ID::YakuzaUnderflow );
-  extern bool __SK_Yakuza_TrackRTVs;
 #endif
 
   if (
@@ -5448,7 +5432,7 @@ D3D11Dev_CreateTexture2D1_Impl (
                     LPVOID                   lpCallerAddr,
                     SK_TLS                  *pTLS )
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   SK_ComPtr <IUnknown>                                      pD3D11On12Device;
@@ -5527,10 +5511,6 @@ D3D11Dev_CreateTexture2D1_Impl (
 #ifdef _M_AMD64
       case SK_GAME_ID::Tales_of_Vesperia:
       {
-        extern void SK_TVFix_CreateTexture2D (
-          D3D11_TEXTURE2D_DESC    *pDesc
-        );
-
         if (SK_GetCallingDLL (lpCallerAddr) == SK_GetModuleHandle (nullptr))
             SK_TVFix_CreateTexture2D ((D3D11_TEXTURE2D_DESC *)pDesc);
       } break;
@@ -5563,8 +5543,6 @@ D3D11Dev_CreateTexture2D1_Impl (
 #else
       case SK_GAME_ID::ChronoCross:
       {
-        extern float
-            __SK_CC_ResMultiplier;
         if (__SK_CC_ResMultiplier)
         {
           if (pDesc->Format != DXGI_FORMAT_R16_UINT &&
@@ -5583,18 +5561,15 @@ D3D11Dev_CreateTexture2D1_Impl (
     }
   }
 
+  
 
   // New versions of SK attempt to preserve MSAA, so this code is counter-productive
 #ifdef _REMOVE_MSAA
   // Handle stuff like DSV textures created for SwapChains that had their
   //   MSAA status removed to be compatible with Flip
-  extern bool
-        bOriginallyFlip;
-  if (! bOriginallyFlip)
+  if (! rb.active_traits.bOriginallyFlip)
   {
-    extern UINT
-        uiOriginalBltSampleCount;
-    if (uiOriginalBltSampleCount == pDesc->SampleDesc.Count && pDesc->SampleDesc.Count > 1)
+    if (rb.active_traits.uiOriginalBltSampleCount == pDesc->SampleDesc.Count && pDesc->SampleDesc.Count > 1)
     {
       if ( (pDesc->BindFlags & D3D11_BIND_DEPTH_STENCIL) ==
                                D3D11_BIND_DEPTH_STENCIL )
@@ -5678,27 +5653,35 @@ D3D11Dev_CreateTexture2D1_Impl (
                    ( pInitialData          == nullptr ||
                      pInitialData->pSysMem == nullptr ) )
   {
-    extern bool SK_HDR_PromoteUAVsTo16Bit;
-
-    static constexpr UINT _UnwantedFlags =
+    static constexpr UINT _UnwantedBindFlags =
         ( D3D11_BIND_VERTEX_BUFFER   | D3D11_BIND_INDEX_BUFFER     |
           D3D11_BIND_CONSTANT_BUFFER | D3D11_BIND_STREAM_OUTPUT    |
           D3D11_BIND_DEPTH_STENCIL   |/*D3D11_BIND_UNORDERED_ACCESS|*/
           D3D11_BIND_DECODER         | D3D11_BIND_VIDEO_ENCODER );
 
-    if ( (((pDesc->BindFlags & D3D11_BIND_RENDER_TARGET)     ==
-                               D3D11_BIND_RENDER_TARGET)     ||
-          //// UAVs also need special treatment for Compute Shader work
-           (pDesc->BindFlags & D3D11_BIND_UNORDERED_ACCESS)  ==
-                               D3D11_BIND_UNORDERED_ACCESS   ||
+    static constexpr UINT _UnwantedMiscFlags =         
+      (/*D3D11_RESOURCE_MISC_GENERATE_MIPS                |*/ D3D11_RESOURCE_MISC_GDI_COMPATIBLE     |
+        D3D11_RESOURCE_MISC_TEXTURECUBE                     | D3D11_RESOURCE_MISC_TILED              |
+        D3D11_RESOURCE_MISC_TILE_POOL                       | D3D11_RESOURCE_MISC_SHARED_NTHANDLE    |
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX               | D3D11_RESOURCE_MISC_SHARED             |
+        D3D11_RESOURCE_MISC_SHARED                          | D3D11_RESOURCE_MISC_SHARED_DISPLAYABLE |
+        D3D11_RESOURCE_MISC_SHARED_EXCLUSIVE_WRITER         | D3D11_RESOURCE_MISC_RESTRICTED_CONTENT |
+        D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE        | D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS  |
+        D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER | D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS );
+
+    if ( ((((pDesc->BindFlags & D3D11_BIND_RENDER_TARGET)     ==
+                                D3D11_BIND_RENDER_TARGET)     ||
+           //// UAVs also need special treatment for Compute Shader work
+            (pDesc->BindFlags & D3D11_BIND_UNORDERED_ACCESS)  ==
+                                D3D11_BIND_UNORDERED_ACCESS   ||
 #if 1
-          ((pDesc->BindFlags & D3D11_BIND_SHADER_RESOURCE)   ==
-                               D3D11_BIND_SHADER_RESOURCE &&
-                pDesc->Width == swapDesc.BufferDesc.Width &&
-               pDesc->Height == swapDesc.BufferDesc.Height//&&
-             /*pDesc->Format == swapDesc.BufferDesc.Format*/)         &&
+           ((pDesc->BindFlags & D3D11_BIND_SHADER_RESOURCE)   ==
+                                D3D11_BIND_SHADER_RESOURCE &&
+                 pDesc->Width == swapDesc.BufferDesc.Width &&
+                pDesc->Height == swapDesc.BufferDesc.Height//&&
+              /*pDesc->Format == swapDesc.BufferDesc.Format*/))         &&
 #endif
-           (pDesc->BindFlags & _UnwantedFlags) == 0 && ( pDesc->Width * pDesc->Height * 8 < 128 * 1024 * 1024 ) )
+           (pDesc->BindFlags & _UnwantedBindFlags) == 0 && (pDesc->MiscFlags & _UnwantedMiscFlags) == 0 && ( pDesc->Width * pDesc->Height * 8 < 128 * 1024 * 1024 ) )
        )
     {
       if ( (! ( DirectX::IsVideo        (pDesc->Format) ||
@@ -6632,7 +6615,7 @@ D3D11Dev_CreateTexture2D_Impl (
                                      SK_ImGui_Toast::ShowTitle   |
                                      SK_ImGui_Toast::ShowCaption );
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   SK_ComPtr <IUnknown>                                      pD3D11On12Device;
@@ -6711,10 +6694,6 @@ D3D11Dev_CreateTexture2D_Impl (
 #ifdef _M_AMD64
       case SK_GAME_ID::Tales_of_Vesperia:
       {
-        extern void SK_TVFix_CreateTexture2D (
-          D3D11_TEXTURE2D_DESC    *pDesc
-        );
-
         if (SK_GetCallingDLL (lpCallerAddr) == SK_GetModuleHandle (nullptr))
             SK_TVFix_CreateTexture2D (pDesc);
       } break;
@@ -6747,8 +6726,6 @@ D3D11Dev_CreateTexture2D_Impl (
 #else
       case SK_GAME_ID::ChronoCross:
       {
-        extern float
-            __SK_CC_ResMultiplier;
         if (__SK_CC_ResMultiplier)
         {
           if (pDesc->Format != DXGI_FORMAT_R16_UINT &&
@@ -6772,13 +6749,9 @@ D3D11Dev_CreateTexture2D_Impl (
 #ifdef _REMOVE_MSAA
   // Handle stuff like DSV textures created for SwapChains that had their
   //   MSAA status removed to be compatible with Flip
-  extern bool
-        bOriginallyFlip;
-  if (! bOriginallyFlip)
+  if (! rb.active_traits.bOriginallyFlip)
   {
-    extern UINT
-        uiOriginalBltSampleCount;
-    if (uiOriginalBltSampleCount == pDesc->SampleDesc.Count && pDesc->SampleDesc.Count > 1)
+    if (rb.active_traits.uiOriginalBltSampleCount == pDesc->SampleDesc.Count && pDesc->SampleDesc.Count > 1)
     {
       if ( (pDesc->BindFlags & D3D11_BIND_DEPTH_STENCIL) ==
                                D3D11_BIND_DEPTH_STENCIL )
@@ -6862,29 +6835,37 @@ D3D11Dev_CreateTexture2D_Impl (
                    //( pInitialData          == nullptr ||
                      //pInitialData->pSysMem == nullptr ) )
   {
-    extern bool SK_HDR_PromoteUAVsTo16Bit;
-
-    static constexpr UINT _UnwantedFlags =
+    static constexpr UINT _UnwantedBindFlags =
         ( D3D11_BIND_VERTEX_BUFFER   | D3D11_BIND_INDEX_BUFFER     |
           D3D11_BIND_CONSTANT_BUFFER | D3D11_BIND_STREAM_OUTPUT    |
           D3D11_BIND_DEPTH_STENCIL   |/*D3D11_BIND_UNORDERED_ACCESS|*/
           D3D11_BIND_DECODER         | D3D11_BIND_VIDEO_ENCODER );
 
-    if ( (((pDesc->BindFlags & D3D11_BIND_RENDER_TARGET)     ==
-                               D3D11_BIND_RENDER_TARGET)     ||
+    static constexpr UINT _UnwantedMiscFlags =         
+      (/*D3D11_RESOURCE_MISC_GENERATE_MIPS                |*/ D3D11_RESOURCE_MISC_GDI_COMPATIBLE     |
+        D3D11_RESOURCE_MISC_TEXTURECUBE                     | D3D11_RESOURCE_MISC_TILED              |
+        D3D11_RESOURCE_MISC_TILE_POOL                       | D3D11_RESOURCE_MISC_SHARED_NTHANDLE    |
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX               | D3D11_RESOURCE_MISC_SHARED             |
+        D3D11_RESOURCE_MISC_SHARED                          | D3D11_RESOURCE_MISC_SHARED_DISPLAYABLE |
+        D3D11_RESOURCE_MISC_SHARED_EXCLUSIVE_WRITER         | D3D11_RESOURCE_MISC_RESTRICTED_CONTENT |
+        D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE        | D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS  |
+        D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER | D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS );
+
+    if ( ((((pDesc->BindFlags & D3D11_BIND_RENDER_TARGET)     ==
+                                D3D11_BIND_RENDER_TARGET)     ||
           //// UAVs also need special treatment for Compute Shader work
-           (pDesc->BindFlags & D3D11_BIND_UNORDERED_ACCESS)  ==
-                               D3D11_BIND_UNORDERED_ACCESS   ||
+            (pDesc->BindFlags & D3D11_BIND_UNORDERED_ACCESS)  ==
+                                D3D11_BIND_UNORDERED_ACCESS   ||
 #if 1
-          ((pDesc->BindFlags & D3D11_BIND_SHADER_RESOURCE)   ==
-                               D3D11_BIND_SHADER_RESOURCE &&
-                pDesc->Width == swapDesc.BufferDesc.Width &&
-               pDesc->Height == swapDesc.BufferDesc.Height//&&
-             /*pDesc->Format == swapDesc.BufferDesc.Format*/ &&
+           ((pDesc->BindFlags & D3D11_BIND_SHADER_RESOURCE)   ==
+                                D3D11_BIND_SHADER_RESOURCE &&
+                 pDesc->Width == swapDesc.BufferDesc.Width &&
+                pDesc->Height == swapDesc.BufferDesc.Height//&&
+              /*pDesc->Format == swapDesc.BufferDesc.Format*/ &&
                ( pInitialData          == nullptr ||
-                 pInitialData->pSysMem == nullptr ))         &&
+                 pInitialData->pSysMem == nullptr )))         &&
 #endif
-           (pDesc->BindFlags & _UnwantedFlags) == 0 && ( pDesc->Width * pDesc->Height * 8 < 128 * 1024 * 1024 ) )
+           (pDesc->BindFlags & _UnwantedBindFlags) == 0 && (pDesc->MiscFlags & _UnwantedMiscFlags) == 0 && ( pDesc->Width * pDesc->Height * 8 < 128 * 1024 * 1024 ) )
        )
     {
       if ( (! ( DirectX::IsVideo        (pDesc->Format) ||
@@ -8404,8 +8385,7 @@ SK_D3D11_HookDevCtx (sk_hook_d3d11_t *pHooks)
 }
 
 
-extern
-unsigned int __stdcall HookD3D12 (LPVOID user);
+
 
 DWORD
 __stdcall
@@ -8512,6 +8492,14 @@ HookD3D11 (LPVOID user)
     if ( pHooks->ppDevice           != nullptr &&
          pHooks->ppImmediateContext != nullptr )
     {
+      SK_ComQIPtr <IDXGIDevice1>
+          pDevice1 (*pHooks->ppDevice);
+      if (pDevice1.p != nullptr)
+      {
+        void SK_DXGI_HookDevice1 (IDXGIDevice1 *pDevice1);
+             SK_DXGI_HookDevice1 (              pDevice1);
+      }
+
       ////// Minimum functionality mode in order to prevent chaos caused by D3D11On12
       ////if (config.apis.last_known == SK_RenderAPI::D3D12)
       ////{
@@ -8762,9 +8750,6 @@ HookD3D11 (LPVOID user)
 }
 
 SK_LazyGlobal <SK_D3D11_StateTrackingCounters> SK_D3D11_TrackingCount;
-
-extern void
-SK_D3D11_LiveTextureView (bool& can_scroll, SK_TLS* pTLS);
 
 UINT _GetStashedRTVIndex (_Notnull_ ID3D11RenderTargetView* pRTV)
 {
@@ -9247,9 +9232,6 @@ SK_D3D11_ReleaseDeviceOnHWnd (IDXGISwapChain1* pChain, HWND hWnd, IUnknown* pDev
   return ret;
 }
 
-extern bool
-SK_DXGI_IsSwapChainReal (const DXGI_SWAP_CHAIN_DESC& desc) noexcept;
-
 bool
 SK_D3D11_IsFeatureLevelSufficient ( D3D_FEATURE_LEVEL   FeatureLevelSupported,
                               const D3D_FEATURE_LEVEL *pFeatureLevels,
@@ -9291,6 +9273,18 @@ D3D11CreateDeviceAndSwapChain_Detour (IDXGIAdapter          *pAdapter,
   if (          ppDevice != nullptr) *ppDevice           = nullptr;
   if (       ppSwapChain != nullptr) *ppSwapChain        = nullptr;
   if (ppImmediateContext != nullptr) *ppImmediateContext = nullptr;
+
+  // Check for the one in a million game that's actually D3D10...
+  //   the D3D10 runtime calls into D3D11, but has some quirks SK does
+  //     not want to bother with...
+  if (  FeatureLevels     == 1                      &&
+       pFeatureLevels [0] <= D3D_FEATURE_LEVEL_10_1 &&
+                    Flags == 0x40000000             &&
+       SK_GetCallerName ().find (L"d3d10.dll") != std::wstring::npos )
+  {
+    SK_MessageBox ( L"Special K does not support Direct3D 10",
+                    L"Incompatible Game", MB_ICONERROR | MB_OK );
+  }
 
   bool bEOSOverlay =
     SK_COMPAT_IgnoreEOSOVHCall ();
@@ -9339,7 +9333,7 @@ D3D11CreateDeviceAndSwapChain_Detour (IDXGIAdapter          *pAdapter,
   Flags =
     SK_D3D11_MakeDebugFlags (Flags);
 
-  static SK_RenderBackend_V2& rb =
+  SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   // Even if the game doesn't care about the feature level, we do.
@@ -9745,6 +9739,19 @@ D3D11CreateDevice_Detour (
 
     if (SK_COMPAT_IgnoreNvCameraCall ())
       return E_NOTIMPL;
+
+    if (StrStrIW (SK_GetCallerName ().c_str (), L"msvproc.dll"))
+    {
+      SK_LOGi0 (L" * Ignoring Media Foundation D3D11 Device.");
+
+      return
+        D3D11CreateDeviceAndSwapChain_Import (
+          pAdapter, DriverType, Software, Flags,
+            pFeatureLevels, FeatureLevels, SDKVersion,
+              nullptr, nullptr, ppDevice, pFeatureLevel,
+                ppImmediateContext
+        );
+    }
   }
 
   Flags =
@@ -10225,10 +10232,10 @@ SK_D3D11_EndFrame (SK_TLS* pTLS)
     return;
   }
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
-  static auto& shaders =
+  auto& shaders =
     SK_D3D11_Shaders;
 
   dwFrameTime = SK::ControlPanel::current_time;

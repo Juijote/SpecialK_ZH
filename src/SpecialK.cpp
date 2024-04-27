@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file is part of Special K.
  *
  * Special K is free software : you can redistribute it
@@ -89,9 +89,6 @@ volatile          LONG __SK_HookContextOwner  = FALSE;
 extern volatile  DWORD __SK_TLS_INDEX;
         volatile LONG  lLastThreadCreate      = 0;
           static bool  _HasLocalDll           = false;
-
-
-extern void SK_Widget_InvokeThreadProfiler (void);
 
 
 class SK_DLL_Bootstrapper
@@ -474,8 +471,7 @@ DllMain ( HMODULE hModule,
                     SK_CreateEvent ( nullptr, TRUE,
                                              FALSE, nullptr );
 
-        extern void SK_Inject_SpawnUnloadListener (void);
-                    SK_Inject_SpawnUnloadListener ();
+        SK_Inject_SpawnUnloadListener ();
       };
 
       auto EarlyOut =
@@ -657,9 +653,8 @@ DllMain ( HMODULE hModule,
         );
       }
 #endif
-
-      extern void SK_Inject_CleanupSharedMemory (void);
-                  SK_Inject_CleanupSharedMemory ();
+      
+      SK_Inject_CleanupSharedMemory ();
 
       // Give time for any threads waiting on something such as a message pump
       //   to wake up before we unload the DLL, because our hook procedures are
@@ -1011,6 +1006,8 @@ BOOL
 __stdcall
 SK_EstablishDllRole (skWin32Module&& _sk_module)
 {
+  SK_WarmupRenderBackends ();
+
   SK_SetDLLRole (DLL_ROLE::INVALID);
 
 #ifndef _M_AMD64

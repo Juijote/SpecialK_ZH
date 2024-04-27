@@ -33,15 +33,6 @@ SK_LazyGlobal <std::unordered_map <wstring_hash, BYTE>> humanKeyNameToVirtKeyCod
 SK_LazyGlobal <std::unordered_map <BYTE, wchar_t [32]>> virtKeyCodeToHumanKeyName;
 SK_LazyGlobal <std::unordered_map <BYTE, wchar_t [32]>> virtKeyCodeToFullyLocalizedKeyName;
 
-extern SK_LazyGlobal <Concurrency::concurrent_unordered_map <DepotId_t, SK_DepotList> >           SK_Steam_DepotManifestRegistry;
-extern SK_LazyGlobal <Concurrency::concurrent_unordered_map <DepotId_t, SK_Steam_DepotManifest> > SK_Steam_InstalledManifest;
-
-extern float __target_fps;
-extern float __target_fps_bg;
-
-void SK_Display_ForceDPIAwarenessUsingAppCompat (bool set);
-void SK_Display_SetMonitorDPIAwareness (bool bOnlyIfWin10);
-
 UINT SK_RecursiveMove ( const wchar_t* wszOrigDir,
                         const wchar_t* wszDestDir,
                               bool     replace );
@@ -239,7 +230,8 @@ SK_GetCurrentGameID (void)
           { L"P3R.exe",                                SK_GAME_ID::Persona3                     },
           { L"granblue_fantasy_relink.exe",            SK_GAME_ID::GranblueFantasyRelink        },
           { L"wrath-sdl.exe",                          SK_GAME_ID::WrathAeonOfRuin              },
-          { L"dd2.exe",                                SK_GAME_ID::DragonsDogma                 }
+          { L"dd2.exe",                                SK_GAME_ID::DragonsDogma                 },
+          { L"Harold Halibut.exe",                     SK_GAME_ID::HaroldHalibut                },
         };
 
     first_check  = false;
@@ -262,8 +254,7 @@ SK_GetCurrentGameID (void)
       {
         current_game = SK_GAME_ID::FinalFantasyXV;
 
-        extern void SK_FFXV_InitPlugin (void);
-                    SK_FFXV_InitPlugin ();
+        SK_FFXV_InitPlugin ();
       }
 
       else if ( StrStrIW ( SK_GetHostApp (), L"ff7remake" ) )
@@ -275,8 +266,7 @@ SK_GetCurrentGameID (void)
       {
         current_game = SK_GAME_ID::AssassinsCreed_Valhalla;
 
-        extern void SK_ACV_InitPlugin (void);
-                    SK_ACV_InitPlugin ();
+        SK_ACV_InitPlugin ();
       }
 
       // Basically, _every single Yakuza game ever_ releases more references than it acquires...
@@ -387,23 +377,17 @@ SK_GetCurrentGameID (void)
         {
           if (std::filesystem::exists (L"eldenring.exe",         ec))
           {
-            extern void
-            SK_SEH_LaunchEldenRing (void);
-            SK_SEH_LaunchEldenRing (    );
+            SK_SEH_LaunchEldenRing ();
           }
 
           else if (std::filesystem::exists (L"armoredcore6.exe", ec))
           {
-            extern void
-            SK_SEH_LaunchArmoredCoreVI (void);
-            SK_SEH_LaunchArmoredCoreVI (    );
+            SK_SEH_LaunchArmoredCoreVI ();
           }
 
           else if (std::filesystem::exists (LR"(LOTF2\Binaries\Win64\LOTF2-Win64-Shipping.exe)", ec))
           {
-            extern void
-            SK_SEH_LaunchLordsOfTheFallen2 (void);
-            SK_SEH_LaunchLordsOfTheFallen2 (    );
+            SK_SEH_LaunchLordsOfTheFallen2 ();
           }
         }
       }
@@ -737,6 +721,8 @@ struct {
     sk::ParameterFloat*   forced_sharpness        = nullptr;
     sk::ParameterBool*    auto_redirect_dll       = nullptr;
     sk::ParameterInt*     forced_preset           = nullptr;
+    sk::ParameterInt*     forced_auto_exposure    = nullptr;
+    sk::ParameterInt*     forced_alpha_upscale    = nullptr;
     sk::ParameterBool*    show_active_features    = nullptr;
     sk::ParameterFloat*   performance_scale       = nullptr;
     sk::ParameterFloat*   balanced_scale          = nullptr;
@@ -749,6 +735,7 @@ struct {
     sk::ParameterInt*     extra_pixels            = nullptr;
     sk::ParameterBool*    disable_ota_updates     = nullptr;
     sk::ParameterBool*    allow_scrgb             = nullptr;
+    sk::ParameterBool*    spoof_feature_support   = nullptr;
   } dlss;
 } nvidia;
 
@@ -791,6 +778,8 @@ struct {
   struct {
     sk::ParameterStringW* target_fps              = nullptr;
     sk::ParameterStringW* target_fps_bg           = nullptr;
+    sk::ParameterFloat*   last_refresh_rate       = nullptr;
+    sk::ParameterStringW* last_monitor_path       = nullptr;
     sk::ParameterInt*     prerender_limit         = nullptr;
     sk::ParameterInt*     present_interval        = nullptr;
     sk::ParameterInt*     sync_interval_clamp     = nullptr;
@@ -813,6 +802,7 @@ struct {
     sk::ParameterBool*    auto_vrr_triggered      = nullptr;
     sk::ParameterBool*    auto_low_latency_ex     = nullptr;
     sk::ParameterBool*    auto_low_latency_optin  = nullptr;
+    sk::ParameterBool*    auto_low_latency_reapply= nullptr;
     sk::ParameterBool*    enable_etw_tracing      = nullptr;
     sk::ParameterBool*    use_amd_mwaitx          = nullptr;
 
@@ -1006,15 +996,24 @@ struct {
     } dinput;
 
     struct {
-      sk::ParameterBool*  disable_touchpad        = nullptr;
-      sk::ParameterBool*  share_clicks_touch      = nullptr;
-      sk::ParameterBool*  mute_applies_to_game    = nullptr;
-      sk::ParameterBool*  enhanced_ps_button      = nullptr;
-      sk::ParameterBool*  power_save_mode         = nullptr;
-      sk::ParameterInt*   led_color_r             = nullptr;
-      sk::ParameterInt*   led_color_g             = nullptr;
-      sk::ParameterInt*   led_color_b             = nullptr;
-      sk::ParameterInt*   led_brightness          = nullptr;
+      sk::ParameterBool*    disable_touchpad      = nullptr;
+      sk::ParameterBool*    share_clicks_touch    = nullptr;
+      sk::ParameterBool*    mute_applies_to_game  = nullptr;
+      sk::ParameterBool*    enhanced_ps_button    = nullptr;
+      sk::ParameterBool*    power_save_mode       = nullptr;
+      sk::ParameterInt*     led_color_r           = nullptr;
+      sk::ParameterInt*     led_color_g           = nullptr;
+      sk::ParameterInt*     led_color_b           = nullptr;
+      sk::ParameterInt*     led_brightness        = nullptr;
+      sk::ParameterInt*     show_ds4_as_ds4_v2    = nullptr;
+      sk::ParameterInt*     hide_ds4_v2_pid       = nullptr;
+      sk::ParameterInt*     hide_ds_edge_pid      = nullptr;
+      sk::ParameterBool*    enable_full_bluetooth = nullptr;
+      sk::ParameterStringW* left_fn_bind          = nullptr;
+      sk::ParameterStringW* right_fn_bind         = nullptr;
+      sk::ParameterStringW* left_paddle_bind      = nullptr;
+      sk::ParameterStringW* right_paddle_bind     = nullptr;
+      sk::ParameterStringW* touch_click_bind      = nullptr;
     } scepad;
 
     struct {
@@ -1027,6 +1026,7 @@ struct {
 
     sk::ParameterInt*     disabled_to_game        = nullptr;
     sk::ParameterBool*    bt_input_only           = nullptr;
+    sk::ParameterFloat*   low_battery_warning     = nullptr;
   } gamepad;
 } input;
 
@@ -1111,6 +1111,15 @@ struct {
 
   sk::ParameterInt*       last_known              = nullptr;
 } apis;
+
+bool hook_xinput_orig    = true;
+bool hook_scepad_orig    = true;
+bool hook_wgi_orig       = true;
+bool hook_raw_input_orig = true;
+bool hook_dinput7_orig   = true;
+bool hook_dinput8_orig   = true;
+bool hook_hid_orig       = true;
+bool hook_winmm_orig     = true;
 
 bool
 SK_LoadConfig (const std::wstring& name)
@@ -1291,7 +1300,7 @@ SK_LoadConfigEx (std::wstring name, bool create)
   if (create)
     SK_CreateDirectories ( full_name.c_str () );
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
 
@@ -1467,7 +1476,7 @@ auto DeclKeybind =
     ConfigEntry (monitoring.gpu.print_slowdown,          L"Print GPU Slowdown Reason (NVIDA GPUs)",                    osd_ini,         L"Monitor.GPU",           L"PrintSlowdown"),
 
     ConfigEntry (monitoring.pagefile.show,               L"Show Pagefile Monitoring",                                  osd_ini,         L"Monitor.Pagefile",      L"Show"),
-    ConfigEntry (monitoring.pagefile.interval,           L"Pagefile Monitoring INterval (seconds)",                    osd_ini,         L"Monitor.Pagefile",      L"Interval"),
+    ConfigEntry (monitoring.pagefile.interval,           L"Pagefile Monitoring Interval (seconds)",                    osd_ini,         L"Monitor.Pagefile",      L"Interval"),
 
     ConfigEntry (monitoring.dlss.show,                   L"Show DLSS Resolution Information",                          osd_ini,         L"Monitor.DLSS",          L"Show"),
     ConfigEntry (monitoring.dlss.show_quality,           L"Print DLSS Quality Level",                                  osd_ini,         L"Monitor.DLSS",          L"ShowQuality"),
@@ -1602,6 +1611,18 @@ auto DeclKeybind =
     ConfigEntry (input.gamepad.scepad.led_color_g,       L"Force Green LED Color [0,255] or -1 for No Override",       input_ini,       L"Input.libScePad",       L"LEDColor_G"),
     ConfigEntry (input.gamepad.scepad.led_color_b,       L"Force Blue LED Color [0,255] or -1 for No Override",        input_ini,       L"Input.libScePad",       L"LEDColor_B"),
     ConfigEntry (input.gamepad.scepad.led_brightness,    L"Force LED brightness [0,1,2,3] or -1 for No Override",      input_ini,       L"Input.libScePad",       L"LEDBrightness"),
+    ConfigEntry (input.gamepad.scepad.show_ds4_as_ds4_v2,L"Cause games to see DualShock 4 v1 as DualShock 4 v2",       dll_ini,         L"Input.libScePad",       L"IdentifyDualShock4AsDualShock4v2"),
+    ConfigEntry (input.gamepad.scepad.hide_ds4_v2_pid,   L"Cause games to see DualShock 4 v2 as DualShock 4",          dll_ini,         L"Input.libScePad",       L"IdentifyDualShock4v2AsDualShock4"),
+    ConfigEntry (input.gamepad.scepad.hide_ds_edge_pid,  L"Cause games to see DualSense Edge as DualSense",            dll_ini,         L"Input.libScePad",       L"IdentifyDualSenseEdgeAsDualSense"),
+    ConfigEntry (input.gamepad.scepad.
+                                   enable_full_bluetooth,L"Allow SK to use all available features over Bluetooth",     dll_ini,         L"Input.libScePad",       L"EnableFullBluetoothSupport"),
+    ConfigEntry (input.gamepad.scepad.left_fn_bind,      L"Keyboard Input to Generate when Left Function is Pressed",  dll_ini,         L"Input.libScePad",       L"LeftFunction"),
+    ConfigEntry (input.gamepad.scepad.right_fn_bind,     L"Keyboard Input to Generate when Right Function is Pressed", dll_ini,         L"Input.libScePad",       L"RightFunction"),
+    ConfigEntry (input.gamepad.scepad.left_paddle_bind,  L"Keyboard Input to Generate when Left Paddle is Pressed",    dll_ini,         L"Input.libScePad",       L"LeftPaddle"),
+    ConfigEntry (input.gamepad.scepad.right_paddle_bind, L"Keyboard Input to Generate when Right Paddle is Pressed",   dll_ini,         L"Input.libScePad",       L"RightPaddle"),
+    ConfigEntry (input.gamepad.scepad.touch_click_bind,  L"Keyboard Input to Generate when Touch Pad is Clicked",      dll_ini,         L"Input.libScePad",       L"TouchpadClick"),
+
+    ConfigEntry (input.gamepad.low_battery_warning,      L"Percentage when SK will warn controller batteries are low", input_ini,       L"Input.Battery",         L"WarnIfPercentIsBelow"),
 
  //DEPRECATED  (                                                                                                                       L"Input.XInput",          L"DisableRumble"),
 
@@ -1711,6 +1732,8 @@ auto DeclKeybind =
 
     ConfigEntry (render.framerate.target_fps,            L"Framerate Target (negative signed values are non-limiting)",dll_ini,         L"Render.FrameRate",      L"TargetFPS"),
     ConfigEntry (render.framerate.target_fps_bg,         L"Framerate Target (window in background;  0.0 = same as fg)",dll_ini,         L"Render.FrameRate",      L"BackgroundFPS"),
+    ConfigEntry (render.framerate.last_refresh_rate,     L"Refresh rate the last time framerate limit was configured.",dll_ini,         L"Render.FrameRate",      L"LastRefreshRate"),
+    ConfigEntry (render.framerate.last_monitor_path,     L"The monitor the last time framerate limit was configured.", dll_ini,         L"Render.FrameRate",      L"LastMonitorPath"),
     ConfigEntry (render.framerate.wait_for_vblank,       L"Limiter Will Wait for VBLANK",                              dll_ini,         L"Render.FrameRate",      L"WaitForVBLANK"),
     ConfigEntry (render.framerate.buffer_count,          L"Number of Backbuffers in the Swapchain",                    dll_ini,         L"Render.FrameRate",      L"BackBufferCount"),
     ConfigEntry (render.framerate.present_interval,      L"Presentation Interval (VSYNC)",                             dll_ini,         L"Render.FrameRate",      L"PresentationInterval"),
@@ -1746,6 +1769,8 @@ auto DeclKeybind =
     ConfigEntry (render.framerate.auto_vrr_triggered,    L"Indicates that Auto VRR activated and has turned off",      dll_ini,         L"Render.DXGI",           L"AutoLowLatencyTriggered"),
     ConfigEntry (render.framerate.auto_low_latency_ex,   L"Auto Low-Latency Mode may add stutter to get lower latency",input_ini,       L"Input.AutoLowLatency",  L"UltraLowLatency"),
     ConfigEntry (render.framerate.auto_low_latency_optin,L"Global policy applied when starting a game the first time", input_ini,       L"Input.AutoLowLatency",  L"DefaultPolicy"),
+    ConfigEntry (render.framerate.
+                                auto_low_latency_reapply,L"Global policy to reapply AutoVRR if display/refresh change",input_ini,       L"Input.AutoLowLatency",  L"AutoReapply"),
 
     ConfigEntry (nvidia.reflex.enable,                   L"Enable NVIDIA Reflex Integration w/ SK's limiter",          dll_ini,         L"NVIDIA.Reflex",         L"Enable"),
     ConfigEntry (nvidia.reflex.low_latency,              L"Low Latency Mode",                                          dll_ini,         L"NVIDIA.Reflex",         L"LowLatency"),
@@ -1763,6 +1788,8 @@ auto DeclKeybind =
     ConfigEntry (nvidia.dlss.forced_sharpness,           L"Sharpness Value to Use",                                    dll_ini,         L"NVIDIA.DLSS",           L"ForcedSharpness"),
     ConfigEntry (nvidia.dlss.auto_redirect_dll,          L"Always load SK's Plug-In DLSS DLL instead of the game's",   dll_ini,         L"NVIDIA.DLSS",           L"AutoRedirectDLL"),
     ConfigEntry (nvidia.dlss.forced_preset,              L"Override DLSS Perf/Quality Level's Preset",                 dll_ini,         L"NVIDIA.DLSS",           L"ForcePreset"),
+    ConfigEntry (nvidia.dlss.forced_auto_exposure,       L"Override DLSS Auto Exposure",                               dll_ini,         L"NVIDIA.DLSS",           L"ForcedAutoExposure"),
+    ConfigEntry (nvidia.dlss.forced_alpha_upscale,       L"Override DLSS Alpha Upscaling (3.7.0+)",                    dll_ini,         L"NVIDIA.DLSS",           L"ForceAlphaUpscale"),
     ConfigEntry (nvidia.dlss.performance_scale,          L"Custom scale factor (if != 0.0f) to use for Performance",   dll_ini,         L"NVIDIA.DLSS",           L"CustomPerformanceScale"),
     ConfigEntry (nvidia.dlss.balanced_scale,             L"Custom scale factor (if != 0.0f) to use for Balanced",      dll_ini,         L"NVIDIA.DLSS",           L"CustomBalancedScale"),
     ConfigEntry (nvidia.dlss.quality_scale,              L"Custom scale factor (if != 0.0f) to use for Quality",       dll_ini,         L"NVIDIA.DLSS",           L"CustomQualityScale"),
@@ -1774,9 +1801,10 @@ auto DeclKeybind =
     ConfigEntry (nvidia.dlss.disable_ota_updates,        L"Disable OTA updates (i.e. NVIDIA phone-home every launch)", dll_ini,         L"NVIDIA.DLSS",           L"DisableOTAUpdates"),
     ConfigEntry (nvidia.dlss.show_active_features,       L"Show the in-use features in the DLSS settings tab",         osd_ini,         L"NVIDIA.DLSS",           L"ShowActiveFeatures"),
     ConfigEntry (nvidia.dlss.allow_scrgb,                L"Allow scRGB even if DLSS-G DLLs are detected",              dll_ini,         L"NVIDIA.DLSS",           L"AllowSCRGBinDLSSG"),
+    ConfigEntry (nvidia.dlss.spoof_feature_support,      L"Report all NGX (D3D11/D3D12) features supported on all HW.",dll_ini,         L"NVIDIA.DLSS",           L"SpoofFeatureSupport"),
 
     ConfigEntry (render.hdr.enable_32bpc,                L"Experimental - Use 32bpc for HDR",                          dll_ini,         L"SpecialK.HDR",          L"Enable128BitPipeline"),
-    ConfigEntry (render.hdr.remaster_8bpc_as_unorm,      L"Do not use Floating-Point RTs when re-mastering 8-bpc RTs", dll_ini,         L"SpecialK.HDR",          L"Keep8BpcRemastersUNORM"),
+    ConfigEntry (render.hdr.remaster_8bpc_as_unorm,      L"Do not use Floating-Point RTs when re-mastering 8-bpc+ RTs",dll_ini,         L"SpecialK.HDR",          L"Keep8BpcRemastersUNORM"),
     ConfigEntry (render.hdr.remaster_subnative_unorm,    L"Do not use FP RTs when re-mastering reduced resolution RTS",dll_ini,         L"SpecialK.HDR",          L"KeepSubnativeRemastersUNORM"),
 
     ConfigEntry (render.osd.draw_in_vidcap,              L"Changes hook order in order to allow recording the OSD.",   dll_ini,         L"Render.OSD",            L"ShowInVideoCapture"),
@@ -2461,7 +2489,7 @@ auto DeclKeybind =
 
       case SK_GAME_ID::FinalFantasyX_X2:
         // Don't auto-pump callbacks
-        //  Excessively lenghty startup is followed by actual SteamAPI init eventually...
+        //  Excessively lengthy startup is followed by actual SteamAPI init eventually...
         config.steam.auto_pump_callbacks = false;
         break;
 
@@ -2756,9 +2784,6 @@ auto DeclKeybind =
 
       case SK_GAME_ID::ChronoCross:
       {
-        extern bool SK_PE32_IsLargeAddressAware       (void);
-        extern bool SK_PE32_MakeLargeAddressAwareCopy (void);
-
         if (! SK_PE32_IsLargeAddressAware ())
               SK_PE32_MakeLargeAddressAwareCopy ();
 
@@ -2966,6 +2991,7 @@ auto DeclKeybind =
         config.window.fullscreen                  =  true;
         config.input.keyboard.override_alt_f4     =  true;
         config.input.keyboard.catch_alt_f4        =  true;
+        config.platform.silent                    =  true; // Game crashes w/ SteamAPI
 
         // Game's busted without this
         config.display.force_windowed             =  true;
@@ -3184,9 +3210,8 @@ auto DeclKeybind =
         config.apis.OpenGL.hook                   = false;
 
         config.threads.enable_file_io_trace       =  true;
-
-        extern void SK_OPT_InitPlugin (void);
-                    SK_OPT_InitPlugin (    );
+        
+        SK_OPT_InitPlugin ();
 
         apis.d3d9.hook->store   (config.apis.d3d9.  hook);
         apis.d3d9ex.hook->store (config.apis.d3d9ex.hook);
@@ -3361,9 +3386,9 @@ auto DeclKeybind =
         config.compatibility.disable_debug_features = true;
         config.window.dont_hook_wndproc             = true;
 
-        config.input.cursor.manage                  = true;  // Mouse cursor doesn't auto-hide
+        config.input.cursor.manage                  =  true; // Mouse cursor doesn't auto-hide
         config.input.gamepad.xinput.hook_setstate   = false; // Breaks haptic feedback
-        config.input.gamepad.xinput.placehold [0]   = false;
+        config.input.gamepad.xinput.placehold [0]   =  true;
         config.input.gamepad.xinput.placehold [1]   = false;
         config.input.gamepad.xinput.placehold [2]   = false;
         config.input.gamepad.xinput.placehold [3]   = false;
@@ -3479,6 +3504,10 @@ auto DeclKeybind =
 
       // Pain in the ass Nixxes port
       case SK_GAME_ID::RatchetAndClank_RiftApart:
+        break;
+
+      case SK_GAME_ID::BatmanArkhamKnight:
+        config.input.gamepad.scepad.hide_ds4_v2_pid = SK_Enabled;
         break;
 
       case SK_GAME_ID::Starfield:
@@ -3711,6 +3740,12 @@ auto DeclKeybind =
 
   monitoring.pagefile.interval->load (config.pagefile.interval);
 
+  config.cpu.interval      = std::clamp (config.cpu.interval,      0.125f, 2.5f);
+  config.gpu.interval      = std::clamp (config.gpu.interval,      0.125f, 2.5f);
+  config.disk.interval     = std::clamp (config.disk.interval,     0.125f, 2.5f);
+  config.pagefile.interval = std::clamp (config.pagefile.interval, 0.125f, 2.5f);
+  config.io.interval       = std::clamp (config.io.interval,       0.125f, 2.5f);
+
   monitoring.dlss.show->load         (config.dlss.show);
   monitoring.dlss.show_quality->load (config.dlss.show_quality);
   monitoring.dlss.show_preset->load  (config.dlss.show_preset);
@@ -3822,6 +3857,8 @@ auto DeclKeybind =
     }
   }
 
+  render.framerate.last_refresh_rate->load    (config.render.framerate.last_refresh_rate);
+  render.framerate.last_monitor_path->load    (config.render.framerate.last_monitor_path);
   render.framerate.sleepless_render->load     (config.render.framerate.sleepless_render);
   render.framerate.sleepless_window->load     (config.render.framerate.sleepless_window);
   render.framerate.enable_mmcss->load         (config.render.framerate.enable_mmcss);
@@ -3892,6 +3929,8 @@ auto DeclKeybind =
   nvidia.dlss.forced_sharpness->load         (config.nvidia.dlss.forced_sharpness);
   nvidia.dlss.auto_redirect_dll->load        (config.nvidia.dlss.auto_redirect_dlss);
   nvidia.dlss.forced_preset->load            (config.nvidia.dlss.forced_preset);
+  nvidia.dlss.forced_auto_exposure->load     (config.nvidia.dlss.forced_auto_exposure);
+  nvidia.dlss.forced_alpha_upscale->load     (config.nvidia.dlss.forced_alpha_upscale);
   nvidia.dlss.performance_scale->load        (config.nvidia.dlss.scale.performance);
   nvidia.dlss.balanced_scale->load           (config.nvidia.dlss.scale.balanced);
   nvidia.dlss.quality_scale->load            (config.nvidia.dlss.scale.quality);
@@ -3903,6 +3942,7 @@ auto DeclKeybind =
   nvidia.dlss.disable_ota_updates->load      (config.nvidia.dlss.disable_ota_updates);
   nvidia.dlss.show_active_features->load     (config.nvidia.dlss.show_active_features);
   nvidia.dlss.allow_scrgb->load              (config.nvidia.dlss.allow_scrgb);
+  nvidia.dlss.spoof_feature_support->load    (config.nvidia.dlss.spoof_support);
 
   render.hdr.enable_32bpc->load              (config.render.hdr.enable_32bpc);
   render.hdr.remaster_8bpc_as_unorm->load    (config.render.hdr.remaster_8bpc_as_unorm);
@@ -4002,6 +4042,8 @@ auto DeclKeybind =
   render.framerate.drop_late_frames->load  (config.render.framerate.drop_late_flips);
   render.framerate.auto_low_latency_optin->
                                      load  (config.render.framerate.auto_low_latency.policy.global_opt);
+  render.framerate.
+             auto_low_latency_reapply->load(config.render.framerate.auto_low_latency.policy.auto_reapply);
 
   bool auto_low_latency_preset =
   render.framerate.auto_low_latency->load  (config.render.framerate.auto_low_latency.waiting);
@@ -4250,6 +4292,15 @@ auto DeclKeybind =
   input.gamepad.hook_dinput7->load       (config.input.gamepad.hook_dinput7);
   input.gamepad.hook_hid->load           (config.input.gamepad.hook_hid);
 
+  SK_RunOnce (hook_xinput_orig    = config.input.gamepad.hook_xinput);
+  SK_RunOnce (hook_scepad_orig    = config.input.gamepad.hook_scepad);
+  SK_RunOnce (hook_wgi_orig       = config.input.gamepad.hook_windows_gaming);
+  SK_RunOnce (hook_raw_input_orig = config.input.gamepad.hook_raw_input);
+  SK_RunOnce (hook_dinput7_orig   = config.input.gamepad.hook_dinput7);
+  SK_RunOnce (hook_dinput8_orig   = config.input.gamepad.hook_dinput8);
+  SK_RunOnce (hook_hid_orig       = config.input.gamepad.hook_hid);
+  SK_RunOnce (hook_winmm_orig     = config.input.gamepad.hook_winmm);
+
   input.gamepad.haptic_ui->load          (config.input.gamepad.haptic_ui);
 
   int placeholder_mask;
@@ -4356,6 +4407,17 @@ auto DeclKeybind =
   input.gamepad.scepad.led_color_g->load          (config.input.gamepad.scepad.led_color_g);
   input.gamepad.scepad.led_color_b->load          (config.input.gamepad.scepad.led_color_b);
   input.gamepad.scepad.led_brightness->load       (config.input.gamepad.scepad.led_brightness);
+  input.gamepad.scepad.show_ds4_as_ds4_v2->load   (config.input.gamepad.scepad.show_ds4_v1_as_v2);
+  input.gamepad.scepad.hide_ds4_v2_pid->load      (config.input.gamepad.scepad.hide_ds4_v2_pid);
+  input.gamepad.scepad.hide_ds_edge_pid->load     (config.input.gamepad.scepad.hide_ds_edge_pid);
+  input.gamepad.scepad.enable_full_bluetooth->load(config.input.gamepad.scepad.enable_full_bluetooth);
+  input.gamepad.scepad.left_fn_bind->load         (config.input.gamepad.scepad.left_fn);
+  input.gamepad.scepad.left_paddle_bind->load     (config.input.gamepad.scepad.left_paddle);
+  input.gamepad.scepad.right_paddle_bind->load    (config.input.gamepad.scepad.right_paddle);
+  input.gamepad.scepad.right_fn_bind->load        (config.input.gamepad.scepad.right_fn);
+  input.gamepad.scepad.touch_click_bind->load     (config.input.gamepad.scepad.touch_click);
+
+  input.gamepad.low_battery_warning->load         (config.input.gamepad.low_battery_percent);
 
   input.gamepad.xinput.ui_slot->load   ((int &)config.input.gamepad.xinput.ui_slot);
   input.gamepad.steam.disable->load    (config.input.gamepad.steam.disabled_to_game);
@@ -4509,11 +4571,11 @@ auto DeclKeybind =
             DISPLAYCONFIG_SOURCE_MODE *pSourceMode =
               &modeArray [path->sourceInfo.modeInfoIdx].sourceMode;
 
-            RECT rect;
-            rect.left   = pSourceMode->position.x;
-            rect.top    = pSourceMode->position.y;
-            rect.right  = pSourceMode->position.x + pSourceMode->width;
-            rect.bottom = pSourceMode->position.y + pSourceMode->height;
+            RECT rect =
+              { pSourceMode->position.x,
+                pSourceMode->position.y,
+                pSourceMode->position.x + sk::narrow_cast <LONG> (pSourceMode->width),
+                pSourceMode->position.y + sk::narrow_cast <LONG> (pSourceMode->height) };
 
             if (! IsRectEmpty (&rect))
             {
@@ -4544,7 +4606,7 @@ auto DeclKeybind =
             getTargetName.header.adapterId = pVidPn->targetInfo.adapterId;
             getTargetName.header.id        = pVidPn->targetInfo.id;
 
-          if ( ERROR_SUCCESS == DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getTargetName ) )
+          if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getTargetName ) )
           {
             _PathDeviceToHMONITOR [getTargetName.monitorDevicePath] = hMonitor;
           }
@@ -4596,6 +4658,9 @@ auto DeclKeybind =
       [](HMONITOR hMonitor, HDC hDC, LPRECT lpRect, LPARAM lParam)
    -> BOOL
       {
+        SK_RenderBackend& rb =
+          SK_GetCurrentRenderBackend ();
+
         std::ignore = hDC;
         std::ignore = lpRect;
         std::ignore = lParam;
@@ -4648,6 +4713,9 @@ auto DeclKeybind =
         [](HMONITOR hMonitor, HDC, LPRECT, LPARAM)
      -> BOOL
         {
+          SK_RenderBackend& rb =
+            SK_GetCurrentRenderBackend ();
+
           MONITORINFOEXW
             mi = { };
             mi.cbSize = sizeof (MONITORINFOEXW);
@@ -4687,6 +4755,9 @@ auto DeclKeybind =
 
     virtual bool OnVarChange (SK_IVariable* var, void* val = nullptr)
     {
+      const SK_RenderBackend& rb =
+        SK_GetCurrentRenderBackend ();
+
       if (val != nullptr && var != nullptr )
       {
         if (var->getValuePointer () == &config.display.refresh_rate)
@@ -5055,6 +5126,7 @@ auto DeclKeybind =
   trace_libraries->load   (config.system.trace_load_library);
   strict_compliance->load (config.system.strict_compliance);
   log_level->load         (config.system.log_level);
+  sk::logs::base_log_lvl = config.system.log_level;
   prefer_fahrenheit->load (config.system.prefer_fahrenheit);
   handle_crashes->load    (config.system.handle_crashes);
   silent_crash->load      (config.system.silent_crash);
@@ -5235,10 +5307,6 @@ auto DeclKeybind =
   if (config.system.wait_for_debugger)
   {
     SK_ApplyQueuedHooks ();
-
-    extern void NTAPI RtlAcquirePebLock_Detour (void);
-    extern void NTAPI RtlReleasePebLock_Detour (void);
-    extern bool   SK_Debug_CheckDebugFlagInPEB (void);
 
     if (      ! SK_IsDebuggerPresent ())
     { while ((! SK_IsDebuggerPresent ()))
@@ -5500,7 +5568,7 @@ SK_SaveConfig ( std::wstring name,
        osd_ini == nullptr    )
     return;
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   // Temp hack to handle GLDX11
@@ -5639,6 +5707,25 @@ SK_SaveConfig ( std::wstring name,
   input.gamepad.rehook_xinput->store          (config.input.gamepad.rehook_xinput);
   input.gamepad.haptic_ui->store              (config.input.gamepad.haptic_ui);
 
+  if (config.input.gamepad.hook_dinput8 != hook_dinput8_orig)
+             input.gamepad.hook_dinput8->store (config.input.gamepad.hook_dinput8);
+  if (config.input.gamepad.hook_dinput7 != hook_dinput7_orig)
+             input.gamepad.hook_dinput7->store (config.input.gamepad.hook_dinput7);
+  if (config.input.gamepad.hook_windows_gaming != hook_wgi_orig)
+             input.gamepad.hook_windows_gaming->
+                                         store (config.input.gamepad.hook_windows_gaming);
+  if (config.input.gamepad.hook_raw_input != hook_raw_input_orig)
+             input.gamepad.hook_raw_input->
+                                         store (config.input.gamepad.hook_raw_input);
+  if (config.input.gamepad.hook_hid != hook_hid_orig)
+             input.gamepad.hook_hid->store     (config.input.gamepad.hook_hid);
+  //if (config.input.gamepad.hook_winmm != hook_winmm_orig)
+  //           input.gamepad.hook_winmm->store     (config.input.gamepad.hook_winmm);
+  if (config.input.gamepad.hook_scepad != hook_scepad_orig)
+             input.gamepad.hook_scepad->store  (config.input.gamepad.hook_scepad);
+  if (config.input.gamepad.hook_xinput != hook_xinput_orig)
+             input.gamepad.hook_xinput->store  (config.input.gamepad.hook_xinput);
+
   int placeholder_mask = 0x0;
 
   placeholder_mask |= (config.input.gamepad.xinput.placehold [0] ? 0x1 : 0x0);
@@ -5707,6 +5794,17 @@ SK_SaveConfig ( std::wstring name,
   input.gamepad.scepad.led_color_g->store          (config.input.gamepad.scepad.led_color_g);
   input.gamepad.scepad.led_color_b->store          (config.input.gamepad.scepad.led_color_b);
   input.gamepad.scepad.led_brightness->store       (config.input.gamepad.scepad.led_brightness);
+  input.gamepad.scepad.show_ds4_as_ds4_v2->store   (config.input.gamepad.scepad.show_ds4_v1_as_v2);
+  input.gamepad.scepad.hide_ds4_v2_pid->store      (config.input.gamepad.scepad.hide_ds4_v2_pid);
+  input.gamepad.scepad.hide_ds_edge_pid->store     (config.input.gamepad.scepad.hide_ds_edge_pid);
+  input.gamepad.scepad.enable_full_bluetooth->store(config.input.gamepad.scepad.enable_full_bluetooth);
+  input.gamepad.scepad.left_fn_bind->store         (config.input.gamepad.scepad.left_fn);
+  input.gamepad.scepad.left_paddle_bind->store     (config.input.gamepad.scepad.left_paddle);
+  input.gamepad.scepad.right_paddle_bind->store    (config.input.gamepad.scepad.right_paddle);
+  input.gamepad.scepad.right_fn_bind->store        (config.input.gamepad.scepad.right_fn);
+  input.gamepad.scepad.touch_click_bind->store     (config.input.gamepad.scepad.touch_click);
+
+  input.gamepad.low_battery_warning->store         (config.input.gamepad.low_battery_percent);
 
 
   threads.enable_mem_alloc_trace->store            (config.threads.enable_mem_alloc_trace);
@@ -5836,7 +5934,6 @@ SK_SaveConfig ( std::wstring name,
     }
   }
 
-//if (close_config)
   wchar_t   wszTargetFps   [16] = { };
   wchar_t   wszTargetFpsBg [16] = { };
   swprintf (wszTargetFps,   L"%f", config.render.framerate.target_fps);
@@ -5844,6 +5941,8 @@ SK_SaveConfig ( std::wstring name,
 
   render.framerate.target_fps->store         (wszTargetFps);//__target_fps);
   render.framerate.target_fps_bg->store      (wszTargetFpsBg);//__target_fps_bg);
+  render.framerate.last_monitor_path->store  (config.render.framerate.last_monitor_path);
+  render.framerate.last_refresh_rate->store  (config.render.framerate.last_refresh_rate);
   render.framerate.sleepless_render->store   (config.render.framerate.sleepless_render);
   render.framerate.sleepless_window->store   (config.render.framerate.sleepless_window);
   render.framerate.enable_mmcss->store       (config.render.framerate.enable_mmcss);
@@ -5935,10 +6034,11 @@ SK_SaveConfig ( std::wstring name,
       nvidia.sli.override->store                    (config.nvidia.sli.override);
     }
 
-    render.framerate.auto_low_latency->store      (config.render.framerate.auto_low_latency.waiting);
-    render.framerate.auto_vrr_triggered->store    (config.render.framerate.auto_low_latency.triggered);
-    render.framerate.auto_low_latency_ex->store   (config.render.framerate.auto_low_latency.policy.ultra_low_latency);
-    render.framerate.auto_low_latency_optin->store(config.render.framerate.auto_low_latency.policy.global_opt);
+    render.framerate.auto_low_latency->store        (config.render.framerate.auto_low_latency.waiting);
+    render.framerate.auto_vrr_triggered->store      (config.render.framerate.auto_low_latency.triggered);
+    render.framerate.auto_low_latency_ex->store     (config.render.framerate.auto_low_latency.policy.ultra_low_latency);
+    render.framerate.auto_low_latency_optin->store  (config.render.framerate.auto_low_latency.policy.global_opt);
+    render.framerate.auto_low_latency_reapply->store(config.render.framerate.auto_low_latency.policy.auto_reapply);
 
     if (  SK_IsInjected ()                       ||
         ( SK_GetDLLRole () & DLL_ROLE::DInput8 ) ||
@@ -5961,6 +6061,8 @@ SK_SaveConfig ( std::wstring name,
       nvidia.dlss.forced_sharpness->store         (config.nvidia.dlss.forced_sharpness);
       nvidia.dlss.auto_redirect_dll->store        (config.nvidia.dlss.auto_redirect_dlss);
       nvidia.dlss.forced_preset->store            (config.nvidia.dlss.forced_preset);
+      nvidia.dlss.forced_auto_exposure->store     (config.nvidia.dlss.forced_auto_exposure);
+      nvidia.dlss.forced_alpha_upscale->store     (config.nvidia.dlss.forced_alpha_upscale);
       nvidia.dlss.performance_scale->store        (config.nvidia.dlss.scale.performance);
       nvidia.dlss.balanced_scale->store           (config.nvidia.dlss.scale.balanced);
       nvidia.dlss.quality_scale->store            (config.nvidia.dlss.scale.quality);
@@ -5972,6 +6074,7 @@ SK_SaveConfig ( std::wstring name,
       nvidia.dlss.disable_ota_updates->store      (config.nvidia.dlss.disable_ota_updates);
       nvidia.dlss.show_active_features->store     (config.nvidia.dlss.show_active_features);
       nvidia.dlss.allow_scrgb->store              (config.nvidia.dlss.allow_scrgb);
+      nvidia.dlss.spoof_feature_support->store    (config.nvidia.dlss.spoof_support);
       render.framerate.max_delta_time->store      (config.render.framerate.max_delta_time);
       render.framerate.flip_discard->store        (config.render.framerate.flip_discard);
       render.framerate.flip_sequential->store     (config.render.framerate.flip_sequential);

@@ -37,12 +37,6 @@
 #include <SpecialK/nvapi.h>
 
 volatile ULONG64 SK_RenderBackend::frames_drawn = 0ULL;
-extern void
-SK_Display_EnableHDR (SK_RenderBackend_V2::output_s *pDisplay);
-
-bool SK_Display_IsDPIAwarenessUsingAppCompat (void);
-void SK_Display_ForceDPIAwarenessUsingAppCompat (bool set);
-void SK_Display_SetMonitorDPIAwareness (bool bOnlyIfWin10);
 
 double
 SK_Display_GetDefaultRefreshRate (HMONITOR hMonitor)
@@ -53,7 +47,7 @@ SK_Display_GetDefaultRefreshRate (HMONITOR hMonitor)
 
   if (hLastMonitor != hMonitor || dwLastChecked < SK_timeGetTime () - 250UL)
   {
-    static auto& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     // Refresh this bastard!
@@ -69,11 +63,13 @@ SK_Display_GetDefaultRefreshRate (HMONITOR hMonitor)
   return dRefresh;
 }
 
+SK_RenderBackend* g_pRenderBackend = nullptr;
 SK_RenderBackend&
 __stdcall
-SK_GetCurrentRenderBackend (void) noexcept
+SK_WarmupRenderBackends (void) noexcept
 {
   static SK_RenderBackend __SK_RBkEnd;
+  g_pRenderBackend     = &__SK_RBkEnd;
   return                  __SK_RBkEnd;
 }
 
@@ -629,15 +625,15 @@ SK_BootVulkan (void)
 SK_RenderBackend_V2::output_s*
 SK_RenderBackend_V2::output_s::nvapi_ctx_s::getDisplayFromId (NvU32 display_id) noexcept
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   const auto active_display =
-    rb.active_display;
+    std::clamp (rb.active_display,0,_MAX_DISPLAYS-1);
 
   // Try the active display first, most of the time it's the one we're looking for.
-  if (      gsl::at (rb.displays, active_display).nvapi.display_id == display_id)
-    return &gsl::at (rb.displays, active_display);
+  if (      rb.displays [active_display].nvapi.display_id == display_id)
+    return &rb.displays [active_display];
 
   // Exhaustive search otherwise
   for ( auto& display : rb.displays )
@@ -651,15 +647,15 @@ SK_RenderBackend_V2::output_s::nvapi_ctx_s::getDisplayFromId (NvU32 display_id) 
 SK_RenderBackend_V2::output_s*
 SK_RenderBackend_V2::output_s::nvapi_ctx_s::getDisplayFromHandle (NvDisplayHandle display_handle) noexcept
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   const auto active_display =
-    rb.active_display;
+    std::clamp (rb.active_display,0,_MAX_DISPLAYS-1);;
 
   // Try the active display first, most of the time it's the one we're looking for.
-  if (      gsl::at (rb.displays, active_display).nvapi.display_handle == display_handle)
-    return &gsl::at (rb.displays, active_display);
+  if (      rb.displays [active_display].nvapi.display_handle == display_handle)
+    return &rb.displays [active_display];
 
   // Exhaustive search otherwise
   for ( auto& display : rb.displays )
@@ -673,7 +669,7 @@ SK_RenderBackend_V2::output_s::nvapi_ctx_s::getDisplayFromHandle (NvDisplayHandl
 void
 SK_RenderBackend_V2::gsync_s::update (bool force)
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   auto& display =
@@ -681,11 +677,64 @@ SK_RenderBackend_V2::gsync_s::update (bool force)
 
   auto _EvaluateAutoLowLatency = [&]()
   {
-    extern float __target_fps;
-
     // Opt-in to Auto-Low Latency the first time this is seen
     if (capable && active && config.render.framerate.present_interval != 0)
     {
+      bool bRefreshRateChanged = false;
+      bool bDisplayChanged     = false;
+
+      const double dRefreshRate =
+        static_cast <double> (display.signal.timing.vsync_freq.Numerator) /
+        static_cast <double> (display.signal.timing.vsync_freq.Denominator);
+
+      if ( config.render.framerate.last_refresh_rate != 0.0f &&
+           ( config.render.framerate.last_refresh_rate > dRefreshRate + 0.1 ||
+             config.render.framerate.last_refresh_rate < dRefreshRate - 0.1 ) )
+      {
+        bRefreshRateChanged = true;
+      }
+
+      else
+      if (            (! config.render.framerate.last_monitor_path.empty ()) &&
+          0 != _wcsicmp (config.render.framerate.last_monitor_path.c_str (), display.path_name))
+      {
+        bDisplayChanged = true;
+      }
+
+      const bool bAutoVRRIsStale =
+        (rb.gsync_state.active && display.nvapi.vrr_enabled == 1) && (bRefreshRateChanged || bDisplayChanged);
+
+      if (bAutoVRRIsStale && config.render.framerate.auto_low_latency.policy.auto_reapply &&
+                           ( config.render.framerate.auto_low_latency.triggered ||
+                             config.render.framerate.auto_low_latency.policy.global_opt ))
+      {
+        if (bRefreshRateChanged || bDisplayChanged)
+        {
+          double dVRROptimalFPS =
+            ( config.render.framerate.last_refresh_rate -
+             (config.render.framerate.last_refresh_rate *
+              config.render.framerate.last_refresh_rate) / 3600.0 );
+
+          if ( ( config.render.framerate.target_fps <=  config.render.framerate.last_refresh_rate + 0.1f && 
+                 config.render.framerate.target_fps >=  config.render.framerate.last_refresh_rate - 0.1f )
+            || ( config.render.framerate.target_fps <= dVRROptimalFPS + 0.1f &&
+                 config.render.framerate.target_fps >= dVRROptimalFPS - 0.1f ) 
+            || ( config.render.framerate.target_fps <= dVRROptimalFPS - 0.005 * dVRROptimalFPS + 0.1f &&
+                 config.render.framerate.target_fps >= dVRROptimalFPS - 0.005 * dVRROptimalFPS - 0.1f ) )
+          {
+            // Re-apply AutoVRR
+            if ( config.render.framerate.auto_low_latency.triggered ||
+                 config.render.framerate.auto_low_latency.policy.global_opt )
+            {
+              config.render.framerate.auto_low_latency.triggered = false;
+              config.render.framerate.auto_low_latency.waiting   = true;
+            }
+          }
+        }
+
+        __target_fps = 0.0f;
+      }
+
       if (config.render.framerate.auto_low_latency.waiting)
       {
         config.nvidia.reflex.enable                 = true;
@@ -714,10 +763,6 @@ SK_RenderBackend_V2::gsync_s::update (bool force)
                                                         //     ACTUALLY active.
         //config.render.framerate.enforcement_policy = 4;
       }
-
-      const double dRefreshRate =
-        static_cast <double> (display.signal.timing.vsync_freq.Numerator) /
-        static_cast <double> (display.signal.timing.vsync_freq.Denominator);
     
       double dVRROptimalFPS =
         (dRefreshRate - (dRefreshRate * dRefreshRate) / (3600.0));
@@ -729,16 +774,30 @@ SK_RenderBackend_V2::gsync_s::update (bool force)
         if (__target_fps == 0.0f ||
             __target_fps > dVRROptimalFPS)
         {
-          //SK_ImGui_WarningWithTitle (
-          //  SK_FormatStringW (L"Framerate Limit Set to %.2f FPS For Optimal VRR", dVRROptimalFPS).c_str (),
-          //                    L"Auto Low-Latency (VRR) Mode Activated"
-          //);
+          SK_ImGui_CreateNotification (
+            "Framerate.AutoVRR", SK_ImGui_Toast::Info,
+               SK_FormatString (
+            "Framerate Limit Set to %.2f FPS For Optimal VRR\r\n\r\n"
+            "\tRight-click the AutoVRR checkbox in Framerate Limiter | "
+            "Advanced to configure this feature.",
+                                dVRROptimalFPS).c_str (),
+                                "Auto Low-Latency (VRR) Mode Activated",
+                        6666, SK_ImGui_Toast::UseDuration |
+                              SK_ImGui_Toast::ShowNewest  |
+                              SK_ImGui_Toast::ShowCaption |
+                              SK_ImGui_Toast::ShowTitle );
     
           config.render.framerate.target_fps = static_cast <float> (dVRROptimalFPS);
           __target_fps                       = static_cast <float> (dVRROptimalFPS);
         }
+
+        config.render.framerate.last_monitor_path = rb.displays [rb.active_display].path_name;
+        config.render.framerate.last_refresh_rate = static_cast <float> (dRefreshRate);
       }
 
+      // We have a better solution for this now, that involves informing the
+      //   user, rather than doing anything automatically...
+#if 0
       // Trigger AutoVRR because framerate limit is too high
       if (__target_fps > dVRROptimalFPS)
       {
@@ -748,6 +807,7 @@ SK_RenderBackend_V2::gsync_s::update (bool force)
           update (true);
         });
       }
+#endif
 
       config.render.framerate.auto_low_latency.waiting = false;
     }
@@ -771,6 +831,9 @@ SK_RenderBackend_V2::gsync_s::update (bool force)
       SK_Thread_CreateEx ([](LPVOID)->
       DWORD
       {
+        SK_RenderBackend& rb =
+          SK_GetCurrentRenderBackend ();
+
         SK_Thread_SetCurrentPriority (THREAD_PRIORITY_BELOW_NORMAL);
 
         do
@@ -912,7 +975,7 @@ SK_RenderBackend_V2::gsync_s::update (bool force)
 bool
 SK_RenderBackendUtil_IsFullscreen (void)
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   SK_ComQIPtr <IDXGISwapChain>
@@ -1116,7 +1179,7 @@ SK_RenderBackend_V2::requestWindowedMode (bool override)
 
 
 double
-SK_RenderBackend_V2::getActiveRefreshRate (HMONITOR hMonitor)
+SK_RenderBackend_V2::getActiveRefreshRate (HMONITOR hMonitor) const
 {
   // This isn't implemented for arbitrary monitors at the moment
   SK_ReleaseAssert (hMonitor == 0);
@@ -1153,7 +1216,7 @@ SK_COM_ValidateRelease (IUnknown** ppObj)
 }
 
 HANDLE
-SK_RenderBackend_V2::getSwapWaitHandle (void)
+SK_RenderBackend_V2::getSwapWaitHandle (void) const
 {
   SK_ComQIPtr <IDXGISwapChain2>
       pSwap2       (swapchain.p);
@@ -1298,7 +1361,7 @@ SK_Render_GetSwapChain (void)
 
 
 HWND
-SK_RenderBackend_V2::window_registry_s::getDevice (void)
+SK_RenderBackend_V2::window_registry_s::getDevice (void) const
 {
   SK_LOG4 ( (__FUNCTIONW__), L"  DEBUG!  " );
 
@@ -1306,7 +1369,7 @@ SK_RenderBackend_V2::window_registry_s::getDevice (void)
 }
 
 HWND
-SK_RenderBackend_V2::window_registry_s::getFocus (void)
+SK_RenderBackend_V2::window_registry_s::getFocus (void) const
 {
   SK_LOG4 ( (__FUNCTIONW__), L"  DEBUG!  " );
 
@@ -1359,13 +1422,13 @@ SK_RenderBackend_V2::window_registry_s::setDevice (HWND hWnd)
   device.update      (hWnd);
   game_window.child = hWnd;
 
-  SK_LOG1 ( (__FUNCTIONW__ L" (%X)", hWnd), L"  DEBUG!  " );
+  SK_LOG1 ( (__FUNCTIONW__ L" (%X)", sk::narrow_cast <UINT> (((intptr_t)hWnd) & 0xFFFFFFFFUL)), L"  DEBUG!  " );
 }
 
 SK_RenderBackend_V2::scan_out_s::SK_HDR_TRANSFER_FUNC
-SK_RenderBackend_V2::scan_out_s::getEOTF (void)
+SK_RenderBackend_V2::scan_out_s::getEOTF (void) const
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (nvapi_hdr.isHDR10 ())
@@ -2584,7 +2647,7 @@ SK_EDID_GetMonitorNameFromBlock ( uint8_t const* block )
 }
 
 std::string
-SK_RenderBackend_V2::parseEDIDForName (uint8_t *edid, size_t length)
+SK_RenderBackend_V2::parseEDIDForName (uint8_t *edid, size_t length) const
 {
   if (edid == nullptr)
     return "";
@@ -2688,7 +2751,7 @@ SK_RenderBackend_V2::parseEDIDForName (uint8_t *edid, size_t length)
 }
 
 POINT
-SK_RenderBackend_V2::parseEDIDForNativeRes (uint8_t* edid, size_t length)
+SK_RenderBackend_V2::parseEDIDForNativeRes (uint8_t* edid, size_t length) const
 {
   if (edid == nullptr)
     return { 0, 0 };
@@ -2802,7 +2865,7 @@ void
 SK_RBkEnd_UpdateMonitorName ( SK_RenderBackend_V2::output_s& display,
                               DXGI_OUTPUT_DESC&              outDesc )
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (*display.name == L'\0')
@@ -3009,9 +3072,6 @@ SK_WDDM_CAPS::init (D3DKMT_HANDLE hAdapter)
   }
 }
 
-extern void
-SK_Display_ResolutionSelectUI (bool bMarkDirty);
-
 void
 SK_RenderBackend_V2::queueUpdateOutputs (void)
 {
@@ -3113,7 +3173,8 @@ SK_RenderBackend_V2::updateWDDMCaps (SK_RenderBackend_V2::output_s *pDisplay)
 }
 
 bool
-SK_RenderBackend_V2::routeAudioForDisplay (SK_RenderBackend_V2::output_s *pDisplay, bool force_update)
+SK_RenderBackend_V2::routeAudioForDisplay ( const output_s *pDisplay,
+                                            bool            force_update ) const
 {
   bool routed = false;
 
@@ -3252,8 +3313,6 @@ sizeof (output_s));
       // Reload the MaxLuminance setting from hdr.ini so that it overrides
       //   whatever values we just got from DXGI
       //
-      extern void
-      SK_HDR_UpdateMaxLuminanceForActiveDisplay (bool forced = false);
       SK_HDR_UpdateMaxLuminanceForActiveDisplay (true);
 
       if ((! isHDRCapable ()) && ( __SK_HDR_16BitSwap ||
@@ -3339,7 +3398,7 @@ SK_RenderBackend_V2::output_s::signal_info_s::timing_s::video_standard_s::toStr 
 
 void SK_Display_EnableHDR (SK_RenderBackend_V2::output_s *pOutput = nullptr)
 {
-  auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (pOutput == nullptr)
@@ -3357,7 +3416,7 @@ void SK_Display_EnableHDR (SK_RenderBackend_V2::output_s *pOutput = nullptr)
 
         setHdrState.enableAdvancedColor = true;
 
-      if ( ERROR_SUCCESS == DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
+      if ( ERROR_SUCCESS == SK_DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
       {
         pOutput->hdr.enabled = setHdrState.enableAdvancedColor;
 
@@ -3372,7 +3431,7 @@ void SK_Display_EnableHDR (SK_RenderBackend_V2::output_s *pOutput = nullptr)
 
 void SK_Display_DisableHDR (SK_RenderBackend_V2::output_s *pOutput = nullptr)
 {
-  auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
    if (pOutput == nullptr)
@@ -3390,7 +3449,7 @@ void SK_Display_DisableHDR (SK_RenderBackend_V2::output_s *pOutput = nullptr)
 
         setHdrState.enableAdvancedColor = false;
 
-      if ( ERROR_SUCCESS == DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
+      if ( ERROR_SUCCESS == SK_DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
       {
         pOutput->hdr.enabled = setHdrState.enableAdvancedColor;
 
@@ -3408,7 +3467,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
 {
   // This needs to be limited to once per-frame
   //
-  static volatile   ULONG64 ulLastUpdate = 0LL;
+  static volatile   ULONG64 ulLastUpdate = ULONG64_MAX;
   if (InterlockedExchange (&ulLastUpdate, SK_GetFramesDrawn ())
                                        == SK_GetFramesDrawn ()) return;
 
@@ -3873,7 +3932,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
           SK_RemoveTrailingDecimalZeros (szHSyncFreq, 16);
 
           SK_LOG0 (
-             (L" ( %20s ) :: PixelClock=%6.1f MHz, vSyncFreq=%7hs Hz, hSyncFreq=%7hs kHz, activeSize=(%lux%lu), totalSize=(%lux%lu), Standard=%hs",
+             (L" ( %20s ) :: PixelClock=%6.1f MHz, vSyncFreq=%7hs Hz, hSyncFreq=%7hs kHz, activeSize=(%lix%li), totalSize=(%lix%li), Standard=%hs",
                                     display.name,
               static_cast <double> (display.signal.timing.pixel_clock) / 1000000.0,
                                                              szVSyncFreq, szHSyncFreq,
@@ -3890,7 +3949,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
         getHdrInfo.header.adapterId = display.vidpn.targetInfo.adapterId;
         getHdrInfo.header.id        = display.vidpn.targetInfo.id;
 
-      if ( ERROR_SUCCESS == DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getHdrInfo ) )
+      if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getHdrInfo ) )
       {
         display.hdr.supported = getHdrInfo.advancedColorSupported;
         display.hdr.enabled   = getHdrInfo.advancedColorEnabled;
@@ -3914,10 +3973,18 @@ SK_RenderBackend_V2::updateOutputTopology (void)
           getSdrWhiteLevel.header.adapterId = display.vidpn.targetInfo.adapterId;
           getSdrWhiteLevel.header.id        = display.vidpn.targetInfo.id;
 
-        if ( ERROR_SUCCESS == DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getSdrWhiteLevel ) )
+        if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getSdrWhiteLevel ) )
         {
           display.hdr.white_level =
             (static_cast <float> (getSdrWhiteLevel.SDRWhiteLevel) / 1000.0f) * 80.0f;
+
+          // Automatically fix SDR white level bug caused by launching OpenGL/Vulkan
+          //   games and them not restoring the SDR whitepoint at exit.
+          if (! display.hdr.applied_sdr_white)
+          {
+            display.hdr.applied_sdr_white =
+              display.setSDRWhiteLevel (display.hdr.white_level);
+          }
         }
 
         else
@@ -3940,7 +4007,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
           getPreferredMode.header.adapterId = display.vidpn.targetInfo.adapterId;
           getPreferredMode.header.id        = display.vidpn.targetInfo.id;
 
-        if ( ERROR_SUCCESS == DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getPreferredMode ) )
+        if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getPreferredMode ) )
         {
           display.native.width   = getPreferredMode.width;
           display.native.height  = getPreferredMode.height;
@@ -3958,7 +4025,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
           getTargetName.header.adapterId    = display.vidpn.targetInfo.adapterId;
           getTargetName.header.id           = display.vidpn.targetInfo.id;
 
-        if ( ERROR_SUCCESS == DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getTargetName ) )
+        if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getTargetName ) )
         {
           switch (getTargetName.outputTechnology)
           {
@@ -4082,8 +4149,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
 
       if (bIsActiveDisplay)
       {
-        extern void SK_HDR_UpdateMaxLuminanceForActiveDisplay (bool forced = false);
-                    SK_HDR_UpdateMaxLuminanceForActiveDisplay (true);
+        SK_HDR_UpdateMaxLuminanceForActiveDisplay (true);
       }
 
       dll_log->LogEx ( true,
@@ -4092,7 +4158,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
         L"  | EDID Device Name |  %hs\n"
         L"  | GDI  Device Name |  %ws (HMONITOR: %06p)\n"
         L"  | Desktop Display. |  %ws%ws\n"
-        L"  | Bits Per Color.. |  %u\n"
+        L"  | Bits Per Color.. |  %d\n"
         L"  | Color Space..... |  %hs\n"
         L"  | Red Primary..... |  %f, %f\n"
         L"  | Green Primary... |  %f, %f\n"
@@ -4150,7 +4216,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
       else
         assignOutputFromHWND (game_window.hWnd);
 
-      SK_LOG0 ( ( L"%s Monitor %i: [ %ix%i | (%5i,%#5i) ] %16ws :: %s",
+      SK_LOG0 ( ( L"%s Monitor %u: [ %ix%i | (%5i,%#5i) ] %16ws :: %ws",
                     displays [i].primary ? L"*" : L" ",
                     displays [i].idx,
                     displays [i].rect.right  - displays [i].rect.left,
@@ -4171,7 +4237,7 @@ SK_RenderBackend_V2::updateOutputTopology (void)
 }
 
 const SK_RenderBackend_V2::output_s*
-SK_RenderBackend_V2::getContainingOutput (const RECT& rkRect)
+SK_RenderBackend_V2::getContainingOutput (const RECT& rkRect) const
 {
   const output_s* pOutput = nullptr;
 
@@ -4269,6 +4335,7 @@ ChangeDisplaySettingsExA_Detour (
 {
   SK_LOG_FIRST_CALL
 
+  LONG lRet = 0;
 
   if (config.display.force_windowed || config.render.dxgi.fake_fullscreen_mode)
   {
@@ -4332,15 +4399,21 @@ ChangeDisplaySettingsExA_Detour (
 
     called = true;
 
-    return
+    lRet =
       ChangeDisplaySettingsExA_Original (lpszDeviceName, lpDevMode, hWnd, CDS_FULLSCREEN, lParam);
   }
 
   else
   {
-    return
+    lRet =
       ChangeDisplaySettingsExA_Original (lpszDeviceName, lpDevMode, hWnd, dwFlags, lParam);
   }
+
+  for ( auto& display : SK_GetCurrentRenderBackend ().displays )
+              display.setSDRWhiteLevel (0.0f);
+
+  return
+    lRet;
 }
 
 
@@ -4377,6 +4450,7 @@ ChangeDisplaySettingsExW_Detour (
 {
   SK_LOG_FIRST_CALL
 
+  LONG lRet = 0;
 
   if (config.display.force_windowed || config.render.dxgi.fake_fullscreen_mode)
   {
@@ -4444,15 +4518,21 @@ ChangeDisplaySettingsExW_Detour (
 
     called = true;
 
-    return
+    lRet =
       ChangeDisplaySettingsExW_Original (lpszDeviceName, lpDevMode, hWnd, CDS_FULLSCREEN, lParam);
   }
 
   else
   {
-    return
+    lRet =
       ChangeDisplaySettingsExW_Original (lpszDeviceName, lpDevMode, hWnd, dwFlags, lParam);
   }
+
+  for ( auto& display : SK_GetCurrentRenderBackend ().displays )
+              display.setSDRWhiteLevel (0.0f);
+
+  return
+    lRet;
 }
 
 LONG
@@ -4481,6 +4561,65 @@ ChangeDisplaySettingsW_Detour (
     ChangeDisplaySettingsExW_Detour (nullptr, lpDevMode, nullptr, dwFlags, nullptr);
 }
 
+using DisplayConfigSetDeviceInfo_pfn = LONG (WINAPI *)(
+  _In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *setPacket
+);
+using DisplayConfigGetDeviceInfo_pfn = LONG (WINAPI *)(
+  _In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *getPacket
+);
+
+DisplayConfigGetDeviceInfo_pfn DisplayConfigGetDeviceInfo_Original = nullptr;
+DisplayConfigSetDeviceInfo_pfn DisplayConfigSetDeviceInfo_Original = nullptr;
+
+LONG
+WINAPI
+DisplayConfigSetDeviceInfo_Detour (_In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *setPacket)
+{
+  SK_LOG_FIRST_CALL
+
+  if (setPacket != nullptr)
+  {
+    // Nope, can't let OpenGL or Vulkan do this.
+    if (setPacket->type == DISPLAYCONFIG_DEVICE_INFO_SET_SDR_WHITE_LEVEL)
+    {
+      SK_LOGi0 (L"*** Blocked attempt by application to change SDR White Level!");
+
+      return ERROR_SUCCESS;
+    }
+  }
+  
+  return
+    DisplayConfigSetDeviceInfo_Original (setPacket);
+}
+
+LONG
+WINAPI
+DisplayConfigGetDeviceInfo_Detour (_In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *getPacket)
+{
+  SK_LOG_FIRST_CALL
+  
+  return
+    DisplayConfigGetDeviceInfo_Original (getPacket);
+}
+
+LONG
+WINAPI
+SK_DisplayConfigSetDeviceInfo (_In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *setPacket)
+{
+  return DisplayConfigSetDeviceInfo_Original != nullptr  ?
+         DisplayConfigSetDeviceInfo_Original (setPacket) :
+         DisplayConfigSetDeviceInfo          (setPacket);
+}
+
+LONG
+WINAPI
+SK_DisplayConfigGetDeviceInfo (_In_ DISPLAYCONFIG_DEVICE_INFO_HEADER *getPacket)
+{
+  return DisplayConfigGetDeviceInfo_Original != nullptr  ?
+         DisplayConfigGetDeviceInfo_Original (getPacket) :
+         DisplayConfigGetDeviceInfo          (getPacket);
+}
+
 void
 SK_Display_HookModeChangeAPIs (void)
 {
@@ -4506,6 +4645,14 @@ SK_Display_HookModeChangeAPIs (void)
                               "ChangeDisplaySettingsExW",
                                ChangeDisplaySettingsExW_Detour,
       static_cast_p2p <void> (&ChangeDisplaySettingsExW_Original) );
+    SK_CreateDLLHook2 (       L"user32",
+                              "DisplayConfigSetDeviceInfo",
+                               DisplayConfigSetDeviceInfo_Detour,
+      static_cast_p2p <void> (&DisplayConfigSetDeviceInfo_Original) );
+    SK_CreateDLLHook2 (       L"user32",
+                              "DisplayConfigGetDeviceInfo",
+                               DisplayConfigGetDeviceInfo_Detour,
+      static_cast_p2p <void> (&DisplayConfigGetDeviceInfo_Original) );
 
     EnumDisplaySettingsA_Original =
       (EnumDisplaySettingsA_pfn) SK_GetProcAddress
@@ -4611,20 +4758,85 @@ SK_Vulkan_DisableThirdPartyLayers (void)
 bool
 SK_RenderBackend_V2::resetTemporaryDisplayChanges (void)
 {
-  if (config.render.dxgi.temporary_dwm_hdr)
+  if (SK_GetFramesDrawn () > 0 || config.render.dxgi.temporary_dwm_hdr || config.display.resolution.applied || SK_IsModuleLoaded (L"vulkan-1.dll"))
   {
-    for ( auto pHDROutput : hdr_enabled_displays )
+    if (config.render.dxgi.temporary_dwm_hdr)
     {
-      SK_Display_DisableHDR (pHDROutput);
+      for ( auto pHDROutput : hdr_enabled_displays )
+      {
+        SK_Display_DisableHDR (pHDROutput);
+      }
     }
+
+    if (config.display.resolution.applied)
+    {
+      return 
+        SK_ChangeDisplaySettingsEx (
+          nullptr, nullptr,
+            0, CDS_RESET, nullptr  ) == DISP_CHANGE_SUCCESSFUL;
+    }
+
+    updateOutputTopology ();
+
+    for ( auto& display : displays )
+    {
+      display.setSDRWhiteLevel (0.0);
+    }
+
+    return true;
   }
 
-  if (config.display.resolution.applied)
+  return false;
+}
+
+bool
+SK_RenderBackend_V2::output_s::setSDRWhiteLevel (float fNits)
+{
+  if (hdr.enabled)
   {
-    return 
-      SK_ChangeDisplaySettingsEx (
-        nullptr, nullptr,
-          0, CDS_RESET, nullptr  ) == DISP_CHANGE_SUCCESSFUL;
+    DISPLAYCONFIG_SDR_WHITE_LEVEL
+      getSdrWhiteLevel                  = { };
+      getSdrWhiteLevel.header.type      = DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+      getSdrWhiteLevel.header.size      = sizeof         (DISPLAYCONFIG_SDR_WHITE_LEVEL);
+      getSdrWhiteLevel.header.adapterId = vidpn.targetInfo.adapterId;
+      getSdrWhiteLevel.header.id        = vidpn.targetInfo.id;
+
+    DISPLAYCONFIG_SET_SDR_WHITE_LEVEL
+      setSdrWhiteLevel                  = { };
+      setSdrWhiteLevel.header.type      = DISPLAYCONFIG_DEVICE_INFO_SET_SDR_WHITE_LEVEL;
+      setSdrWhiteLevel.header.size      = sizeof         (DISPLAYCONFIG_SET_SDR_WHITE_LEVEL);
+      setSdrWhiteLevel.header.adapterId = vidpn.targetInfo.adapterId;
+      setSdrWhiteLevel.header.id        = vidpn.targetInfo.id;
+
+    if (fNits == 0.0f)
+    {
+      if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getSdrWhiteLevel ) )
+      {
+        fNits =
+          (static_cast <float> (getSdrWhiteLevel.SDRWhiteLevel) / 1000.0f) * 80.0f;
+      }
+
+      else
+        return false;
+    }
+
+    setSdrWhiteLevel.SDRWhiteLevel =
+      static_cast <ULONG> ((1000.0f * fNits) / 80.0f);
+    setSdrWhiteLevel.finalValue    = TRUE;
+
+    if ( ERROR_SUCCESS == SK_DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setSdrWhiteLevel ) )
+    {
+      // Expected, but we will read the actual value back below.
+      hdr.white_level = fNits;
+
+      if ( ERROR_SUCCESS == SK_DisplayConfigGetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&getSdrWhiteLevel ) )
+      {
+        hdr.white_level =
+          (static_cast <float> (getSdrWhiteLevel.SDRWhiteLevel) / 1000.0f) * 80.0f;
+      }
+    }
+
+    return true;
   }
 
   return false;

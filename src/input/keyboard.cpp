@@ -29,35 +29,176 @@
 #define __SK_SUBSYSTEM__ L"Input Mgr."
 
 bool
+SK_ImGui_ExemptOverlaysFromKeyboardCapture (void)
+{
+//static const UINT vKeyEpic    = VK_F3;
+  static const UINT vKeySteam   = VK_TAB;
+  static const UINT vKeyReShade = VK_HOME;
+  static const UINT vKeyShift   = VK_SHIFT;
+
+  static bool bLastTab  = false;
+//static bool bLastF3   = false;
+  static bool bLastHome = false;
+
+  const bool bTab   = (sk::narrow_cast <USHORT> (SK_GetAsyncKeyState (vKeySteam  )) & 0x8000) != 0;
+//const bool bF3    = (sk::narrow_cast <USHORT> (SK_GetAsyncKeyState (vKeyEpic   )) & 0x8000) != 0;
+  const bool bShift = (sk::narrow_cast <USHORT> (SK_GetAsyncKeyState (vKeyShift  )) & 0x8000) != 0;
+  const bool bHome  = (sk::narrow_cast <USHORT> (SK_GetAsyncKeyState (vKeyReShade)) & 0x8000) != 0;
+
+  if ( bHome == bLastHome &&
+       bTab  == bLastTab )
+     //bF3   == bLastF3 )
+  {
+    return false;
+  }
+
+  bool bTabChanged  = (bLastTab  != bTab  );
+//bool bF3Changed   = (bLastF3   != bF3   );
+  bool bHomeChanged = (bLastHome != bHome );
+
+  bLastTab  = bTab;
+//bLastF3   = bF3;
+  bLastHome = bHome;
+
+  if (game_window.active && SK_ImGui_WantKeyboardCapture ())
+  {
+    static bool           bHasReShadeDLL = false;
+    static const wchar_t* wszsReShadeDLL =
+      SK_RunLHIfBitness(32, L"ReShade32.dll",
+                            L"ReShade64.dll");
+
+    const bool
+      bSteamOverlay    =  ( bShift && bTab ),
+    //bEpicOverlay     =  ( bShift && bF3  ),
+      bReShadeOverlay  =  ( bHome  &&
+                        (bHasReShadeDLL ||
+      SK_IsModuleLoaded (wszsReShadeDLL)) );
+    if (bReShadeOverlay) bHasReShadeDLL = true;
+
+    if (bSteamOverlay /*|| bEpicOverlay*/ || bReShadeOverlay)
+    {
+      WriteULong64Release (
+        &config.input.keyboard.temporarily_allow,
+          SK_GetFramesDrawn () + 40
+      );
+
+      if (bSteamOverlay/*|| bEpicOverlay*/)
+      {
+        const BYTE bScancodeShift =
+          (BYTE)MapVirtualKey (vKeyShift, 0);
+
+        const DWORD dwFlagsShift =
+          ( bScancodeShift & 0xE0 ) == 0  ?
+                static_cast <DWORD> (0x0) :
+                static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
+
+        if (bSteamOverlay && bTabChanged)
+        {
+          const BYTE bScancodeSteam =
+            (BYTE)MapVirtualKey (vKeySteam, 0);
+
+          const DWORD dwFlagsSteam =
+            ( bScancodeSteam & 0xE0 ) == 0  ?
+                  static_cast <DWORD> (0x0) :
+                  static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
+
+          SK_keybd_event ((BYTE)vKeyShift, bScancodeShift, dwFlagsShift, 0);
+          SK_keybd_event ((BYTE)vKeySteam, bScancodeSteam, dwFlagsSteam, 0);
+        }
+
+#if 0
+        else if (bEpicOverlay && bF3Changed)
+        {
+          const BYTE bScancodeEpic =
+            (BYTE)MapVirtualKey (vKeyEpic, 0);
+
+          const DWORD dwFlagsEpic =
+            ( bScancodeEpic & 0xE0 ) == 0  ?
+                 static_cast <DWORD> (0x0) :
+                 static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
+
+          SK_keybd_event ((BYTE)vKeyShift, bScancodeShift, dwFlagsShift, 0);
+          SK_keybd_event ((BYTE)vKeyEpic,  bScancodeEpic,  dwFlagsEpic,  0);
+        }
+#endif
+      }
+
+      else if (bReShadeOverlay && bHomeChanged)
+      {
+        const BYTE bScancodeReShade =
+          (BYTE)MapVirtualKey (vKeyReShade, 0);
+
+        const DWORD dwFlagsReShade =
+          ( bScancodeReShade & 0xE0 ) == 0 ?
+                 static_cast <DWORD> (0x0) :
+                 static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
+
+        SK_keybd_event ((BYTE)vKeyReShade, bScancodeReShade, dwFlagsReShade, 0);
+      }
+
+      return true;
+    }
+  }
+
+  else
+  {
+    bLastTab  = false;
+  //bLastF3   = false;
+    bLastHome = false;
+  }
+
+  return false;
+}
+
+bool
 SK_ImGui_WantKeyboardCapture (void)
 {
-  // Allow keyboard input while Steam overlay is active
-  if (SK::SteamAPI::GetOverlayState (true))
+  // Do not block on first frame drawn unless explicitly disabled
+  if (SK_GetFramesDrawn () < 1 && (config.input.keyboard.disabled_to_game != 1))
+    return false;
+
+  if (! SK_GImDefaultContext ())
     return false;
 
   // Allow keyboard input while ReShade overlay is active
   if (SK_ReShadeAddOn_IsOverlayActive ())
     return false;
 
-  if (! SK_GImDefaultContext ())
+  // Allow keyboard input while Steam /EOS overlays are active
+  if (SK::SteamAPI::GetOverlayState (true) ||
+           SK::EOS::GetOverlayState (true))
+  {
     return false;
+  }
 
   bool imgui_capture =
     config.input.keyboard.disabled_to_game == SK_InputEnablement::Disabled;
 
-  static const auto& io =
-    ImGui::GetIO ();
+  const bool bWindowActive =
+     SK_IsGameWindowActive ();
 
-  if (SK_IsGameWindowActive () || SK_WantBackgroundRender ())
+  if (bWindowActive || SK_WantBackgroundRender ())
   {
+    static const auto& io =
+      ImGui::GetIO ();
+
     if ((nav_usable || io.WantCaptureKeyboard || io.WantTextInput) && (! SK_ImGuiEx_Visible))
       imgui_capture = true;                                        // Don't block keyboard input on popups, or stupid games can miss Alt+F4
 
-    if (SK_IsConsoleVisible ())
+    else if (SK_IsConsoleVisible ())
       imgui_capture = true;
+
+    else
+    {
+      // Poke through input for a special-case
+      if (ReadULong64Acquire (&config.input.keyboard.temporarily_allow) > SK_GetFramesDrawn () - 20)
+      {
+        imgui_capture = false;
+      }
+    }
   }
 
-  if ((! SK_IsGameWindowActive ()) && config.input.keyboard.disabled_to_game == SK_InputEnablement::DisabledInBackground)
+  if ((! bWindowActive) && config.input.keyboard.disabled_to_game == SK_InputEnablement::DisabledInBackground)
     imgui_capture = true;
 
   return
@@ -67,30 +208,43 @@ SK_ImGui_WantKeyboardCapture (void)
 bool
 SK_ImGui_WantTextCapture (void)
 {
-  // Allow keyboard input while Steam overlay is active
-  if (SK::SteamAPI::GetOverlayState (true))
+  if (! SK_GImDefaultContext ())
     return false;
 
   // Allow keyboard input while ReShade overlay is active
   if (SK_ReShadeAddOn_IsOverlayActive ())
     return false;
 
-  if (! SK_GImDefaultContext ())
+  // Allow keyboard input while Steam /EOS overlays are active
+  if (SK::SteamAPI::GetOverlayState (true) ||
+           SK::EOS::GetOverlayState (true))
+  {
     return false;
+  }
 
   bool imgui_capture =
     config.input.keyboard.disabled_to_game == SK_InputEnablement::Disabled;
 
-  static const auto& io =
-    ImGui::GetIO ();
+  const bool bWindowActive =
+     SK_IsGameWindowActive ();
 
-  if (SK_IsGameWindowActive () || SK_WantBackgroundRender ())
+  if (bWindowActive || SK_WantBackgroundRender ())
   {
+    static const auto& io =
+      ImGui::GetIO ();
+
     if (io.WantTextInput)
       imgui_capture = true;
+
+    else if (bWindowActive)
+    {
+      // Poke through input for a special-case
+      if (ReadULong64Acquire (&config.input.keyboard.temporarily_allow) > SK_GetFramesDrawn () - 20)
+        imgui_capture = false;
+    }
   }
 
-  if ((! SK_IsGameWindowActive ()) && config.input.keyboard.disabled_to_game == SK_InputEnablement::DisabledInBackground)
+  if ((! bWindowActive) && config.input.keyboard.disabled_to_game == SK_InputEnablement::DisabledInBackground)
     imgui_capture = true;
 
   return
@@ -120,6 +274,13 @@ keybd_event_Detour (
   );
 }
 
+struct SK_Win32_KeybdEvent {
+  BYTE       bVk;
+  BYTE       bScan;
+  DWORD     dwFlags;
+  ULONG_PTR dwExtraInfo;
+};
+
 void
 WINAPI
 SK_keybd_event (
@@ -128,9 +289,47 @@ SK_keybd_event (
   _In_ DWORD     dwFlags,
   _In_ ULONG_PTR dwExtraInfo )
 {
-  ( keybd_event_Original != nullptr )                         ?
-    keybd_event_Original ( bVk, bScan, dwFlags, dwExtraInfo ) :
-    keybd_event          ( bVk, bScan, dwFlags, dwExtraInfo ) ;
+  static concurrency::concurrent_queue <SK_Win32_KeybdEvent> _keybd_events;
+  static HANDLE                                               hInputEvent =
+    SK_CreateEvent (nullptr, FALSE, FALSE, L"[SK] Input Synthesis Requested");
+
+  static HANDLE hKeyboardSynthesisThread =
+    SK_Thread_CreateEx ([](LPVOID)->DWORD
+    {
+      SK_Thread_SetCurrentPriority (THREAD_PRIORITY_TIME_CRITICAL);
+
+      HANDLE hSignals [] =
+        { __SK_DLL_TeardownEvent,
+                     hInputEvent };
+
+      while ( WAIT_OBJECT_0 !=
+                WaitForMultipleObjects (2, hSignals, FALSE, INFINITE) )
+      {
+        while (! _keybd_events.empty ())
+        {
+          SK_Win32_KeybdEvent        data = { };
+          if (_keybd_events.try_pop (data))
+          {
+            ( keybd_event_Original != nullptr )                       ?
+              keybd_event_Original ( data.bVk,     data.bScan,
+                                     data.dwFlags, data.dwExtraInfo ) :
+              keybd_event          ( data.bVk,     data.bScan,
+                                     data.dwFlags, data.dwExtraInfo ) ;
+          }
+        }
+      }
+
+      SK_Thread_CloseSelf ();
+
+      return 0;
+    }, L"[SK] Keyboard Input Synthesizer"
+  );
+
+  _keybd_events.push (
+    { bVk, bScan, dwFlags, dwExtraInfo }
+  );
+
+  SetEvent (hInputEvent);
 }
 
 GetKeyState_pfn      GetKeyState_Original      = nullptr;
@@ -154,7 +353,7 @@ SHORT
 WINAPI
 SK_GetSharedKeyState_Impl (int vKey, GetAsyncKeyState_pfn pfnGetFunc)
 {
-  auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   auto SK_ConsumeVKey = [&](int vKey) ->

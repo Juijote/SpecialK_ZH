@@ -75,6 +75,8 @@
 //#include <../depends/include/DXSDK/D3DX11.h>
 //#include <../depends/include/DXSDK/D3DX11tex.h>
 
+extern volatile LONG SK_D3D11_initialized;
+
 enum class SK_D3D11_ShaderType {
   Vertex   =  1,
   Pixel    =  2,
@@ -2319,9 +2321,9 @@ struct SK_D3D11_RenderCtx {
     ~FrameCtx (void);
   };
 
-  SK_ComPtr <ID3D11BlendState>            pGenericBlend     = nullptr;
+  SK_ComPtr <ID3D11BlendState>              pGenericBlend     = nullptr;
 
-  std::vector <FrameCtx>                frames_;
+  std::vector <FrameCtx> frames_;
 
   void present (IDXGISwapChain*      pSwapChain);
   void release (IDXGISwapChain*      pSwapChain);
@@ -2436,6 +2438,8 @@ struct D3DX11_STATE_BLOCK
   ID3DDeviceContextState*    DeviceContext              = nullptr;
 };
 
+
+bool SK_D3D11_IsDirectCopyCompatible (DXGI_FORMAT src, DXGI_FORMAT dst);
 
 void SK_D3D11_BeginFrame (void);
 void SK_D3D11_EndFrame   (SK_TLS* pTLS = SK_TLS_Bottom ());
@@ -2888,3 +2892,12 @@ struct SK_IMGUI_D3D11StateBlock {
        pDevCtx->RSSetScissorRects      ( Scissor.RectCount,   Scissor.Rects  );
     }
 };
+
+extern std::pair <BOOL*, BOOL> SK_ImGui_FlagDrawing_OnD3D11Ctx (UINT dev_idx);
+extern bool                    SK_ImGui_IsDrawing_OnD3D11Ctx   (UINT dev_idx, ID3D11DeviceContext* pDevCtx);
+
+void SK_D3D11_InitMutexes (void);
+BOOL SK_D3D11_SetWrappedImmediateContext ( ID3D11Device        *pDev,
+                                           ID3D11DeviceContext *pDevCtx );
+
+extern bool SK_GL_OnD3D11;

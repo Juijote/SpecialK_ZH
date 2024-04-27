@@ -1,13 +1,10 @@
-﻿//汉化相关
+//汉化相关
 
 #include <SpecialK/stdafx.h>
 
 #include <SpecialK/render/d3d11/d3d11_core.h>
 
 extern iSK_INI* osd_ini;
-
-extern std::string
-SK_CountToString (uint64_t count);
 
 class SKWG_D3D11_Pipeline : public SK_Widget
 {

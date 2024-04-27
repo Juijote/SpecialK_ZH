@@ -9,6 +9,7 @@
 #define __SK_SUBSYSTEM__ L"Input Mgr."
 
 #include <imgui/backends/imgui_d3d11.h>
+#include <SpecialK/injection/injection.h>
 
 bool SK_WantBackgroundRender (void)
 {
@@ -16,9 +17,22 @@ bool SK_WantBackgroundRender (void)
     config.window.background_render;
 }
 
+extern "C" {
+  extern LONG g_sHookedPIDs [MAX_INJECTED_PROCS];
+}
+
+DWORD SK_WGI_GamePollingThreadId = 0;
+
 bool
 SK_ImGui_WantGamepadCapture (void)
 {
+  // Do not block on first frame drawn unless explicitly disabled
+  if (SK_GetFramesDrawn () < 1 && (config.input.gamepad.disabled_to_game != 1))
+    return false;
+
+  if (! SK_GImDefaultContext ())
+    return false;
+
   auto _Return = [](BOOL bCapture) ->
   bool
   {
@@ -31,11 +45,43 @@ SK_ImGui_WantGamepadCapture (void)
       );
     }
 
-    // Conditionally block Steam Input
-    else
+    static BOOL        lastCapture = -1;
+    if (std::exchange (lastCapture, bCapture) != bCapture)
     {
-      static BOOL        lastCapture = -1;
-      if (std::exchange (lastCapture, bCapture) != bCapture)
+      // Suspend the Windows.Gaming.Input thread in case we did not
+      //   manage to hook the necessary UWP interface APIs
+      if (SK_WGI_GamePollingThreadId != 0)
+      {
+        SK_AutoHandle hThread__ (
+          OpenThread ( THREAD_SUSPEND_RESUME,
+                         FALSE,
+                           SK_WGI_GamePollingThreadId )
+        );
+
+        if ((intptr_t)hThread__.m_h > 0)
+        {
+          static int suspensions = 0;
+
+          if (bCapture)
+          {
+            if (suspensions == 0)
+            { ++suspensions;
+              SuspendThread (hThread__);
+            }
+          }
+
+          else
+          {
+            if (suspensions > 0)
+            { --suspensions;
+              ResumeThread (hThread__);
+            }
+          }
+        }
+      }
+
+      // Conditionally block Steam Input
+      if (! config.input.gamepad.steam.disabled_to_game)
       {
         // Prefer to force an override in the Steam client itself,
         //   but fallback to forced input appid if necessary
@@ -48,6 +94,28 @@ SK_ImGui_WantGamepadCapture (void)
           if (! bCapture)
           {
             SK_SteamInput_Unfux0r ();
+          }
+        }
+      }
+    }
+
+    if (! bCapture)
+    {
+      // Implicitly block input to this game if SK is currently injected
+      //   into two games at once, and the other game is currently foreground.
+      if (! game_window.active)
+      {
+        HWND hWndForeground =
+          SK_GetForegroundWindow ();
+
+        DWORD                                      dwForegroundPid = 0x0;
+        GetWindowThreadProcessId (hWndForeground, &dwForegroundPid);
+
+        for ( auto pid : g_sHookedPIDs )
+        {
+          if (pid == (LONG)dwForegroundPid)
+          {
+            bCapture = true;
           }
         }
       }
@@ -519,7 +587,7 @@ SK_Input_Init (void)
 void
 SK_Input_SetLatencyMarker (void) noexcept
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
                   DWORD64 ulFramesDrawn =

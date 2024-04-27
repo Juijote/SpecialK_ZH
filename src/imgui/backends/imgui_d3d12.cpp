@@ -334,7 +334,7 @@ ImGui_ImplDX12_RenderDrawData ( ImDrawData* draw_data,
   //
   // HDR STUFF
   //
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   bool hdr_display =
@@ -1197,7 +1197,7 @@ ImGui_ImplDX12_NewFrame (void)
   if (! _imgui_d3d12.pPipelineState)
     ImGui_ImplDX12_CreateDeviceObjects ();
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (! rb.device)
@@ -1682,9 +1682,9 @@ D3D12GraphicsCommandList_CopyResource_Detour (
       if (copy_stage == 0)
         cmdList->EndQuery (queries.dlssg.pHeap.p, D3D12_QUERY_TYPE_TIMESTAMP, swapIdx * 2);
 
-      D3D12_CPU_DESCRIPTOR_HANDLE dstUAVHandle_CPU;
-      D3D12_GPU_DESCRIPTOR_HANDLE dstUAVHandle_GPU;
-      D3D12_CPU_DESCRIPTOR_HANDLE srcUAVHandle_CPU;
+      D3D12_CPU_DESCRIPTOR_HANDLE dstUAVHandle_CPU = { };
+      D3D12_GPU_DESCRIPTOR_HANDLE dstUAVHandle_GPU = { };
+      D3D12_CPU_DESCRIPTOR_HANDLE srcUAVHandle_CPU = { };
 
       const SIZE_T srvDescriptorSize =
         pDevice->GetDescriptorHandleIncrementSize (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1863,7 +1863,7 @@ D3D12GraphicsCommandList_CopyTextureRegion_Detour (
 
     if (D3D12_RESOURCE_DIMENSION_TEXTURE2D == src_desc.Dimension)
     {
-      static auto& rb =
+      const SK_RenderBackend& rb =
         SK_GetCurrentRenderBackend ();
 
       SK_ComQIPtr <IDXGISwapChain>
@@ -2035,9 +2035,6 @@ SK_D3D12_HDR_CopyBuffer ( ID3D12GraphicsCommandList *pCommandList,
     SK_RunOnce (SK_LOGi0 (L"Cannot perform HDR CopyBuffer because D3D12 Render Backend is not initialized yet..."));
     return;
   }
-
-  static auto& rb =
-    SK_GetCurrentRenderBackend ();
 
   SK_ComPtr <ID3D12Device>
              pD3D12Device;
@@ -2222,7 +2219,7 @@ SK_D3D12_RenderCtx::present (IDXGISwapChain3 *pSwapChain)
     }
   }
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   ///bool hdr_display =
@@ -2544,9 +2541,7 @@ SK_D3D12_RenderCtx::present (IDXGISwapChain3 *pSwapChain)
               SK_D3D12_WriteResources ();
 
   SK_D3D12_CommitUploadQueue (pCommandList);
-
-  extern DWORD SK_ImGui_DrawFrame ( DWORD dwFlags, void* user    );
-               SK_ImGui_DrawFrame (       0x00,          nullptr );
+  SK_ImGui_DrawFrame         (0x00,nullptr);
 
   // Queue-up Post-SK OSD Screenshots  (If done here, will not include ReShade)
   SK_Screenshot_ProcessQueue  (SK_ScreenshotStage::PrePresent, rb);
@@ -2979,7 +2974,7 @@ SK_D3D12_RenderCtx::init (IDXGISwapChain3 *pSwapChain, ID3D12CommandQueue *pComm
     _pSwapChain =
      pSwapChain;
 
-    static auto& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     if (rb.swapchain == nullptr || rb.swapchain != pSwapChain)

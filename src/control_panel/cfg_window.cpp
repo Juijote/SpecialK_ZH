@@ -8,7 +8,7 @@
 bool
 SK::ControlPanel::Window::Draw (void)
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if ( ImGui::CollapsingHeader ("窗口管理") )

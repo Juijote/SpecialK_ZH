@@ -2,7 +2,6 @@
 
 #include <SpecialK/stdafx.h>
 
-
 #include <SpecialK/nvapi.h>
 #include <nvapi/NvApiDriverSettings.h>
 
@@ -261,7 +260,7 @@ sk::NVAPI::EnumGPUs_DXGI (void)
     NVAPI_CALL (GPU_GetFullName (_nv_dxgi_gpus [i], name));
 
     NV_GPU_MEMORY_INFO_EX
-      meminfo;
+      meminfo         = { };
       meminfo.version = NV_GPU_MEMORY_INFO_EX_VER_1;
 
     NvAPI_GPU_GetMemoryInfoEx (_nv_dxgi_gpus [i], &meminfo);
@@ -639,7 +638,7 @@ NvAPI_Disp_HdrColorControl_Override ( NvU32              displayId,
       NvAPI_Disp_HdrColorControl_Original (displayId, pHdrColorData);
   }
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static NV_HDR_COLOR_DATA_V2  expandedData = { };
@@ -1164,7 +1163,7 @@ NvAPI_Disp_HdrColorControl_Override ( NvU32              displayId,
 void
 SK_RenderBackend_V2::output_s::nvapi_ctx_s::vblank_history_s::addRecord (NvDisplayHandle nv_disp, NvU32 tNow) noexcept
 {
-  auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   //
@@ -1175,15 +1174,25 @@ SK_RenderBackend_V2::output_s::nvapi_ctx_s::vblank_history_s::addRecord (NvDispl
   //
   if (rb.stale_display_info || (! rb.gsync_state.active))
     return;
+  
+  NvU32   vblank_count =     0;
+  bool bHasVBlankCount = false;
 
-  std::scoped_lock
-    lock (SK_NvAPI_Threading->locks.Disp_GetVRRInfo,
-          SK_NvAPI_Threading->locks.D3D_IsGSyncActive);
-
-  NvU32 vblank_count = 0;
-
-  if (NVAPI_OK == NvAPI_GetVBlankCounter (nv_disp, &vblank_count))
+  static constexpr auto                                   _PollingFreqInMs = 7;
+  if (last_polled_time <= SK::ControlPanel::current_time -_PollingFreqInMs)
   {
+    std::scoped_lock
+      lock (SK_NvAPI_Threading->locks.Disp_GetVRRInfo,
+            SK_NvAPI_Threading->locks.D3D_IsGSyncActive);
+
+    bHasVBlankCount =
+      (NVAPI_OK == NvAPI_GetVBlankCounter (nv_disp, &vblank_count));
+  }
+
+  if (bHasVBlankCount)
+  {
+    last_polled_time = SK::ControlPanel::current_time;
+
     head = std::min (head, (NvU32)MaxVBlankRecords-1);
 
     if (vblank_count != records [head].vblank_count)
@@ -1597,8 +1606,6 @@ SK_NvAPI_PreInitHDR (void)
   }
 }
 
-extern SK_LazyGlobal <SK_AppCache_Manager> app_cache_mgr;
-
 BOOL
 NVAPI::InitializeLibrary (const wchar_t* wszAppName)
 {
@@ -1750,6 +1757,12 @@ NVAPI::InitializeLibrary (const wchar_t* wszAppName)
         static_cast_p2p <void> (&NvAPI_QueryInterface_Original) );
 
       SK_ApplyQueuedHooks ();
+
+      if (! SK_IsRunDLLInvocation ())
+      {
+        SK_GetCurrentRenderBackend ().nvapi.rebar =
+          SK_NvAPI_DRS_GetDWORD (0x000F00BA) != 0x0;
+      }
 
 //#ifdef SK_AGGRESSIVE_HOOKS
 //      SK_ApplyQueuedHooks ();
@@ -3125,6 +3138,199 @@ RunDLL_RestartNVIDIADriver ( HWND   hwnd,        HINSTANCE hInst,
       );
     }
   }
+}
+
+DWORD
+SK_NvAPI_DRS_GetDWORD (NvU32 setting_id)
+{
+  if (! nv_hardware)
+    return (DWORD)-1;
+
+  NvAPI_Status       ret       = NVAPI_ERROR;
+  NvDRSSessionHandle hSession  = { };
+
+  NVAPI_CALL (DRS_CreateSession (&hSession));
+  NVAPI_CALL (DRS_LoadSettings  ( hSession));
+
+               NvDRSProfileHandle hProfile       = { };
+  std::unique_ptr    <NVDRS_APPLICATION> app_ptr =
+    std::make_unique <NVDRS_APPLICATION> ();
+  NVDRS_APPLICATION&                     app     =
+                                        *app_ptr;
+
+  NVAPI_SILENT ();
+
+  app.version = NVDRS_APPLICATION_VER;
+  ret         = NVAPI_ERROR;
+
+  NVAPI_CALL2 ( DRS_FindApplicationByName ( hSession,
+                                              (NvU16 *)app_name.c_str (),
+                                                &hProfile,
+                                                  &app ),
+                ret );
+
+  // If no executable exists anywhere by this name, create a profile for it
+  //   and then add the executable to it.
+  if (ret == NVAPI_EXECUTABLE_NOT_FOUND)
+  {
+    NVDRS_PROFILE custom_profile = {   };
+
+    if (friendly_name.empty ()) // Avoid NVAPI failure: NVAPI_PROFILE_NAME_EMPTY
+        friendly_name = app_name;
+
+    custom_profile.isPredefined  = FALSE;
+    lstrcpyW ((wchar_t *)custom_profile.profileName, friendly_name.c_str ());
+    custom_profile.version = NVDRS_PROFILE_VER;
+
+    // It's not necessarily wrong if this does not return NVAPI_OK, so don't
+    //   raise a fuss if it happens.
+    NVAPI_SILENT ()
+    {
+      NVAPI_CALL2 (DRS_CreateProfile (hSession, &custom_profile, &hProfile), ret);
+    }
+    NVAPI_VERBOSE ()
+
+    // Add the application name to the profile, if a profile already exists
+    if (ret == NVAPI_PROFILE_NAME_IN_USE)
+    {
+      NVAPI_CALL2 ( DRS_FindProfileByName ( hSession,
+                                              (NvU16 *)friendly_name.c_str (),
+                                                &hProfile),
+                      ret );
+    }
+
+    if (ret == NVAPI_OK)
+    {
+      RtlZeroMemory (app_ptr.get (), sizeof NVDRS_APPLICATION);
+
+      lstrcpyW ((wchar_t *)app.appName,          app_name.c_str      ());
+      lstrcpyW ((wchar_t *)app.userFriendlyName, friendly_name.c_str ());
+
+      app.version      = NVDRS_APPLICATION_VER;
+      app.isPredefined = FALSE;
+      app.isMetro      = FALSE;
+
+      NVAPI_CALL2 (DRS_CreateApplication (hSession, hProfile, &app), ret);
+      NVAPI_CALL2 (DRS_SaveSettings      (hSession), ret);
+    }
+  }
+
+  NVDRS_SETTING get_val               = {               };
+                get_val.version       = NVDRS_SETTING_VER;
+
+  // These settings may not exist, and getting back a value of 0 is okay...
+  NVAPI_SILENT  ();
+  NVAPI_CALL    (DRS_GetSetting (hSession, hProfile, setting_id, &get_val));
+  NVAPI_VERBOSE ();
+
+  NVAPI_CALL (DRS_DestroySession (hSession));
+
+  return get_val.u32CurrentValue;
+}
+
+bool
+SK_NvAPI_DRS_SetDWORD (NvU32 setting_id, DWORD dwValue)
+{
+  if (! nv_hardware)
+    return FALSE;
+
+
+  NvAPI_Status       ret       = NVAPI_ERROR;
+  NvDRSSessionHandle hSession  = { };
+
+  NVAPI_CALL (DRS_CreateSession (&hSession));
+  NVAPI_CALL (DRS_LoadSettings  ( hSession));
+
+               NvDRSProfileHandle hProfile       = { };
+  std::unique_ptr    <NVDRS_APPLICATION> app_ptr =
+    std::make_unique <NVDRS_APPLICATION> ();
+  NVDRS_APPLICATION&                     app     =
+                                        *app_ptr;
+
+  NVAPI_SILENT ();
+
+  app.version = NVDRS_APPLICATION_VER;
+  ret         = NVAPI_ERROR;
+
+  NVAPI_CALL2 ( DRS_FindApplicationByName ( hSession,
+                                              (NvU16 *)app_name.c_str (),
+                                                &hProfile,
+                                                  &app ),
+                ret );
+
+  // If no executable exists anywhere by this name, create a profile for it
+  //   and then add the executable to it.
+  if (ret == NVAPI_EXECUTABLE_NOT_FOUND)
+  {
+    NVDRS_PROFILE custom_profile = {   };
+
+    if (friendly_name.empty ()) // Avoid NVAPI failure: NVAPI_PROFILE_NAME_EMPTY
+        friendly_name = app_name;
+
+    custom_profile.isPredefined  = FALSE;
+    lstrcpyW ((wchar_t *)custom_profile.profileName, friendly_name.c_str ());
+    custom_profile.version = NVDRS_PROFILE_VER;
+
+    // It's not necessarily wrong if this does not return NVAPI_OK, so don't
+    //   raise a fuss if it happens.
+    NVAPI_SILENT ()
+    {
+      NVAPI_CALL2 (DRS_CreateProfile (hSession, &custom_profile, &hProfile), ret);
+    }
+    NVAPI_VERBOSE ()
+
+    // Add the application name to the profile, if a profile already exists
+    if (ret == NVAPI_PROFILE_NAME_IN_USE)
+    {
+      NVAPI_CALL2 ( DRS_FindProfileByName ( hSession,
+                                              (NvU16 *)friendly_name.c_str (),
+                                                &hProfile),
+                      ret );
+    }
+
+    if (ret == NVAPI_OK)
+    {
+      RtlZeroMemory (app_ptr.get (), sizeof NVDRS_APPLICATION);
+
+      lstrcpyW ((wchar_t *)app.appName,          app_name.c_str      ());
+      lstrcpyW ((wchar_t *)app.userFriendlyName, friendly_name.c_str ());
+
+      app.version      = NVDRS_APPLICATION_VER;
+      app.isPredefined = FALSE;
+      app.isMetro      = FALSE;
+
+      NVAPI_CALL2 (DRS_CreateApplication (hSession, hProfile, &app), ret);
+      NVAPI_CALL2 (DRS_SaveSettings      (hSession), ret);
+    }
+  }
+
+  NVDRS_SETTING set_val               = {               };
+                set_val.version       = NVDRS_SETTING_VER;
+
+  // These settings may not exist, and getting back a value of 0 is okay...
+  NVAPI_SILENT  ();
+  NVAPI_CALL    (DRS_GetSetting (hSession, hProfile, setting_id, &set_val));
+  NVAPI_VERBOSE ();
+
+
+  BOOL already_set = TRUE;
+
+  // Do this first so we don't touch other settings if this fails
+  if (set_val.u32CurrentValue != dwValue)
+  {
+    ret = NVAPI_ERROR;
+
+    // This requires admin privs, and we will handle that gracefully...
+    NVAPI_SILENT    ();
+    NVAPI_SET_DWORD (set_val, setting_id, dwValue);
+    NVAPI_CALL2     (DRS_SetSetting (hSession, hProfile, &set_val), ret);
+    NVAPI_VERBOSE   ();
+
+    already_set = FALSE;
+  }
+
+  return
+    (! already_set);
 }
 
 void

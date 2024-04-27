@@ -54,18 +54,6 @@ static constexpr int SK_MAX_WINDOW_DIM = 16384;
 # define SK_WINDOW_LOG_CALL_UNTESTED() { }
 #endif
 
-extern bool SK_WantBackgroundRender ();
-
-extern HWND SK_Inject_GetFocusWindow (void);
-extern void SK_Inject_SetFocusWindow (HWND hWndFocus);
-
-extern bool SK_ImGui_IsMouseRelevant       (void);
-extern bool SK_InputUtil_IsHWCursorVisible (void);
-
-extern void SK_Display_ResolutionSelectUI (bool bMarkDirty = false);
-
-bool SK_Window_OnFocusChange (HWND hWndNewTarget, HWND hWndOld);
-
 BOOL
 WINAPI
 SetWindowPlacement_Detour (
@@ -263,10 +251,10 @@ public:
               return TRUE;
             }, 0);
 
-            static auto& rb =
+            SK_RenderBackend_V2& rb =
               SK_GetCurrentRenderBackend ();
 
-            // TODO: Use this isntead config.display.monitor_handle in RepositionIfNeeded
+            // TODO: Use this instead config.display.monitor_handle in RepositionIfNeeded
             //
             //   This will prevent locking a game window unless the user wants that
             //
@@ -303,7 +291,7 @@ public:
 
         config.display.monitor_handle = 0;
 
-        static auto& rb =
+        SK_RenderBackend_V2& rb =
           SK_GetCurrentRenderBackend ();
 
         UINT highest_idx = 1,
@@ -720,7 +708,7 @@ public:
         SK_AdjustWindow ();
 
         auto *pszRes =
-          static_cast <char *> (((SK_IVarStub <char *> *)var)->getValuePointer ());
+          (char *)((SK_IVarStub <char *> *)var)->getValuePointer ();
 
         _snprintf_s (pszRes, _RES_STR_MAX, _TRUNCATE, "%ux%u", x, y);
 
@@ -728,7 +716,7 @@ public:
       }
 
       auto *pszRes =
-        static_cast <char *> (((SK_IVarStub <char *> *)var)->getValuePointer ());
+        (char *)((SK_IVarStub <char *> *)var)->getValuePointer ();
 
       _snprintf_s (pszRes, _RES_STR_MAX, _TRUNCATE, "INVALID");
 
@@ -1009,7 +997,7 @@ ActivateWindow ( HWND hWnd,
 
   SK_ASSERT_NOT_THREADSAFE ();
 
-  static auto& rb =
+  SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   const bool is_game_window =
@@ -1040,7 +1028,7 @@ ActivateWindow ( HWND hWnd,
           if ((SK_GetAsyncKeyState (VKey) & 0x8000) == 0x0/* &&
                SK_GetKeyState      (VKey)           != 0x0*/)
           {
-            SK_keybd_event ((BYTE)VKey, 0, KEYEVENTF_KEYUP, 0);
+            SK_keybd_event (BYTE (VKey), 0, KEYEVENTF_KEYUP, 0);
           }
         }
       }
@@ -1078,6 +1066,9 @@ ActivateWindow ( HWND hWnd,
 
       bool proposeChange (INT _GPU, DWORD _dwProcess)
       {
+        SK_RenderBackend_V2& rb =
+          SK_GetCurrentRenderBackend ();
+
         SK_ComPtr      <ID3D11Device> pDev11 =
           rb.getDevice <ID3D11Device> ();
         SK_ComPtr      <ID3D12Device> pDev12 =
@@ -1187,7 +1178,8 @@ ActivateWindow ( HWND hWnd,
           auto* pLimiter =
             SK::Framerate::GetLimiter (rb.swapchain);
 
-          pLimiter->reset (true);
+          if (pLimiter != nullptr)
+              pLimiter->reset (true);
         }
       }
     }
@@ -1270,7 +1262,7 @@ CALLBACK
 SK_EnumWindows (HWND hWnd, LPARAM lParam)
 {
   window_t& win =
-    *reinterpret_cast <window_t *> (lParam);
+    *(window_t *)(lParam);
 
   DWORD proc_id = 0;
 
@@ -1327,7 +1319,7 @@ SK_FindRootWindow (DWORD proc_id)
 
   EnumWindows (
     SK_EnumWindows,
-      (LPARAM)&win
+      LPARAM (&win)
   );
 
   return win;
@@ -1627,7 +1619,7 @@ ClipCursor_Detour (const RECT *lpRect)
     ////}
 
 
-    if (SK_ExpandSmallClipCursor ((RECT *)&_rect))
+    if (SK_ExpandSmallClipCursor (static_cast <RECT *> (&_rect)))
     {
       // Generally this only matters if [background rendering is enabled;
       //   flat-out ignore cursor clip rects if the window's not even active.
@@ -1891,9 +1883,7 @@ SK_CenterWindowAtMouse (BOOL remember_pos)
 
       return 0;
       // Don't dereference this, it's actually a boolean
-    }, reinterpret_cast <LPVOID>   (
-            static_cast <uintptr_t> (remember_pos)
-                                   ) );
+    }, LPVOID ( uintptr_t ( remember_pos ) ) );
   }
 }
 
@@ -1993,7 +1983,7 @@ SetWindowPos_Detour(
     }
   }
 
-  BOOL bRet =
+  const BOOL bRet =
     SK_SetWindowPos ( hWnd,
                       hWndInsertAfter,
                          X,   Y,
@@ -2388,8 +2378,7 @@ SetWindowLong_Marshall (
         }
 
         SK_SetWindowStyle ( game_window.actual.style,
-         reinterpret_cast < SetWindowLongPtr_pfn >
-                              ( pOrigFunc )
+           SetWindowLongPtr_pfn (pOrigFunc)
                           );
 
         return
@@ -2422,8 +2411,8 @@ SetWindowLong_Marshall (
             game_window.game.style_ex;
         }
 
-        SK_SetWindowStyleEx (                                          game_window.actual.style_ex,
-                              reinterpret_cast <SetWindowLongPtr_pfn> (pOrigFunc) );
+        SK_SetWindowStyleEx ( game_window.actual.style_ex,
+           SetWindowLongPtr_pfn (pOrigFunc) );
 
         return
           sk::narrow_cast <ULONG> (
@@ -3112,7 +3101,7 @@ SK_SetWindowStyleEx ( DWORD_PTR            dwStyleEx_ptr,
   dwStyleEx &= ~(WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYOUTRTL |
                  WS_EX_RIGHT      | WS_EX_RTLREADING  | WS_EX_TOOLWINDOW);
 
-  game_window.actual.style_ex = (DWORD_PTR)dwStyleEx;
+  game_window.actual.style_ex = DWORD_PTR (dwStyleEx);
 
   if (pDispatchFunc == nullptr)
       pDispatchFunc = game_window.SetWindowLongPtr;
@@ -3204,7 +3193,7 @@ SK_Window_HasBorder (HWND hWnd)
 {
   return
     SK_WindowManager::StyleHasBorder (
-      (DWORD_PTR)SK_GetWindowLongW ( hWnd, GWL_STYLE )
+        DWORD_PTR (SK_GetWindowLongW ( hWnd, GWL_STYLE ))
     );
 }
 
@@ -3274,17 +3263,17 @@ SK_AdjustBorder (void)
   if (config.window.borderless)
   {
     game_window.actual.style    =
-      (ULONG_PTR)SK_BORDERLESS;
+       ULONG_PTR (SK_BORDERLESS);
     game_window.actual.style_ex =
-      (ULONG_PTR)SK_BORDERLESS_EX;
+       ULONG_PTR (SK_BORDERLESS_EX);
   }
 
   if (game_window.attach_border)
   {
     game_window.actual.style    =
-      (ULONG_PTR)game_window.border_style;
+      ULONG_PTR (game_window.border_style);
     game_window.actual.style_ex =
-      (ULONG_PTR)game_window.border_style_ex;
+      ULONG_PTR (game_window.border_style_ex);
 
     game_window.attach_border = false;
   }
@@ -3304,9 +3293,9 @@ SK_AdjustBorder (void)
   SK_SetWindowStyleEx ( game_window.actual.style_ex );
 
   if ( SK_AdjustWindowRectEx ( &new_window,
-         static_cast <DWORD>  (game_window.actual.style),
-         FALSE,
-         static_cast <DWORD>  (game_window.actual.style_ex) )
+      sk::narrow_cast <DWORD> ( game_window.actual.style    ),
+                       FALSE,
+      sk::narrow_cast <DWORD> ( game_window.actual.style_ex ) )
      )
   {
     const bool had_border = has_border;
@@ -3398,7 +3387,7 @@ SK_Window_RepositionIfNeeded (void)
 
         if (dwWaitState == WAIT_OBJECT_0 + 1)
         {
-          static auto& rb =
+          SK_RenderBackend_V2& rb =
             SK_GetCurrentRenderBackend ();
 
           ResetEvent (hSignals [1]);
@@ -3505,10 +3494,8 @@ SK_Window_RepositionIfNeeded (void)
           config.window.fullscreen = _configFullscreen;
           config.window.center     = _configCenter;
 
-          extern volatile LONG lResetD3D11;
-
           // Client rect changed, we probably want to reset our render context to
-          //   accomodate the new internal resolution
+          //   accommodate the new internal resolution
           if (! EqualRect (&rcClientOrig, &game_window.actual.client))
           {
           //if ( rcClientOrig.right  - rcClientOrig.left != rcClientLast.right  - rcClientLast.left ||
@@ -3566,9 +3553,6 @@ SK_Window_RepositionIfNeeded (void)
 
 
 #include <SpecialK/render/d3d11/d3d11_core.h>
-
-extern volatile LONG lResetD3D12;
-extern volatile LONG lResetD3D11;
 
 void
 SK_AdjustClipRect (void)
@@ -3731,10 +3715,10 @@ SK_AdjustWindow (void)
 
     // Adjust the desktop resolution to make room for window decorations
     //   if the game window were maximized.
-    if ((! borderless) && (! SK_GetCurrentRenderBackend ().isTrueFullscreen ())) {
+    if ((! borderless) && (! SK_GetCurrentRenderBackend ().isTrueFullscreen ()))
+    {
       SK_AdjustWindowRect (
-        &mi.rcWork,
-        static_cast <LONG> (game_window.actual.style),
+        &mi.rcWork, sk::narrow_cast <DWORD> (game_window.actual.style),
         FALSE
       );
     }
@@ -3809,7 +3793,7 @@ SK_AdjustWindow (void)
     bool nomove = config.window.offset.isZero       ();
     bool nosize = config.window.res.override.isZero ();
 
-    static SK_RenderBackend& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     if (! bMultiMonitorMode)
@@ -4079,7 +4063,7 @@ GetWindowInfo_Detour (HWND hwnd, PWINDOWINFO pwi)
 {
   SK_LOG_FIRST_CALL
 
-  BOOL bRet =
+  const BOOL bRet =
     GetWindowInfo_Original (hwnd, pwi);
 
   // Apps may call GetWindowInfo and check WS_ACTIVECAPTION rather
@@ -4257,12 +4241,12 @@ PeekMessageA_Detour (
   if ( PeekFunc == nullptr )
   {
     // A nasty kludge to fix the Steam overlay
-    static auto         early_PeekMessageA =
-      reinterpret_cast <NtUserPeekMessage_pfn> (
-             SK_GetProcAddress      (
-               SK_GetModuleHandle (   L"user32"  ),
-                                       "PeekMessageA"
-                                    )          );
+    static auto early_PeekMessageA =
+                NtUserPeekMessage_pfn (
+    SK_GetProcAddress      (
+      SK_GetModuleHandle (   L"user32"  ),
+                              "PeekMessageA"
+                           )          );
 
     NtUserPeekMessage_pfn early =
       early_PeekMessageA;
@@ -4310,7 +4294,7 @@ PeekMessageA_Detour (
       bool gamepad  = false;
     
       SK_Input_ClassifyRawInput (
-        reinterpret_cast <HRAWINPUT> (msg.lParam),
+        HRAWINPUT (msg.lParam),
           mouse, keyboard, gamepad
       );
     
@@ -4363,12 +4347,12 @@ PeekMessageW_Detour (
   if ( PeekFunc == nullptr )
   {
     // A nasty kludge to fix the Steam overlay
-    static auto         early_PeekMessageW =
-      reinterpret_cast <NtUserPeekMessage_pfn> (
-             SK_GetProcAddress      (
-               SK_GetModuleHandle (   L"user32"  ),
-                                       "PeekMessageW"
-                                    )          );
+    static auto early_PeekMessageW =
+                NtUserPeekMessage_pfn (
+     SK_GetProcAddress      (
+       SK_GetModuleHandle (   L"user32"  ),
+                               "PeekMessageW"
+                            )         );
 
     NtUserPeekMessage_pfn early =
       early_PeekMessageW;
@@ -4416,7 +4400,7 @@ PeekMessageW_Detour (
       bool gamepad  = false;
     
       SK_Input_ClassifyRawInput (
-        reinterpret_cast <HRAWINPUT> (msg.lParam),
+        HRAWINPUT (msg.lParam),
           mouse, keyboard, gamepad
       );
     
@@ -4930,7 +4914,7 @@ GetForegroundWindow_Detour (void)
 {
   SK_LOG_FIRST_CALL
 
-  static auto& rb =
+  const SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   // This function is hooked before we actually know the game's HWND,
@@ -5182,10 +5166,6 @@ __SKX_WinHook_InstallInputHooks (HWND hWnd)
   using  UnhookWindowsHookEx_pfn =
     BOOL (WINAPI *)(HHOOK);
 
-  extern SetWindowsHookEx_pfn    SetWindowsHookExA_Original;
-  extern SetWindowsHookEx_pfn    SetWindowsHookExW_Original;
-  extern UnhookWindowsHookEx_pfn UnhookWindowsHookEx_Original;
-
   if (SetWindowsHookExW_Original == nullptr)
     return false;
 
@@ -5298,7 +5278,7 @@ SK_DetourWindowProc ( _In_  HWND   hWnd,
     SK_Console::getInstance ()->isVisible ();
 
 
-  static auto& rb =
+  SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   if (hWnd != 0)
@@ -5363,9 +5343,6 @@ SK_DetourWindowProc ( _In_  HWND   hWnd,
     }
   }
 
-
-  //extern bool SK_ImGui_WantExit;
-
   // HDR caps, Refresh Rate and Display Mode may have changed,
   //   let's try to be smart about this (for a change)...
   if ( uMsg == WM_DISPLAYCHANGE ||
@@ -5383,7 +5360,7 @@ SK_DetourWindowProc ( _In_  HWND   hWnd,
 
     ////if (! SK_IsGameWindowActive ())
     ////{
-    ////  // Using a static kinda prevents us from supporting multiple windows,
+    ////  // Using a static kind of prevents us from supporting multiple windows,
     ////  //   but it's good enough for now.
     ////  static ULONG64 ulLastReset = 0;
     ////
@@ -5559,7 +5536,7 @@ SK_DetourWindowProc ( _In_  HWND   hWnd,
         {
           if (ImGui_WndProcHandler (hWnd, uMsg, wParam, lParam) != 0 && (ImGui::GetIO ().WantCaptureMouse || SK_ImGui_IsAnythingHovered ()))
           {
-            bool bOrig =
+            const bool bOrig =
               std::exchange (__SK_EnableSetCursor, true);
 
             SK_ImGui_Cursor.activateWindow (true);
@@ -5588,8 +5565,8 @@ SK_DetourWindowProc ( _In_  HWND   hWnd,
     {
       if (hWnd == game_window.hWnd || hWnd == game_window.child)
       {
-        WINDOWPOS* pWindowPos = (WINDOWPOS *)lParam;
-
+        const WINDOWPOS*
+               pWindowPos = (WINDOWPOS *)lParam;
         if (! (pWindowPos->flags & SWP_NOSENDCHANGING))
           SK_Window_RepositionIfNeeded ();
       }
@@ -6102,8 +6079,8 @@ SK_Window_IsTopMost (HWND hWnd = game_window.hWnd)
 void
 SK_Window_SetTopMost (bool bTop, bool bBringToTop, HWND hWnd)
 {
-  bool _unicode =
-    IsWindowUnicode (hWnd);
+  const bool _unicode =
+      IsWindowUnicode (hWnd);
 
   auto               SetWindowLongFn =
     ( _unicode ? &SK_SetWindowLongW  :
@@ -6114,9 +6091,16 @@ SK_Window_SetTopMost (bool bTop, bool bBringToTop, HWND hWnd)
                 &SK_GetWindowLongA  );
 
   HWND      hWndOrder = nullptr;
-  DWORD_PTR dwStyleEx =
-    GetWindowLongFn (hWnd, GWL_EXSTYLE);
-  DWORD_PTR dwStyleExOrig = dwStyleEx;
+  DWORD_PTR dwStyleEx = 0;
+
+  if (            GetWindowLongFn != nullptr)
+      dwStyleEx = GetWindowLongFn (hWnd, GWL_EXSTYLE);
+  else
+  {
+    SK_LOGi0 (L"Missing function pointer for GetWindowLong!");
+  }
+
+  const DWORD_PTR dwStyleExOrig = dwStyleEx;
 
   SK_Inject_SetFocusWindow (game_window.hWnd);
 
@@ -6135,7 +6119,10 @@ SK_Window_SetTopMost (bool bTop, bool bBringToTop, HWND hWnd)
 
   if (dwStyleEx != dwStyleExOrig)
   {
-    SetWindowLongFn ( hWnd, GWL_EXSTYLE, (LONG)dwStyleEx );
+    if (SetWindowLongFn != nullptr)
+        SetWindowLongFn ( hWnd, GWL_EXSTYLE, (LONG)dwStyleEx );
+    else
+      SK_LOGi0 (L"Missing function pointer for SetWindowLong!");
   }
 
   SK_SetWindowPos ( hWnd,
@@ -6185,7 +6172,7 @@ SK_InitWindow (HWND hWnd, bool fullscreen_exclusive)
   game_window.actual.style_ex =
     game_window.GetWindowLongPtr ( hWnd, GWL_EXSTYLE );
 
-  bool has_border  = SK_WindowManager::StyleHasBorder (
+  const bool has_border = SK_WindowManager::StyleHasBorder (
     game_window.actual.style
   );
 
@@ -6199,7 +6186,7 @@ SK_InitWindow (HWND hWnd, bool fullscreen_exclusive)
   game_window.game.style_ex = game_window.actual.style_ex;
 
 
-  static auto& rb =
+  SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   auto& windows =
@@ -6693,8 +6680,6 @@ SK_InstallWindowHook (HWND hWnd)
   // Not sure why this was conditional upon 1 frame drawn, but NOT
   //   continuing beyond this point w/ no frames drawn will crash Disgaea PC
 #if 0
-  extern bool
-         SK_GL_OnD3D11;
   if ((! SK_GL_OnD3D11) && (! SK_GetFramesDrawn ()))
     return;
 #endif
@@ -6814,7 +6799,7 @@ SK_InstallWindowHook (HWND hWnd)
 
     SK_SetLastError (dwLast);
 
-    static SK_RenderBackend& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     rb.windows.setFocus  (hWnd);
@@ -7105,6 +7090,19 @@ SK_MakeWindowHook (WNDPROC class_proc, WNDPROC wnd_proc, HWND hWnd)
   {
     SK_GetCurrentRenderBackend ().windows.unity =  true;
 
+    bool changed = false;
+
+    // Auto-enable this for Unity Engine games
+    if (config.input.gamepad.scepad.hide_ds_edge_pid == SK_NoPreference) {
+        config.input.gamepad.scepad.hide_ds_edge_pid =  SK_Enabled;
+        changed = true;
+    }
+
+    if (config.input.gamepad.scepad.hide_ds4_v2_pid == SK_NoPreference) {
+        config.input.gamepad.scepad.hide_ds4_v2_pid =  SK_Enabled;
+        changed = true;
+    }
+
     if ( config.apis.last_known != SK_RenderAPI::Reserved &&
          config.apis.last_known != SK_RenderAPI::OpenGL )
     {
@@ -7113,6 +7111,12 @@ SK_MakeWindowHook (WNDPROC class_proc, WNDPROC wnd_proc, HWND hWnd)
 
     config.textures.cache.ignore_nonmipped      =  true;
     cache_opts.ignore_non_mipped                =  true; // Push this change through immediately
+
+    if (changed)
+    {
+      config.utility.save_async ();
+      SK_RestartGame ();
+    }
   }
 
   else if (! _wcsicmp (wszClassName, L"UnrealWindow"))
@@ -7474,6 +7478,10 @@ SK_COMPAT_SafeCallProc (sk_window_s* pWin, HWND hWnd_, UINT Msg, WPARAM wParam, 
              GetExceptionCode () == EXCEPTION_BREAKPOINT       ?
                                     EXCEPTION_EXECUTE_HANDLER  : EXCEPTION_CONTINUE_SEARCH )
   {
+    SK_LOGi0 (
+      L"Unexpected Exception Caught in SK_COMPAT_SafeCallProc! HWND=%x, Msg=%d",
+        hWnd_, Msg
+    );
   }
 
   return ret;
@@ -7672,8 +7680,6 @@ SK_SetWindowPos ( HWND hWnd,
 }
 
 HWND SK_Win32_BackgroundHWND = HWND_DESKTOP;
-void SK_Win32_BringBackgroundWindowToTop (void);
-
 
 void
 SK_Win32_DestroyBackgroundWindow (void)
@@ -8054,7 +8060,7 @@ bool SK_Window_OnFocusChange (HWND hWndNewTarget, HWND hWndOld)
 void
 SK_Window_CreateTopMostFixupThread (void)
 {
-  static auto& rb =
+  const SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
 #if 1
@@ -8067,6 +8073,9 @@ SK_Window_CreateTopMostFixupThread (void)
   static SK_AutoHandle _
   ( SK_Thread_CreateEx ([](LPVOID)->DWORD
     {
+      const SK_RenderBackend_V2& rb =
+        SK_GetCurrentRenderBackend ();
+
       while (WaitForSingleObject (__SK_DLL_TeardownEvent, 5000UL) != WAIT_OBJECT_0)
       {
         const bool smart_always_on_top =

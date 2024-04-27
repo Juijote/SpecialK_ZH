@@ -43,6 +43,7 @@
 #define XUSER_MAX_INDEX (DWORD)XUSER_MAX_COUNT-1
 
 void SK_Steam_SignalEmulatedXInputActivity (DWORD dwSlot, bool blocked);
+bool bUseEmulationForSetState = false;
 
 struct SK_XInputContext
 {
@@ -340,18 +341,6 @@ SK_XInput_EstablishPrimaryHook ( HMODULE                       hModCaller,
   }
 }
 
-
-extern bool
-SK_ImGui_FilterXInput (
-  _In_  DWORD         dwUserIndex,
-  _Out_ XINPUT_STATE *pState );
-
-extern bool
-_Success_(false)
-SK_ImGui_FilterXInputKeystroke (
-  _In_  DWORD             dwUserIndex,
-  _Out_ XINPUT_KEYSTROKE *pKeystroke );
-
 BOOL xinput_enabled = TRUE;
 
 // Unlike our hook, this actually turns XInput off. The hook just causes
@@ -569,6 +558,8 @@ XInputGetState1_4_Detour (
 
       if (pNewestInputDevice != nullptr && (bUseEmulation || pNewestInputDevice->xinput.last_active > ReadULong64Acquire (&last_time [0])))
       {
+        bUseEmulationForSetState = true;
+
         extern XINPUT_STATE hid_to_xi;
                             hid_to_xi = pNewestInputDevice->xinput.prev_report;
         memcpy (  pState,  &hid_to_xi, sizeof (XINPUT_STATE) );
@@ -588,7 +579,13 @@ XInputGetState1_4_Detour (
 
         dwRet = ERROR_SUCCESS;
       }
+
+      else
+        bUseEmulationForSetState = false;
     }
+
+    else if (dwUserIndex == 0)
+      bUseEmulationForSetState = false;
   }
 
   if (SK_ImGui_WantGamepadCapture () || config.input.gamepad.xinput.disable [dwUserIndex])
@@ -832,6 +829,8 @@ XInputGetStateEx1_4_Detour (
 
       if (pNewestInputDevice != nullptr && (bUseEmulation || pNewestInputDevice->xinput.last_active > ReadULong64Acquire (&last_time [0])))
       {
+        bUseEmulationForSetState = true;
+
         extern XINPUT_STATE hid_to_xi;
                             hid_to_xi = pNewestInputDevice->xinput.prev_report;
         memcpy ( pState,   &hid_to_xi, sizeof (XINPUT_STATE) );
@@ -851,7 +850,12 @@ XInputGetStateEx1_4_Detour (
 
         dwRet = ERROR_SUCCESS;
       }
+      else
+        bUseEmulationForSetState = false;
     }
+
+    else if (dwUserIndex == 0)
+      bUseEmulationForSetState = false;
   }
 
   if (SK_ImGui_WantGamepadCapture () || config.input.gamepad.xinput.disable [dwUserIndex])
@@ -1132,7 +1136,6 @@ XInputGetBatteryInformation1_4_Detour (
   {
     if (dwRet != ERROR_DEVICE_NOT_CONNECTED)
     {
-      extern DWORD WINAPI SK_DelayExecution (double dMilliseconds, BOOL bAlertable) noexcept;
       SK_DelayExecution (0.5, TRUE);
     }
   }
@@ -1186,7 +1189,7 @@ XInputSetState1_4_Detour (
 
   DWORD dwRet = ERROR_DEVICE_NOT_CONNECTED;
 
-  if (pNewestInputDevice == nullptr && (! xinput_ctx.preventHapticRecursion (dwUserIndex, true)))
+  if ((! bUseEmulationForSetState) || (pNewestInputDevice == nullptr && (! xinput_ctx.preventHapticRecursion (dwUserIndex, true))))
   {
     SK_XInputContext::instance_s* pCtx =
       &xinput_ctx.XInput1_4;
@@ -1254,7 +1257,7 @@ XInputSetState1_4_Detour (
     }
   }
 
-  if (config.input.gamepad.xinput.emulate && (! config.input.gamepad.xinput.blackout_api) && dwUserIndex == 0)
+  if (config.input.gamepad.xinput.emulate && (! config.input.gamepad.xinput.blackout_api) && dwUserIndex == 0 && (bUseEmulationForSetState || dwRet != ERROR_SUCCESS))
   {
     bool bHasSetState = false;
 
@@ -1284,13 +1287,29 @@ XInputSetState1_4_Detour (
               0x0 // Normalize against largest range seen
             );
 
-            controller.write_output_report ();
+            if ((controller.bBluetooth && config.input.gamepad.bt_input_only))
+            {
+              // Device doesn't want rumble
+            }
+
+            else if ((! (controller.bBluetooth && controller.bSimpleMode)) || (pVibration->wLeftMotorSpeed > 0 || pVibration->wRightMotorSpeed > 0))
+            {
+              if (controller.bBluetooth && (pVibration->wLeftMotorSpeed == 0 && pVibration->wRightMotorSpeed == 0))
+              {
+                if (controller.write_output_report ()) // Let the device decide whether to process this or not
+                  bHasSetState = true;
+              }
+              else
+              {
+                // Force an update
+                if (controller.write_output_report (true))
+                  bHasSetState = true;
+              }
+            }
           }
 
           //SK_XINPUT_WRITE (dwUserIndex)
         }
-
-        bHasSetState = true;
       }
     }
 
@@ -3039,7 +3058,7 @@ SK_XInput_PulseController ( INT   iJoyID,
         &controller == pNewestInputDevice ? vibes.wRightMotorSpeed : 0
       );
 
-      if (controller.write_output_report ())
+      if ((controller.bBluetooth && (config.input.gamepad.bt_input_only || controller.bSimpleMode)) || controller.write_output_report ())
       {
         if (pNewestInputDevice == &controller)
           bSet = true;
@@ -3087,7 +3106,7 @@ void SK_XInput_Refresh (UINT iJoyID)
 }
 
 static bool
-_ShouldRecheckStatus (INT iJoyID)
+_ShouldRecheckXInputStatus (INT iJoyID)
 {
   auto idx =
     std::clamp (iJoyID, 0, (INT)XUSER_MAX_INDEX);
@@ -3241,7 +3260,7 @@ SK_XInput_PollController ( INT           iJoyID,
 
   // This function is actually a performance hazard when no controllers
   //   are plugged in, so ... throttle the sucker.
-  if (_ShouldRecheckStatus (iJoyID))
+  if (_ShouldRecheckXInputStatus (iJoyID))
   {
     // Steam does not disable XInput 1.1, awesome!
     static XInputEnable_pfn
@@ -3315,7 +3334,15 @@ SK_XInput_PollController ( INT           iJoyID,
 
   static DWORD       dwLastPacketUI [4] = { 0, 0, 0, 0 };
   if (std::exchange (dwLastPacketUI [iJoyID], xstate.dwPacketNumber) != xstate.dwPacketNumber)
+  {
     SK_XInput_UpdateSlotForUI (TRUE, iJoyID,  xstate.dwPacketNumber);
+    
+    if (xstate.dwPacketNumber > ReadULongAcquire (&last_packet [iJoyID]))
+    {
+      InterlockedExchange (&last_packet [iJoyID], xstate.dwPacketNumber);
+      InterlockedExchange (&last_time   [iJoyID], SK_QueryPerf ().QuadPart);
+    }
+  }
 
   if (pState != nullptr)
     memcpy (pState, &xstate, sizeof (XINPUT_STATE));
@@ -3530,6 +3557,8 @@ SK_XInput_ZeroHaptics (INT iJoyID)
   SK_XInput_Enable          (orig_enable);
 }
 
+#include <SpecialK/render/d3d11/d3d11_tex_mgr.h>
+
 void
 SK_XInput_TalesOfAriseButtonSwap (XINPUT_STATE* pState)
 {
@@ -3551,7 +3580,6 @@ SK_XInput_TalesOfAriseButtonSwap (XINPUT_STATE* pState)
 
   if (SK_GetFramesDrawn () > 200)
   {
-    extern int            SK_D3D11_ReloadAllTextures (void);
     if (A||B) SK_RunOnce (SK_D3D11_ReloadAllTextures ());
   }
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
 * This file is part of Special K.
 *
 * Special K is free software : you can redistribute it
@@ -55,6 +55,13 @@ using NVSDK_NGX_D3D12_EvaluateFeature_pfn =
                                  const NVSDK_NGX_Parameter       *InParameters,
                                    PFN_NVSDK_NGX_ProgressCallback InCallback );
 
+struct IDXGIAdapter;
+
+using NVSDK_NGX_D3D12_GetFeatureRequirements_pfn =
+      NVSDK_NGX_Result (NVSDK_CONV *)( IDXGIAdapter *Adapter,
+                                 const NVSDK_NGX_FeatureDiscoveryInfo *FeatureDiscoveryInfo,
+                                       NVSDK_NGX_FeatureRequirement   *OutSupported );
+
 static NVSDK_NGX_D3D12_Init_pfn
        NVSDK_NGX_D3D12_Init_Original                    = nullptr;
 static NVSDK_NGX_D3D12_Init_Ext_pfn
@@ -75,6 +82,8 @@ static NVSDK_NGX_D3D12_GetParameters_pfn
        NVSDK_NGX_D3D12_GetParameters_Original           = nullptr;
 static NVSDK_NGX_D3D12_ReleaseFeature_pfn               
        NVSDK_NGX_D3D12_ReleaseFeature_Original          = nullptr;
+static NVSDK_NGX_D3D12_GetFeatureRequirements_pfn
+       NVSDK_NGX_D3D12_GetFeatureRequirements_Original  = nullptr;
 
 NVSDK_NGX_Result
 NVSDK_CONV
@@ -149,6 +158,29 @@ NVSDK_NGX_D3D12_GetParameters_Detour (NVSDK_NGX_Parameter **InParameters)
   }
 
   return ret;
+}
+
+NVSDK_NGX_Result
+NVSDK_CONV
+NVSDK_NGX_D3D12_GetFeatureRequirements_Detour ( IDXGIAdapter                   *Adapter,
+                                          const NVSDK_NGX_FeatureDiscoveryInfo *FeatureDiscoveryInfo,
+                                                NVSDK_NGX_FeatureRequirement   *OutSupported )
+{
+  SK_LOG_FIRST_CALL
+
+  if (config.nvidia.dlss.spoof_support)
+  {
+               OutSupported->MinHWArchitecture = (unsigned int)NV_GPU_ARCHITECTURE_NV40;
+    strncpy_s (OutSupported->MinOSVersion, "1.0.0.0", 254);
+               OutSupported->FeatureSupported  = NVSDK_NGX_FeatureSupportResult_Supported;
+
+    return NVSDK_NGX_Result_Success;
+  }
+
+  return
+    NVSDK_NGX_D3D12_GetFeatureRequirements_Original (
+      Adapter, FeatureDiscoveryInfo, OutSupported
+    );
 }
 
 NVSDK_NGX_Result
@@ -372,7 +404,7 @@ NVSDK_NGX_D3D12_EvaluateFeature_Detour (ID3D12GraphicsCommandList *InCmdList, co
     }
   }
 
-  static auto &rb =
+  const SK_RenderBackend_V2 &rb =
     SK_GetCurrentRenderBackend ();
 
   const double dFrameTimeDeltaInMsec =
@@ -590,5 +622,15 @@ SK_NGX_InitD3D12 (void)
                            "NVSDK_NGX_D3D12_GetCapabilityParameters",
                             NVSDK_NGX_D3D12_GetCapabilityParameters_Detour,
                   (void **)&NVSDK_NGX_D3D12_GetCapabilityParameters_Original );
+
+    // Do not hook unless overriding, NGX will not return valid
+    //   results if the function is hooked
+    if (config.nvidia.dlss.spoof_support)
+    {
+      SK_CreateDLLHook2 ( L"_nvngx.dll",
+                             "NVSDK_NGX_D3D12_GetFeatureRequirements",
+                              NVSDK_NGX_D3D12_GetFeatureRequirements_Detour,
+                    (void **)&NVSDK_NGX_D3D12_GetFeatureRequirements_Original );
+    }
   });
 }

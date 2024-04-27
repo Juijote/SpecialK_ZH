@@ -1,4 +1,4 @@
-// ImGui Win32 + DirectX11 binding
+﻿// ImGui Win32 + DirectX11 binding
 // In this binding, ImTextureID is used to store a 'ID3D11ShaderResourceView*' texture identifier. Read the FAQ about ImTextureID in imgui.cpp.
 
 // You can copy and use unmodified imgui_impl_* files in your project. See main.cpp for an example of using this.
@@ -40,9 +40,6 @@
 #define __SK_SUBSYSTEM__ L"D3D11BkEnd"
 
 bool running_on_12 = false;
-
-extern void
-SK_ImGui_User_NewFrame (void);
 
 // Data
 static ImGuiMouseCursor         g_LastMouseCursor       = ImGuiMouseCursor_COUNT;
@@ -186,7 +183,7 @@ ImGui_ImplDX11_RenderDrawData (ImDrawData* draw_data)
   ImGuiIO& io =
     ImGui::GetIO ();
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (! rb.swapchain)
@@ -688,9 +685,6 @@ ImGui_ImplDX11_RenderDrawData (ImDrawData* draw_data)
             static_cast <LONG> (clip_min.x), static_cast <LONG> (clip_min.y),
             static_cast <LONG> (clip_max.x), static_cast <LONG> (clip_max.y)
           };
-
-          extern ID3D11ShaderResourceView*
-            SK_HDR_GetUnderlayResourceView (void);
 
           ID3D11ShaderResourceView* views [2] =
           {
@@ -1675,7 +1669,7 @@ ImGui_ImplDX11_Init ( IDXGISwapChain*      pSwapChain,
   io.BackendRendererName = "imgui_impl_dx11";
   io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   ImGui_ImplDX11_CreateDeviceObjects (pSwapChain, pDevice, pDevCtx);
@@ -1707,7 +1701,7 @@ ImGui_ImplDX11_NewFrame (void)
   auto& io =
     ImGui::GetIO ();
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   auto pDev =
@@ -1764,7 +1758,7 @@ ImGui_ImplDX11_Resize ( IDXGISwapChain *This,
   UNREFERENCED_PARAMETER (Height);
   UNREFERENCED_PARAMETER (This);
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (! rb.getDevice <ID3D11Device> ())
@@ -1978,12 +1972,7 @@ SK_D3D11_RenderCtx::release (IDXGISwapChain* pSwapChain)
 
     frames_.clear         ();
 
-    void
-    SK_HDR_ReleaseResources (void);
-    SK_HDR_ReleaseResources ();
-
-    void
-    SK_DXGI_ReleaseSRGBLinearizer (void);
+    SK_HDR_ReleaseResources       ();
     SK_DXGI_ReleaseSRGBLinearizer ();
 
     ImGui_ImplDX11_InvalidateDeviceObjects ();
@@ -2008,13 +1997,10 @@ SK_D3D11_RenderCtx::FrameCtx::~FrameCtx (void)
 
 #include <SpecialK/nvapi.h>
 
-extern volatile LONG __SK_NVAPI_UpdateGSync;
-
 //extern D3D11_PSSetSamplers_pfn D3D11_PSSetSamplers_Original;
 
 void  SK_HDR_SnapshotSwapchain (void);
 bool  ImGui_DX11Startup        (IDXGISwapChain* pSwapChain);
-DWORD SK_ImGui_DrawFrame       (DWORD dwFlags, void* user);
 
 void
 SK_D3D11_RenderCtx::present (IDXGISwapChain* pSwapChain)
@@ -2028,7 +2014,7 @@ SK_D3D11_RenderCtx::present (IDXGISwapChain* pSwapChain)
   if (! _pDeviceCtx.p)
     return;
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (! SK_D3D11_EnsureMatchingDevices (pSwapChain, _d3d11_rbk->_pDevice))

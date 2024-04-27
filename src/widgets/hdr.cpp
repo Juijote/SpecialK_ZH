@@ -524,14 +524,14 @@ SK_Display_ComparePathNameGUIDs ( const wchar_t *wszPathName0,
 }
 
 void
-SK_HDR_UpdateMaxLuminanceForActiveDisplay (bool forced = false)
+SK_HDR_UpdateMaxLuminanceForActiveDisplay (bool forced)
 {
   static auto pINI =
       SK_CreateINI (
         (std::wstring (SK_GetInstallPath ()) + LR"(\Global\hdr.ini)").c_str ()
       );
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static std::wstring
@@ -572,7 +572,7 @@ SK_HDR_DisplayProfilerDialog (bool draw = true)
         (std::wstring (SK_GetInstallPath ()) + LR"(\Global\hdr.ini)").c_str ()
       );
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
   
   if (! draw)
@@ -842,7 +842,7 @@ public:
 
       if ( var->getValuePointer () == &__SK_HDR_AnyKind )
       {
-        static auto& rb =
+        SK_RenderBackend& rb =
           SK_GetCurrentRenderBackend ();
 
         if (! *(bool *)val)
@@ -873,7 +873,7 @@ public:
       {
         __SK_HDR_16BitSwap = *(bool *)val;
 
-        static auto& rb =
+        SK_RenderBackend& rb =
           SK_GetCurrentRenderBackend ();
 
         rb.scanout.colorspace_override = __SK_HDR_16BitSwap ? DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709 :
@@ -890,7 +890,7 @@ public:
       {
         __SK_HDR_10BitSwap = *(bool *)val;
 
-        static auto& rb =
+        SK_RenderBackend& rb =
           SK_GetCurrentRenderBackend ();
 
         rb.scanout.colorspace_override = __SK_HDR_10BitSwap ? DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020 :
@@ -911,7 +911,7 @@ public:
   {
     static bool first_widget_run = true;
 
-    static auto& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     if ( __SK_HDR_10BitSwap ||
@@ -955,8 +955,7 @@ public:
     else
     {
       //// Automatically handle sRGB -> Linear if the original SwapChain used it
-      extern bool             bOriginallysRGB;
-      if (rb.srgb_stripped || bOriginallysRGB)
+      if (rb.srgb_stripped || rb.active_traits.bOriginallysRGB)
       {
         // Only apply sRGB -> Linear on the first frame drawn after turning SK HDR on,
         //   allow the user turn it off manually afterwards
@@ -1013,11 +1012,17 @@ public:
 
     // Games where 11-bit remastering is a known stability issue
     //
-    if ( SK_GetCurrentGameID () == SK_GAME_ID::Yakuza0       ||
-         SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami  ||
-         SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami2 ||
-         SK_GetCurrentGameID () == SK_GAME_ID::YakuzaUnderflow )
+    if ( SK_GetCurrentGameID () == SK_GAME_ID::Yakuza0         ||
+         SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami    ||
+         SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami2   ||
+         SK_GetCurrentGameID () == SK_GAME_ID::YakuzaUnderflow ||
+         SK_GetCurrentGameID () == SK_GAME_ID::Tales_of_Arise ) // Artifacts in Tales of Arise
       SK_HDR_RenderTargets_11bpc->PromoteTo16Bit = false;
+
+    // Games where 8-bit Compute Remastering has problems
+    //
+    if (SK_GetCurrentGameID () == SK_GAME_ID::HaroldHalibut)
+      SK_HDR_UnorderedViews_8bpc->PromoteTo16Bit = false;
 
     _SK_HDR_FullRange =
       _CreateConfigParameterBool ( SK_HDR_SECTION,
@@ -1118,7 +1123,7 @@ public:
     if (ImGui::GetFont () == nullptr)
       return;
 
-    static auto& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     static SKTL_BidirectionalHashMap <unsigned char, int>
@@ -1990,7 +1995,7 @@ public:
               ImGui::Spacing  ();
               ImGui::SameLine (); ImGui::SameLine ();
 
-              if (ImGui::Button ("启用处理"))
+              if (ImGui::Button ("启用处理") || preset.cfg_nits->get_value () != 1.0f)
               {
                 if (preset.preset_idx == 2)
                 {
@@ -2420,8 +2425,13 @@ public:
                   ImGui::EndTooltip      ();
                 }
 
+                const bool bDoesNotSupport8BitCompute =
+                  (SK_GetCurrentGameID () == SK_GAME_ID::HaroldHalibut);
+
                 if (bDetails)
                 {
+                  if (bDoesNotSupport8BitCompute) ImGui::BeginDisabled ();
+
                   changed |= ImGui::Checkbox ("重制 8 位计算通道", &SK_HDR_UnorderedViews_8bpc->PromoteTo16Bit);
 
                   if (ImGui::IsItemHovered ())
@@ -2432,6 +2442,8 @@ public:
                                           ReadAcquire64    (&SK_HDR_UnorderedViews_8bpc->BytesAllocated));
                     ImGui::EndTooltip    ();
                   }
+
+                  if (bDoesNotSupport8BitCompute) ImGui::EndDisabled ();
                 }
 
                 ImGui::EndGroup          ();
@@ -2469,6 +2481,11 @@ public:
                 ImGui::SameLine          ();
                 ImGui::BeginGroup        ();
 
+                const bool bDoesNotSupport11BitRender =
+                  (SK_GetCurrentGameID () == SK_GAME_ID::Tales_of_Arise);
+
+                if (bDoesNotSupport11BitRender) ImGui::BeginDisabled ();
+
                 changed |= ImGui::Checkbox ("重制 11 位绘制通道", &SK_HDR_RenderTargets_11bpc->PromoteTo16Bit);
 
                 if (ImGui::IsItemHovered ())
@@ -2481,6 +2498,8 @@ public:
                                           ReadAcquire64    (&SK_HDR_RenderTargets_11bpc->BytesAllocated));
                   ImGui::EndTooltip      ();
                 }
+
+                if (bDoesNotSupport11BitRender) ImGui::EndDisabled ();
 
                 if (bDetails)
                 {
@@ -2666,7 +2685,7 @@ public:
           }
 
           if (
-            ImGui::CollapsingHeader ( "高级###HDR_Widget_Advaced",
+            ImGui::CollapsingHeader ( "高级###HDR_Widget_Advanced",
                                         ImGuiTreeNodeFlags_DefaultOpen )
           )
           {
@@ -2824,6 +2843,23 @@ public:
     }
   }
 
+  void config_base (void) override
+  {
+    SK_Widget::config_base ();
+
+    ImGui::Separator ();
+
+    bool changed = false;
+
+    changed |= ImGui::Checkbox ("Keep 8/10-bpc Render Passes UNORM (Unsigned Normalized) when Remastering", &config.render.hdr.remaster_8bpc_as_unorm);
+    changed |= ImGui::Checkbox ("Keep Sub-Native Resolution Render Passes UNORM when Remastering",          &config.render.hdr.remaster_subnative_as_unorm);
+
+    if (changed)
+    {
+      config.utility.save_async ();
+    }
+  }
+
   void OnConfig (ConfigEvent event) override
   {
     switch (event)
@@ -2925,7 +2961,7 @@ SK_ImGui_DrawGamut (void)
   ImDrawList* draw_list =
     ImGui::GetWindowDrawList ();
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   struct color_triangle_s {

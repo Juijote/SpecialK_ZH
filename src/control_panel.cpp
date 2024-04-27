@@ -31,6 +31,7 @@
 #include <SpecialK/render/d3d11/d3d11_tex_mgr.h>
 #include <SpecialK/render/dxgi/dxgi_util.h>
 #include <SpecialK/render/dxgi/dxgi_hdr.h>
+#include <SpecialK/render/d3d9/d3d9_backend.h>
 
 #include <imgui/font_awesome.h>
 
@@ -110,9 +111,6 @@ SK_API
 void
 SK_ImGui_Toggle (void);
 
-extern bool __stdcall SK_FAR_IsPlugIn      (void);
-extern void __stdcall SK_FAR_ControlPanel  (void);
-
 std::string
 SK_NvAPI_GetGPUInfoStr (void);
 
@@ -171,9 +169,6 @@ UINT SK_DPI_Update (void)
 
   if (GetDpiForSystem != nullptr)
   {
-    extern float
-      g_fDPIScale;
-
     UINT dpi = ( GetDpiForWindow != nullptr &&
                         IsWindow (game_window.hWnd) ) ?
                  GetDpiForWindow (game_window.hWnd)   :
@@ -192,12 +187,9 @@ UINT SK_DPI_Update (void)
     _uiDPI;
 };
 
-extern void __stdcall SK_ImGui_DrawEULA (LPVOID reserved);
-       bool IMGUI_API SK_ImGui_Visible          = false;
-       bool           SK_ImGuiEx_Visible        = false;
-       bool           SK_ControlPanel_Activated = false;
-
-extern void ImGui_ToggleCursor (void);
+bool IMGUI_API SK_ImGui_Visible          = false;
+bool           SK_ImGuiEx_Visible        = false;
+bool           SK_ControlPanel_Activated = false;
 
 bool SK_ImGui_WantExit    = false;
 bool SK_ImGui_WantRestart = false;
@@ -243,8 +235,8 @@ namespace SK_ImGui
     ImGui::PushStyleColor (ImGuiCol_Button, color);
     ImGui::PushID         (text);
 
-    ret = ImGui::Button ( "", ImVec2 (text_size.y + pad * 2,
-                                      text_size.x + pad * 2) );
+    ret = ImGui::Button ( "##VerticalButton", ImVec2 (text_size.y + pad * 2,
+                                                      text_size.x + pad * 2) );
     ImGui::PopStyleColor ();
 
     while ((c = *text++))
@@ -472,8 +464,6 @@ SK_ImGui_SetNextWindowPosCenter (ImGuiCond cond)
 void
 SK_ImGui_ProcessWarnings (void)
 {
-  extern bool
-      SK_ImGui_IsEULAVisible (void);
   if (SK_ImGui_IsEULAVisible ())
     return;
 
@@ -725,7 +715,7 @@ SK_GetFriendlyAppName (void)
                                               PathFileExistsW (L"../.egstore") ||
                           StrStrIW (SK_GetFullyQualifiedApp (), L"Epic Games");
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static std::string appcache_name =
@@ -786,9 +776,6 @@ SK_ImGui_ControlPanelTitle (void)
                                               PathFileExistsW (L"../.egstore") ||
                           StrStrIW (SK_GetFullyQualifiedApp (), L"Epic Games");
 
-  static auto& rb =
-    SK_GetCurrentRenderBackend ();
-
   static bool bTBFix = SK_GetModuleHandle (L"tbfix.dll") != nullptr;
 
   static std::string title;
@@ -804,8 +791,6 @@ SK_ImGui_ControlPanelTitle (void)
   }
 
   title += "  控制面板";
-
-  extern __time64_t __SK_DLL_AttachTime;
 
   __time64_t now     = 0ULL;
    _time64 (&now);
@@ -965,7 +950,7 @@ SK_PlugIn_ControlPanelWidget (void)
 #pragma optimize( "", on )
 
 void
-SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
+SK_Display_ResolutionSelectUI (bool bMarkDirty)
 {
   static bool dirty = true;
 
@@ -975,7 +960,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     return;
   }
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   struct list_s {
@@ -1192,9 +1177,11 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   {
     if (display.attached)
     {
-      outputs.push_back ((int)
-        ((intptr_t)&display -
-         (intptr_t)&rb.displays [0]) / sizeof (SK_RenderBackend_V2::output_s)
+      outputs.push_back (
+        sk::narrow_cast <int>
+          ((((intptr_t)&display -
+             (intptr_t)&rb.displays [0]) /
+      sizeof (SK_RenderBackend_V2::output_s)))
       );
     }
   }
@@ -1224,7 +1211,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   display_list += '\0';
 
-  ImGui::TreePush ("");
+  ImGui::TreePush ("###MonitorSubMenu");
 
   int active_display = rb.active_display;
 
@@ -1447,8 +1434,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       {
         if (rb.fullscreen_exclusive)
         {
-          extern void SK_D3D9_TriggerReset (bool);
-                      SK_D3D9_TriggerReset (false);
+          SK_D3D9_TriggerReset (false);
         }
 
         else // User should not even see this menu in windowed...
@@ -1600,7 +1586,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
     if (state == NV_DITHER_STATE_ENABLED)
     {
-      ImGui::TreePush ("");
+      ImGui::TreePush ("###DitheringSubMenu");
 
       auto bits_orig = bits;
 
@@ -1727,11 +1713,16 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
   ImVec2 vHDRPos;
 
-  if ( rb.displays [rb.active_display].hdr.supported ||
-                    rb.isHDRCapable () )
+  auto& display =
+    rb.displays [rb.active_display];
+
+  static float fWhitePointSliderWidth = 0.0f;
+
+  if ( display.hdr.supported ||
+          rb.isHDRCapable () )
   {
     bool hdr_enable =
-      rb.displays [rb.active_display].hdr.enabled;
+      display.hdr.enabled;
 
     if (ImGui::Checkbox ("启用 HDR", &hdr_enable))
     {
@@ -1744,18 +1735,9 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 
         setHdrState.enableAdvancedColor = hdr_enable;
 
-      if ( ERROR_SUCCESS == DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
+      if ( ERROR_SUCCESS == SK_DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
       {
-        rb.displays [rb.active_display].hdr.enabled = hdr_enable;
-      }
-    }
-
-    if (ImGui::IsItemHovered ())
-    {
-      if (rb.displays [rb.active_display].hdr.enabled)
-      {
-        ImGui::SetTooltip ( "SDR Whitepoint: %4.1f cd/m²",
-                              rb.displays [rb.active_display].hdr.white_level );
+        display.hdr.enabled = hdr_enable;
       }
     }
 
@@ -1789,6 +1771,29 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
     vHDRPos.x =
       ImGui::GetCursorPosX ();
     ImGui::Spacing         ();
+  }
+
+  ImGui::BeginGroup ();
+
+  if (display.hdr.enabled)
+  {
+    float orig_lvl  = display.hdr.white_level;
+    float sdr_white =
+      display.hdr.white_level;
+
+    ImGui::PushItemWidth (fWhitePointSliderWidth);
+
+    if (ImGui::SliderFloat ("###SDR_WHITE_SLIDER", &sdr_white, 80.0f, 480.0f, "SDR White: %4.1f cd/m²"))
+    {
+      // Sanity checks because this API is somewhat expensive and triggers
+      //   a WM_DISPLAYCHANGE even if nothing changes
+      if (sdr_white >= 80.0f && sdr_white <= 480.0f && sdr_white != orig_lvl)
+      {
+        display.setSDRWhiteLevel (sdr_white);
+      }
+    }
+
+    ImGui::PopItemWidth ();
   }
 
   static bool bDPIAware  =
@@ -1895,19 +1900,30 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       ImGui::SetTooltip ("对 “设备监测”上的分辨率或刷新率的更改将适用于今后运行的游戏");
 
   ImGui::EndGroup    ();
+  fWhitePointSliderWidth =
+    ImGui::GetItemRectSize ().x;
+  ImGui::EndGroup    ();
   ImGui::SameLine    ();
   ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
   ImGui::SameLine    ();
   ImGui::BeginGroup  ();
 
-  auto &display =
-    rb.displays [rb.active_display];
+  static bool restart_required = false;
+         bool hovering_rebar   = false;
+         bool configure_rebar  = false;
 
   ImGui::Separator   ();
   ImGui::BeginGroup  ();
   ImGui::Text        ("多平面叠加: ");
   ImGui::Text        ("硬件调度: ");
   ImGui::Text        ("硬件绘制队列: ");
+  if (sk::NVAPI::nv_hardware)
+  {
+    ImGui::Text      ("可调整大小条形图: ");
+
+    configure_rebar = ImGui::IsItemClicked (ImGuiMouseButton_Right);
+    hovering_rebar  = ImGui::IsItemHovered ();
+  }
   ImGui::EndGroup    ();
   ImGui::SameLine    ();
   ImGui::BeginGroup  ();
@@ -1953,7 +1969,69 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
   _PrintWDDMCapability (display.wddm_caps._3_0.HwFlipQueueEnabled,
                         display.wddm_caps._3_0.HwFlipQueueSupportState);
 
+  if (sk::NVAPI::nv_hardware)
+  {
+    if (rb.nvapi.rebar)
+      ImGui::TextColored ( ImVec4 (0.f, 1.f, 0.f, 1.f), "On " );
+    else
+      ImGui::TextColored ( ImVec4 (1.f, 1.f, 0.f, 1.f), "Off " );
+
+    configure_rebar |= ImGui::IsItemClicked (ImGuiMouseButton_Right);
+    hovering_rebar  |= ImGui::IsItemHovered ();
+
+    if (hovering_rebar)
+    {
+      ImGui::BeginTooltip    ( );
+      ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
+
+      ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
+      ImGui::SameLine        ( );
+      ImGui::TextUnformatted ("Right-click to configure");
+      ImGui::PopStyleColor   ( );
+      ImGui::EndTooltip      ( );
+    }
+
+    if (configure_rebar)
+    {
+      ImGui::OpenPopup         ("ReBarSubMenu");
+      ImGui::SetNextWindowSize (ImVec2 (-1.0f, -1.0f), ImGuiCond_Always);
+    }
+
+    if (ImGui::BeginPopup      ("ReBarSubMenu"))
+    {
+      bool change_value =
+        ImGui::Checkbox ("Enable###EnableReBar", &rb.nvapi.rebar);
+
+      bool reset_value =
+        ImGui::Button ("Reset to Default");
+
+      if (change_value || reset_value)
+      {
+        std::wstring wszCommand =
+          SK_FormatStringW (
+            L"rundll32.exe \"%ws\", RunDLL_NvAPI_SetDWORD %x %ws %ws",
+              SK_GetModuleFullName (SK_GetDLL ()).c_str (),
+                0x000F00BA, reset_value ? L"~"   :
+                         rb.nvapi.rebar ? L"0x1" :
+                                          L"0x0",
+                  sk::NVAPI::app_name.c_str ()
+          );
+
+        SK_ElevateToAdmin (wszCommand.c_str (), false);
+        restart_required = true;
+
+        ImGui::CloseCurrentPopup ();
+      }
+
+      ImGui::EndPopup ();
+    }
+  }
+
   ImGui::EndGroup    ();
+
+  if (restart_required)
+      ImGui::BulletText ("Game Restart Required");
+
   ImGui::EndGroup    ();
 
   if (ImGui::Checkbox ("宽高比拉伸", &config.display.aspect_ratio_stretch))
@@ -2046,7 +2124,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
       }
     }
 
-    if (ImGui::Combo ("", &iVirtualAspect, " 5:4\0 4:3\0 3:2\0 16:10\0 16:9\0 21:9\0 Custom\0\0"))
+    if (ImGui::Combo ("###VirtualAspectRatio", &iVirtualAspect, " 5:4\0 4:3\0 3:2\0 16:10\0 16:9\0 21:9\0 Custom\0\0"))
     {
       switch (iVirtualAspect)
       {
@@ -2139,8 +2217,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
           MAKELPARAM (config.window.res.override.x, config.window.res.override.y)
                     );
 
-        extern void SK_Win32_BringBackgroundWindowToTop (void);
-                    SK_Win32_BringBackgroundWindowToTop ();
+        SK_Win32_BringBackgroundWindowToTop ();
       }
 
       SK_ImGui_AdjustCursor ();
@@ -2210,7 +2287,7 @@ SK_Display_ResolutionSelectUI (bool bMarkDirty = false)
 void
 DisplayModeMenu (bool windowed)
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   enum {
@@ -2931,29 +3008,20 @@ DisplayModeMenu (bool windowed)
   }
 }
 
-
-extern float __target_fps;
-extern float __target_fps_bg;
-
-extern void SK_ImGui_DrawGraph_FramePacing (void);
-extern void SK_ImGui_DrawGraph_Latency     (bool predraw);
-extern void SK_ImGui_DrawConfig_Latency    (void);
-
-extern void SK_Framerate_EnergyControlPanel (void);
-
 void
 SK_NV_LatencyControlPanel (void)
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (! (sk::NVAPI::nv_hardware && SK_API_IsDXGIBased (rb.api)))
     return;
 
-  ImGui::Separator ();
+  ImGui::Separator  ();
 
   bool bLatencyManagement =
-    ImGui::TreeNodeEx ("NVIDIA 延迟管理", ImGuiTreeNodeFlags_DefaultOpen);
+    ImGui::TreeNodeEx ("NVIDIA 延迟管理", ImGuiTreeNodeFlags_DefaultOpen |
+                                                    ImGuiTreeNodeFlags_AllowOverlap);
 
   static bool     native_disabled =
     config.nvidia.reflex.disable_native;
@@ -2998,7 +3066,9 @@ SK_NV_LatencyControlPanel (void)
   }
 
   if (! bLatencyManagement)
+  {
     return;
+  }
 
   if ((! rb.displays [rb.active_display].primary) && config.nvidia.reflex.low_latency
                                                   && config.nvidia.reflex.enable)
@@ -3028,7 +3098,7 @@ SK_DXGI_FullscreenControlPanel (void)
   {
     ImGui::TextUnformatted ("D3D11 / D3D12 全Ping设置\t(Experimental)");
 
-    ImGui::TreePush ("");
+    ImGui::TreePush ("###DXGI_FullscreenCpl");
 
     if (ImGui::Checkbox ("启用假全Ping模式", &config.render.dxgi.fake_fullscreen_mode))
     {
@@ -3065,7 +3135,7 @@ SK_NV_GSYNCControlPanel ()
 {
   if (sk::NVAPI::nv_hardware)
   {
-    static auto& rb =
+    SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     SK_RunOnce (rb.gsync_state.disabled.for_app = !SK_NvAPI_GetVRREnablement ());
@@ -3074,7 +3144,7 @@ SK_NV_GSYNCControlPanel ()
     {
       ImGui::TextUnformatted ("NVIDIA G-Sync 设置");
 
-      ImGui::TreePush ("");
+      ImGui::TreePush ("###GSyncConfig");
 
       static bool bEnableFastSync =
              SK_NvAPI_GetFastSync ();
@@ -3120,7 +3190,7 @@ SK_ImGui_ControlPanel (void)
   auto& io =
     ImGui::GetIO ();
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   SK_TLS *pTLS =
@@ -3380,9 +3450,7 @@ SK_ImGui_ControlPanel (void)
 
         if ((! SK_IsInjected ()) || SK_Inject_IsHookActive ())
         {
-          extern bool
-              SK_CanRestartGame (void);
-          if (SK_CanRestartGame () && ImGui::MenuItem ("重启游戏"))
+          if (SK_CanRestartGame () && ImGui::MenuItem ("重启游戏##RestartGame"))
           {
             SK_ImGui_WantRestart = true;
             SK_ImGui_WantExit    = true;
@@ -3454,7 +3522,7 @@ SK_ImGui_ControlPanel (void)
           ImGui::Spacing         ( );
           ImGui::Spacing         ( );
 
-          ImGui::TreePush        ("");
+          ImGui::TreePush        ("###ColorCorrectionWarning");
           ImGui::BulletText      ("仅当 SK 自己的 HDR 处于活动状态且当前游戏为 D3D11 时，第三方叠加滑块才会出现");
           ImGui::BulletText      ("第三方叠加的 HDR 颜色校正 -确实 -适用于 D3D12，但它使用 D3D11 中设置的值");
 
@@ -3463,7 +3531,7 @@ SK_ImGui_ControlPanel (void)
 
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.933f, .933f, .933f, 1.f));
 
-          ImGui::TextUnformatted ("对于原生 HDR 游戏中的叠加色彩校正，请使用 SK 的 HDR10 或 scRGB 模式 + HDR10 Native 或 scRGB Native Preset");
+        //ImGui::TextUnformatted ("对于原生 HDR 游戏中的叠加色彩校正，请使用 SK 的 HDR10 或 scRGB 模式 + HDR10 Native 或 scRGB Native Preset");
           ImGui::TreePop         ( );
           ImGui::PopStyleColor   (4);
           ImGui::EndTooltip      ( );
@@ -3653,7 +3721,7 @@ SK_ImGui_ControlPanel (void)
 
         if (config.screenshots.png_compress)
         {
-          ImGui::TreePush ("");
+          ImGui::TreePush ("###ScreenshotEncoderCfg");
 
           if (config.screenshots.use_avif)
           {
@@ -3752,7 +3820,7 @@ SK_ImGui_ControlPanel (void)
             rb.screenshot_mgr->getRepoStats (hdr_changed);
 
           ImGui::BeginGroup (  );
-          ImGui::TreePush   ("");
+          ImGui::TreePush   ("###ScreenshotSizeTotal");
           ImGui::Text ( "%u 文件使用 %ws",
                           repo.files,
                             SK_File_SizeToString (repo.liSize.QuadPart, Auto, pTLS).data ()
@@ -3830,8 +3898,6 @@ SK_ImGui_ControlPanel (void)
 
           if (ImGui::Checkbox ("启用 HDR###EnableHDRUsingCPL", &bEnabled))
           {
-            extern void
-            SK_Display_EnableHDR (SK_RenderBackend_V2::output_s *pDisplay);
             SK_Display_EnableHDR (&rb.displays [rb.active_display]);
 
             hdr_toggled = true;
@@ -4163,7 +4229,7 @@ SK_ImGui_ControlPanel (void)
 
         //ImGui::MenuItem ("Special K Documentation (Work in Progress)", "Ctrl + Shift + Nul", &selected, false);
 
-        ImGui::TreePush ("");
+        ImGui::TreePush ("###HelpSubmenu");
         {
 #if 0
           if (ImGui::MenuItem (R"("Kaldaien's Mod")", "论坛", &selected, true))
@@ -4288,10 +4354,6 @@ SK_ImGui_ControlPanel (void)
 
         if (sk::NVAPI::nv_hardware)
         {
-          extern INT  SK_NvAPI_GetAnselEnablement (DLL_ROLE role);
-          extern BOOL SK_NvAPI_EnableAnsel        (DLL_ROLE role);
-          extern BOOL SK_NvAPI_DisableAnsel       (DLL_ROLE role);
-
           static INT enablement =
             SK_NvAPI_GetAnselEnablement (SK_GetDLLRole ());
 
@@ -4321,7 +4383,7 @@ SK_ImGui_ControlPanel (void)
           }
         }
 
-        ImGui::TreePush  ("");
+        ImGui::TreePush  ("###InjectionSubMenu");
 
         if (SK_IsInjected ())
         {
@@ -4468,8 +4530,8 @@ SK_ImGui_ControlPanel (void)
        ImGui::TreePop   ();
        ImGui::Separator ();
 
-       ImGui::TreePush ("");
-       ImGui::TreePush ("");
+       ImGui::TreePush ("###PlugInTree0");
+       ImGui::TreePush ("###PlugInTree1");
 
        for ( auto& import : imports->imports )
        {
@@ -4743,12 +4805,10 @@ SK_ImGui_ControlPanel (void)
 
     ImGui::Separator ();
 
-    // Flip model may be fudging with the actual format of the framebuffer
-    extern bool bOriginallysRGB;
-
     char szResolution [128] = { };
 
-    bool sRGB     = (rb.framebuffer_flags & SK_FRAMEBUFFER_FLAG_SRGB) || bOriginallysRGB;
+    // Flip model may be fudging with the actual format of the framebuffer
+    bool sRGB     = (rb.framebuffer_flags & SK_FRAMEBUFFER_FLAG_SRGB) || rb.active_traits.bOriginallysRGB;
     bool hdr_out  =  rb.isHDRCapable ()  &&
                      rb.isHDRActive  ();
     bool override = false;
@@ -4946,15 +5006,27 @@ SK_ImGui_ControlPanel (void)
       {
         strcat (szGSyncStatus, "    Supported + ");
 
+        auto& nvapi_display =
+          rb.displays [rb.active_display].nvapi;
+
+        float fVBlankHz =
+          nvapi_display.vblank_counter.getVBlankHz (
+                    SK::ControlPanel::current_time );
+
+        if (rb.api == SK_RenderAPI::D3D12)
+        {
+          float fFixedHz =
+            (static_cast <float> (rb.displays [rb.active_display].signal.timing.vsync_freq.Numerator) /
+             static_cast <float> (rb.displays [rb.active_display].signal.timing.vsync_freq.Denominator));
+
+          if (fVBlankHz <= fFixedHz - (fFixedHz * fFixedHz) / 3600.0)
+          {
+            rb.gsync_state.active = true;
+          }
+        }
+
         if (rb.gsync_state.active)
         {
-          auto& nvapi_display =
-            rb.displays [rb.active_display].nvapi;
-
-          float fVBlankHz =
-            nvapi_display.vblank_counter.getVBlankHz (
-                      SK::ControlPanel::current_time );
-
           // Is it really "active" if we can't calculate the rate?
           if (fVBlankHz == 0.0f)
             strcat (szGSyncStatus, "Active " ICON_FA_QUESTION_CIRCLE);
@@ -5096,7 +5168,7 @@ SK_ImGui_ControlPanel (void)
 
     if ((! has_own_scale) && ImGui::CollapsingHeader ("用户界面设置"))
     {
-      ImGui::TreePush    ("");
+      ImGui::TreePush    ("###UIRenderSettings");
 
       if ( ImGui::SliderFloat ( "###IMGUI_SCALE", &config.imgui.scale,
                                   1.0f, 3.0f, "用户界面缩放比例 %.2f" ) )
@@ -5137,15 +5209,15 @@ SK_ImGui_ControlPanel (void)
     {
       case SK_GAME_ID::GalGun_Double_Peace:
       {
-        extern bool SK_GalGun_PlugInCfg (void);
-                    SK_GalGun_PlugInCfg ();
+        SK_GalGun_PlugInCfg ();
       } break;
 
+#ifdef _WIN64
       case SK_GAME_ID::FarCry6:
       {
-        extern bool SK_FarCry6_PlugInCfg (void);
-                    SK_FarCry6_PlugInCfg ();
+        SK_FarCry6_PlugInCfg ();
       } break;
+#endif
     };
 
 
@@ -5178,23 +5250,315 @@ SK_ImGui_ControlPanel (void)
         ImGui::BeginGroup ();
         ImGui::BeginGroup ();
 
+        static bool bRefreshRateChanged = false;
+        static bool bDisplayChanged     = false;
+
+        const double dRefreshRate =
+          static_cast <double> (rb.displays [rb.active_display].signal.timing.vsync_freq.Numerator) /
+          static_cast <double> (rb.displays [rb.active_display].signal.timing.vsync_freq.Denominator);
+
+        if ( config.render.framerate.last_refresh_rate != 0.0f &&
+             ( config.render.framerate.last_refresh_rate > dRefreshRate + 0.1 ||
+               config.render.framerate.last_refresh_rate < dRefreshRate - 0.1 ) )
+        {
+          bRefreshRateChanged = true;
+        }
+
+        else
+        if (            (! config.render.framerate.last_monitor_path.empty ()) &&
+            0 != _wcsicmp (config.render.framerate.last_monitor_path.c_str (), rb.displays [rb.active_display].path_name))
+        {
+          bDisplayChanged = true;
+        }
+
+        if (bRefreshRateChanged)
+        {
+          ImGui::TextColored (ImVec4 (1.f, .9f, .1f, 1.f), ICON_FA_QUESTION_CIRCLE);
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip (
+              "显示器的刷新率与上次设置此 FPS 限制时不同，请通过设置新值来确认该限制是否正确。"
+            );
+          }
+
+          ImGui::SameLine    ();
+        }
+
+        else if (bDisplayChanged)
+        {
+          ImGui::TextColored (ImVec4 (1.f, .9f, .1f, 1.f), ICON_FA_QUESTION_CIRCLE);
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip (
+              "活动显示设备与上次设置此 FPS 限制时不同，请通过设置新值来确认该限制是否正确。"
+            );
+          }
+
+          ImGui::SameLine    ();
+        }
+
+        static bool bRefreshRateChanged = false;
+        static bool bDisplayChanged     = false;
+
+        const double dRefreshRate =
+          static_cast <double> (rb.displays [rb.active_display].signal.timing.vsync_freq.Numerator) /
+          static_cast <double> (rb.displays [rb.active_display].signal.timing.vsync_freq.Denominator);
+
+        if ( config.render.framerate.last_refresh_rate != 0.0f &&
+             ( config.render.framerate.last_refresh_rate > dRefreshRate + 0.1 ||
+               config.render.framerate.last_refresh_rate < dRefreshRate - 0.1 ) )
+        {
+          bRefreshRateChanged = true;
+        }
+
+        else
+        if (            (! config.render.framerate.last_monitor_path.empty ()) &&
+            0 != _wcsicmp (config.render.framerate.last_monitor_path.c_str (), rb.displays [rb.active_display].path_name))
+        {
+          bDisplayChanged = true;
+        }
+
+        if (bRefreshRateChanged)
+        {
+          ImGui::TextColored (ImVec4 (1.f, .9f, .1f, 1.f), ICON_FA_QUESTION_CIRCLE);
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip (
+              "显示器的刷新率与上次设置此 FPS 限制时不同，请通过设置新值来确认该限制是否正确。"
+            );
+          }
+
+          ImGui::SameLine    ();
+        }
+
+        else if (bDisplayChanged)
+        {
+          ImGui::TextColored (ImVec4 (1.f, .9f, .1f, 1.f), ICON_FA_QUESTION_CIRCLE);
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip (
+              "活动显示设备与上次设置此 FPS 限制时不同，请通过设置新值来确认该限制是否正确。"
+            );
+          }
+
+          ImGui::SameLine    ();
+        }
+
         if (ImGui::Checkbox ("FPS 限制", &limit))
         {
+          if (bRefreshRateChanged || bDisplayChanged)
+          {
+            double dVRROptimalFPS =
+              ( config.render.framerate.last_refresh_rate -
+               (config.render.framerate.last_refresh_rate *
+                config.render.framerate.last_refresh_rate) / 3600.0 );
+
+            if ( ( config.render.framerate.target_fps <=  config.render.framerate.last_refresh_rate + 0.1f && 
+                   config.render.framerate.target_fps >=  config.render.framerate.last_refresh_rate - 0.1f )
+              || ( config.render.framerate.target_fps <= dVRROptimalFPS + 0.1f &&
+                   config.render.framerate.target_fps >= dVRROptimalFPS - 0.1f ) 
+              || ( config.render.framerate.target_fps <= dVRROptimalFPS - 0.005 * dVRROptimalFPS + 0.1f &&
+                   config.render.framerate.target_fps >= dVRROptimalFPS - 0.005 * dVRROptimalFPS - 0.1f ) )
+            {
+              // Re-apply AutoVRR
+              if ( config.render.framerate.auto_low_latency.triggered ||
+                   config.render.framerate.auto_low_latency.policy.global_opt )
+              {
+                config.render.framerate.auto_low_latency.triggered = false;
+                config.render.framerate.auto_low_latency.waiting   = true;
+              }
+
+              __target_fps = 0.0f;
+            }
+          }
+
           if (__target_fps != 0.0f) // Negative zero... it exists and we don't want it.
               __target_fps = -__target_fps;
 
           if (__target_fps == 0.0f)
           {
             __target_fps =
-              static_cast <float> (SK_GetCurrentRenderBackend ().windows.device.getDevCaps ().res.refresh);
+              static_cast <float> (dRefreshRate);
           }
 
-          config.render.framerate.target_fps = __target_fps;
+          config.render.framerate.target_fps        = __target_fps;
+          config.render.framerate.last_refresh_rate = 
+            static_cast <float> (dRefreshRate);
+          config.render.framerate.last_monitor_path = rb.displays [rb.active_display].path_name;
+
+          bRefreshRateChanged = false;
+          bDisplayChanged     = false;
+
+          config.utility.save_async ();
         }
+
+        float fps_slider_width    = 0.0f;
 
         bool bg_limit =
               ( limit &&
           ( __target_fps_bg != 0.0f ) );
+
+        auto _GraphMeasurementConfig = [&](void)
+        {
+          ImGui::BeginGroup      ();
+          float cursor_y =
+            ImGui::GetCursorPosY ();
+          ImGui::Spacing         ();
+          ImGui::TextUnformatted ("Graph Measurement");
+          ImGui::EndGroup        ();
+          ImGui::SameLine        ();
+          ImGui::PushItemWidth   (fps_slider_width - ImGui::GetStyle ().ItemSpacing.x);
+          ImGui::SetCursorPos    (ImVec2 ( ImGui::GetCursorPosX (), cursor_y ));
+          bool method_changed =
+            ImGui::Combo ( "###Graph_Method", &config.fps.timing_method,
+                           "Frame Pace\t (Limiter Delay-to-Limiter Delay)\0"
+                           "Frame Submit  (Present-to-Present)\0"
+                           "Frame Start\t (Frame Begin-to-Frame Begin)\0\0" );
+          ImGui::PopItemWidth    ();
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::BeginTooltip    ();
+            ImGui::TextUnformatted ("Timing Method Used to Measure the Interval Between Two Frames.");
+            ImGui::Separator       ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
+            ImGui::TextUnformatted ("Frame Start  (Latency-Focused)");
+            ImGui::PopStyleColor   ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
+            ImGui::BeginGroup      ();
+            ImGui::BulletText      ("What: ");
+            ImGui::BulletText      ("When: ");
+            ImGui::BulletText      ("Why: ");
+            ImGui::EndGroup        ();
+            ImGui::SameLine        ();
+            ImGui::PopStyleColor   ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Earliest possible time a game can start its next frame.");
+            ImGui::TextUnformatted ("After SK's hook on Present returns control to the game.");
+            ImGui::TextUnformatted ("Measures frametime consistency from the perspective of the game engine.");
+            ImGui::EndGroup        ();
+
+#if 0
+            // CPU=Done,
+            // GPU=Started (possibly finished),
+            // Display=May have started scanning the frame submitted immediately before this
+
+            ImGui::Spacing         ();
+
+            ImGui::TreePush        ("");
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("SwapChain Activity: ");
+            ImGui::TextUnformatted ("Third-Party Overlays: ");
+            ImGui::TextUnformatted ("Third-Party Limiters (Smooth): ");
+            ImGui::EndGroup        ();
+            ImGui::SameLine        ();
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Flip Enqueued; Wait-Sync: GPU Completion + Display Scanout Begin (if VSYNC)");
+            ImGui::TextUnformatted ("Finished Drawing");
+            ImGui::TextUnformatted ("Just Finished / Will Start Immediately");
+            ImGui::EndGroup        ();
+            ImGui::TreePop         ();
+#endif
+
+            ImGui::PopStyleColor   ();
+            ImGui::Spacing         ();
+            ImGui::Spacing         ();
+
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
+            ImGui::TextUnformatted ("Frame Submit  (Smoothness-Focused)");
+            ImGui::PopStyleColor   ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
+            ImGui::BeginGroup      ();
+            ImGui::BulletText      ("What: ");
+            ImGui::BulletText      ("When: ");
+            ImGui::BulletText      ("Why: ");
+            ImGui::EndGroup        ();
+            ImGui::SameLine        ();
+            ImGui::PopStyleColor   ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Earliest possible submission time for a finished (CPU-side) frame.");
+            ImGui::TextUnformatted ("When SK's Present hook is called; before submission to flip queue.");
+            ImGui::TextUnformatted ("Measures frametime consistency from the perspective of display-out.");
+            ImGui::EndGroup        ();
+
+            // CPU=Finishing,
+            // GPU=Started (any work not-yet-submitted was added by overlays),
+            // Display=Scanning previous frame
+
+#if 0
+            ImGui::Spacing         ();
+
+            ImGui::TreePush        ("");
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("SwapChain Activity: ");
+            ImGui::TextUnformatted ("Third-Party Overlays: ");
+            ImGui::TextUnformatted ("Third-Party Limiters (Low-Latency): ");
+            ImGui::EndGroup        ();
+            ImGui::SameLine        ();
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Flip Queue Unchanged; Wait-Sync: CPU (Third-Party Overlays) and GPU Completion");
+            ImGui::TextUnformatted ("Have Drawn or are Starting to Draw");
+            ImGui::TextUnformatted ("Just Finished / Will Start Immediately");
+            ImGui::EndGroup        ();
+            ImGui::TreePop         ();
+            ImGui::BulletText      ("Work: Buffer Flip: not enqueued, 3rd-party overlays: Drawing, 3rd-party limiters: Have run if they favor smoothness");
+
+            // CPU=Finished or Finishing,
+            // GPU=Started or Possibly Finished,
+            // Display=Scanning previous frame
+#endif
+            ImGui::PopStyleColor   ();
+            ImGui::Spacing         ();
+            ImGui::Spacing         ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
+            ImGui::TextUnformatted ("Frame Pace  (Limiter-Focused)");
+            ImGui::PopStyleColor   ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
+            ImGui::BeginGroup      ();
+            ImGui::BulletText      ("What: ");
+            ImGui::BulletText      ("When: ");
+            ImGui::BulletText      ("Why: ");
+            ImGui::EndGroup        ();
+            ImGui::SameLine        ();
+            ImGui::PopStyleColor   ();
+            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Earliest possible frame begin/end per-configured framerate limit.");
+            ImGui::TextUnformatted ("SK's Framerate Limiter has finished delaying a frame's begin/end.");
+            ImGui::TextUnformatted ("Measures SK's frame pacing efficacy for the active limit settings.");
+            ImGui::EndGroup        ();
+            ImGui::PopStyleColor   ();
+
+#if 0
+            ImGui::Spacing         ();
+            ImGui::TreePush        ("");
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Normal Pacing: ");
+            ImGui::TextUnformatted ("VRR Pacing: ");
+            ImGui::TextUnformatted ("Latent Sync: ");
+            ImGui::EndGroup        ();
+            ImGui::SameLine        ();
+            ImGui::BeginGroup      ();
+            ImGui::TextUnformatted ("Equivalent to Frame Submit");
+            ImGui::TextUnformatted ("Equivalent to Frame Start");
+            ImGui::TextUnformatted ("Hybrid of Frame Submit and Frame Start");
+            ImGui::EndGroup        ();
+            ImGui::TreePop         ();
+#endif
+            ImGui::EndTooltip      ();
+          }
+
+          if (method_changed)
+          {
+            config.utility.save_async ();
+          }
+        };
 
         if (limit)
         {
@@ -5268,7 +5632,7 @@ SK_ImGui_ControlPanel (void)
         };
 
         ImGui::EndGroup   ();
-        ImGui::SameLine   ();
+        ImGui::SameLine   (0.0f, ImGui::GetStyle ().ItemSpacing.x * 2.0f);
         ImGui::BeginGroup ();
 
         auto _LimitSlider =
@@ -5286,8 +5650,13 @@ SK_ImGui_ControlPanel (void)
             ( active ? ImColor (1.00f, 1.00f, 1.00f).Value
                      : ImColor (0.73f, 0.73f, 0.73f).Value ) );
 
+          float max_limit =
+            static_cast <float> (
+              rb.windows.device.getDevCaps ().res.refresh
+            ) * 1.25f;
+
           if ( ImGui::DragFloat ( label, &target_mag,
-                                      1.0f, 24.0f, 166.0f, target > 0 ?
+                                      1.0f, 24.0f, max_limit, target > 0 ?
                           ( active ? "%6.3f fps  (限制参与)" :
                                      "%6.3f fps  (~窗口状态)" )
                                                                   :
@@ -5428,9 +5797,6 @@ SK_ImGui_ControlPanel (void)
 
             bFirstFrame = false;
 
-
-            extern int __SK_LatentSyncSkip;
-
             int maxLatentSyncSkip = 0;/*(
               SK_API_IsLayeredOnD3D11 (rb.api) ||
               SK_API_IsDirect3D9      (rb.api) ||
@@ -5510,7 +5876,7 @@ SK_ImGui_ControlPanel (void)
 
             if (bLatentSync)
             {
-              ImGui::TreePush ("");
+              ImGui::TreePush ("###LatentSync");
 
               double dRefresh =
                 rb.getActiveRefreshRate ();
@@ -5618,8 +5984,7 @@ SK_ImGui_ControlPanel (void)
             //{
             //
             //}
-            extern void SK_ImGui_LatentSyncConfig (void);
-                        SK_ImGui_LatentSyncConfig ();
+            SK_ImGui_LatentSyncConfig ();
 
             ImGui::EndPopup     ();
           }
@@ -5663,170 +6028,46 @@ SK_ImGui_ControlPanel (void)
                                             "TargetFPS",
                         (SK_IsGameWindowActive () || (! bg_limit)) );
 
+        fps_slider_width = ImGui::GetItemRectSize ().x;
+
+
         if (limit)
         {
-          if (advanced && bg_limit)
+          if (advanced)
           {
-            _LimitSlider (
-              __target_fps_bg, "###Background_FPS",
-                                  "BackgroundFPS", (! SK_IsGameWindowActive ())
-            );
+            if (bg_limit)
+            {
+              _LimitSlider (
+                __target_fps_bg, "###Background_FPS",
+                                    "BackgroundFPS", (! SK_IsGameWindowActive ())
+              );
+            }
+
+            else
+            {
+              fps_slider_width -= ImGui::CalcTextSize ("Graph Measurement").x;
+              _GraphMeasurementConfig ();
+            }
           }
         }
+
+        else
+        {
+          bg_limit = false;
+        };
+
         ImGui::EndGroup ();
 
-        if (advanced)
+        if (((! limit) || bg_limit) && advanced)
         {
-          ImGui::BeginGroup      ();
-          ImGui::Spacing         ();
-          ImGui::TextUnformatted ("Graph Measurement");
-          ImGui::EndGroup        ();
-          ImGui::SameLine        ();
-          bool method_changed =
-            ImGui::Combo ( "###Graph_Method", &config.fps.timing_method,
-                           "Frame Pace\t (Limiter Delay-to-Limiter Delay)\0"
-                           "Frame Submit  (Present-to-Present)\0"
-                           "Frame Start\t (Frame Begin-to-Frame Begin)\0\0" );
-
-          if (ImGui::IsItemHovered ())
+          if (bg_limit)
           {
-            ImGui::BeginTooltip    ();
-            ImGui::TextUnformatted ("Timing Method Used to Measure the Interval Between Two Frames.");
-            ImGui::Separator       ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
-            ImGui::TextUnformatted ("Frame Start  (Latency-Focused)");
-            ImGui::PopStyleColor   ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-            ImGui::BeginGroup      ();
-            ImGui::BulletText      ("What: ");
-            ImGui::BulletText      ("When: ");
-            ImGui::BulletText      ("Why: ");
-            ImGui::EndGroup        ();
-            ImGui::SameLine        ();
-            ImGui::PopStyleColor   ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Earliest possible time a game can start its next frame.");
-            ImGui::TextUnformatted ("After SK's hook on Present returns control to the game.");
-            ImGui::TextUnformatted ("Measures frametime consistency from the perspective of the game engine.");
-            ImGui::EndGroup        ();
-
-#if 0
-            // CPU=Done,
-            // GPU=Started (possibly finished),
-            // Display=May have started scanning the frame submitted immediately before this
-
-            ImGui::Spacing         ();
-
-            ImGui::TreePush        ("");
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("SwapChain Activity: ");
-            ImGui::TextUnformatted ("Third-Party Overlays: ");
-            ImGui::TextUnformatted ("Third-Party Limiters (Smooth): ");
-            ImGui::EndGroup        ();
-            ImGui::SameLine        ();
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Flip Enqueued; Wait-Sync: GPU Completion + Display Scanout Begin (if VSYNC)");
-            ImGui::TextUnformatted ("Finished Drawing");
-            ImGui::TextUnformatted ("Just Finished / Will Start Immediately");
-            ImGui::EndGroup        ();
-            ImGui::TreePop         ();
-#endif
-
-            ImGui::PopStyleColor   ();
-            ImGui::Spacing         ();
-            ImGui::Spacing         ();
-
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
-            ImGui::TextUnformatted ("Frame Submit  (Smoothness-Focused)");
-            ImGui::PopStyleColor   ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-            ImGui::BeginGroup      ();
-            ImGui::BulletText      ("What: ");
-            ImGui::BulletText      ("When: ");
-            ImGui::BulletText      ("Why: ");
-            ImGui::EndGroup        ();
-            ImGui::SameLine        ();
-            ImGui::PopStyleColor   ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Earliest possible submission time for a finished (CPU-side) frame.");
-            ImGui::TextUnformatted ("When SK's Present hook is called; before submission to flip queue.");
-            ImGui::TextUnformatted ("Measures frametime consistency from the perspective of display-out.");
-            ImGui::EndGroup        ();
-
-            // CPU=Finishing,
-            // GPU=Started (any work not-yet-submitted was added by overlays),
-            // Display=Scanning previous frame
-
-#if 0
-            ImGui::Spacing         ();
-
-            ImGui::TreePush        ("");
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("SwapChain Activity: ");
-            ImGui::TextUnformatted ("Third-Party Overlays: ");
-            ImGui::TextUnformatted ("Third-Party Limiters (Low-Latency): ");
-            ImGui::EndGroup        ();
-            ImGui::SameLine        ();
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Flip Queue Unchanged; Wait-Sync: CPU (Third-Party Overlays) and GPU Completion");
-            ImGui::TextUnformatted ("Have Drawn or are Starting to Draw");
-            ImGui::TextUnformatted ("Just Finished / Will Start Immediately");
-            ImGui::EndGroup        ();
-            ImGui::TreePop         ();
-            ImGui::BulletText      ("Work: Buffer Flip: not enqueued, 3rd-party overlays: Drawing, 3rd-party limiters: Have run if they favor smoothness");
-
-            // CPU=Finished or Finishing,
-            // GPU=Started or Possibly Finished,
-            // Display=Scanning previous frame
-#endif
-            ImGui::PopStyleColor   ();
-            ImGui::Spacing         ();
-            ImGui::Spacing         ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
-            ImGui::TextUnformatted ("Frame Pace  (Limiter-Focused)");
-            ImGui::PopStyleColor   ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-            ImGui::BeginGroup      ();
-            ImGui::BulletText      ("What: ");
-            ImGui::BulletText      ("When: ");
-            ImGui::BulletText      ("Why: ");
-            ImGui::EndGroup        ();
-            ImGui::SameLine        ();
-            ImGui::PopStyleColor   ();
-            ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Earliest possible frame begin/end per-configured framerate limit.");
-            ImGui::TextUnformatted ("SK's Framerate Limiter has finished delaying a frame's begin/end.");
-            ImGui::TextUnformatted ("Measures SK's frame pacing efficacy for the active limit settings.");
-            ImGui::EndGroup        ();
-
-#if 0
-            ImGui::Spacing         ();
-            ImGui::TreePush        ("");
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Normal Pacing: ");
-            ImGui::TextUnformatted ("VRR Pacing: ");
-            ImGui::TextUnformatted ("Latent Sync: ");
-            ImGui::EndGroup        ();
-            ImGui::SameLine        ();
-            ImGui::BeginGroup      ();
-            ImGui::TextUnformatted ("Equivalent to Frame Submit");
-            ImGui::TextUnformatted ("Equivalent to Frame Start");
-            ImGui::TextUnformatted ("Hybrid of Frame Submit and Frame Start");
-            ImGui::EndGroup        ();
-            ImGui::TreePop         ();
-#endif
-            ImGui::EndTooltip      ();
+            fps_slider_width += ImGui::GetStyle ().ItemSpacing.x;
           }
 
-          if (method_changed)
-          {
-            config.utility.save_async ();
-          }
+          _GraphMeasurementConfig ();
         }
-
+        ImGui::SameLine ();
         ImGui::EndGroup ();
         ImGui::SameLine ();
 
@@ -5874,8 +6115,6 @@ SK_ImGui_ControlPanel (void)
               }
             }
 
-            extern bool
-                __SK_ForceDLSSGPacing;
             if (__SK_ForceDLSSGPacing)
             {
               if (mode != 0)
@@ -6105,7 +6344,13 @@ SK_ImGui_ControlPanel (void)
                   ImGui::SetTooltip ("控制游戏是否自动使用此功能");
 
                 vrr_changed |=
-                  ImGui::Checkbox ("Ultra Low-Latency", &config.render.framerate.auto_low_latency.policy.ultra_low_latency);
+                  ImGui::Checkbox ("如果刷新率发生变化，请重新应用", &config.render.framerate.auto_low_latency.policy.auto_reapply);
+
+                if (ImGui::IsItemHovered ())
+                  ImGui::SetTooltip ("当显示器或其刷新率发生变化时，FPS 限制将重新优化");
+
+                vrr_changed |=
+                  ImGui::Checkbox ("超低延迟", &config.render.framerate.auto_low_latency.policy.ultra_low_latency);
 
                 if (ImGui::IsItemHovered ())
                   ImGui::SetTooltip ("积极支持低延迟，即使它会破坏 FPS 节奏");
@@ -6364,7 +6609,7 @@ SK_ImGui_ControlPanel (void)
     bool hdr           = SK_ImGui_Widgets->hdr_control->isVisible     ();
     bool tobii         = SK_ImGui_Widgets->tobii->isVisible           ();
 
-    ImGui::TreePush ("");
+    ImGui::TreePush ("###WidgetSelector");
 
     if (ImGui::Checkbox ("Frame 生成", &framepacing))
     {
@@ -6489,7 +6734,7 @@ SK_ImGui_ControlPanel (void)
 
   if (ImGui::CollapsingHeader ("截图"))
   {
-    ImGui::TreePush ("");
+    ImGui::TreePush ("###ScreenshotSubMenu");
 
     ImGui::BeginGroup ();
 
@@ -6592,7 +6837,7 @@ SK_ImGui_ControlPanel (void)
 
       ImGui::BeginGroup (  );
       ImGui::Separator  (  );
-      ImGui::TreePush   ("");
+      ImGui::TreePush   ("###ScreenshotSizeTotal");
       ImGui::Text ( "%u 文件使用 %hs",
                       repo.files,
                         SK_WideCharToUTF8 (SK_File_SizeToString (repo.liSize.QuadPart, Auto, pTLS).data ()).c_str ()
@@ -6896,6 +7141,8 @@ SK_ImGui_MouseProc (int code, WPARAM wParam, LPARAM lParam)
 
     //SK_ImGui_Cursor.last_move = current_time;
       break;
+    default:
+      break;
   }
 
   return
@@ -6924,6 +7171,11 @@ SK_ImGui_KeyboardProc (int       code, WPARAM wParam, LPARAM lParam)
     if (SK_ImGui_Active () || config.input.keyboard.catch_alt_f4 || config.input.keyboard.override_alt_f4 || SK_ImGui_WantKeyboardCapture ())
         SK_ImGui_WantExit = true;
 
+    WriteULong64Release (
+      &config.input.keyboard.temporarily_allow,
+        SK_GetFramesDrawn () + 40
+    );
+
     if (SK_ImGui_Visible || SK_ImGui_WantKeyboardCapture ()) return 1;
   }
 
@@ -6948,7 +7200,7 @@ SK_ImGui_StageNextFrame (void)
   if (imgui_staged)
     return;
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   // Excessively long frames from things like toggling the Steam overlay
@@ -6963,7 +7215,6 @@ SK_ImGui_StageNextFrame (void)
 
   if (last_frame != SK_GetFramesDrawn ())
   {   last_frame  = SK_GetFramesDrawn ();
-
     auto& io =
       ImGui::GetIO ();
 
@@ -7028,8 +7279,6 @@ SK_ImGui_StageNextFrame (void)
   else
     style.Colors [ImGuiCol_WindowBg].w = orgWindowBg;
 
-  extern volatile
-               LONG __SK_ScreenShot_CapturingHUDless;
   if (ReadAcquire (&__SK_ScreenShot_CapturingHUDless))
   {
     imgui_staged = false;
@@ -7052,8 +7301,7 @@ SK_ImGui_StageNextFrame (void)
 
   if (config.render.framerate.latent_sync.show_fcat_bars)
   {
-    extern void SK_ImGui_DrawFCAT (void);
-                SK_ImGui_DrawFCAT ();
+    SK_ImGui_DrawFCAT ();
   }
 
   static auto widgets =
@@ -7288,7 +7536,7 @@ SK_ImGui_StageNextFrame (void)
     //ImGui::Text          ("development branch.");
       ImGui::Spacing       ();
       ImGui::Spacing       ();
-      ImGui::TreePush      ("");
+      ImGui::TreePush      ("###VersionInfoBanner");
       ImGui::TextColored   (ImColor::HSV (.08f,.85f,1.f), "%s",
                             utf8_time_checked.c_str ());ImGui::SameLine ();
       ImGui::TextColored   (ImColor (1.f, 1.f, 1.f, 1.f), (const char *)u8"  ※  ");
@@ -7927,6 +8175,8 @@ SK_ImGui_DrawFrame ( _Unreferenced_parameter_ DWORD  dwFlags,
   if (! lock.try_lock ())
     return 0;
 
+  //SK_ImGui_ExemptOverlaysFromKeyboardCapture ();
+
   UNREFERENCED_PARAMETER (dwFlags);
   UNREFERENCED_PARAMETER (lpUser);
 
@@ -7949,7 +8199,7 @@ SK_ImGui_DrawFrame ( _Unreferenced_parameter_ DWORD  dwFlags,
     ImGui::NewFrame ();
   }
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   // Popup Windows, actually
@@ -8030,11 +8280,6 @@ SK_ImGui_DrawFrame ( _Unreferenced_parameter_ DWORD  dwFlags,
   return 0;
 }
 
-extern bool SK_IsRectTooSmall (RECT* lpRect0, RECT* lpRect1);
-
-extern RECT SK_Input_SaveClipRect    (RECT *pSave = nullptr);
-extern RECT SK_Input_RestoreClipRect (void);
-
 SK_API
 void
 SK_ImGui_Toggle (void)
@@ -8046,9 +8291,6 @@ SK_ImGui_Toggle (void)
     current_time  = SK_timeGetTime    ();
     last_frame    = SK_GetFramesDrawn ();
   }
-
-  static SK_RenderBackend& rb =
-    SK_GetCurrentRenderBackend ();
 
   SK_ImGui_Visible = (! SK_ImGui_Visible);
 
@@ -8199,7 +8441,7 @@ SK_ImGui_Toggle (void)
   // Save config on control panel close, not open
   if (! SK_ImGui_Visible)
     config.utility.save_async ();
-  // Move the cursor a couple of times to chnage the loaded image
+  // Move the cursor a couple of times to change the loaded image
   else
   {
     if (config.input.ui.use_hw_cursor)
@@ -8239,7 +8481,7 @@ SK_ImGui_Toggle (void)
 void
 SK_Display_UpdateOutputTopology (void)
 {
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   rb.updateOutputTopology ();

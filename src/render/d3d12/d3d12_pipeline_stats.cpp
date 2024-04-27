@@ -1,4 +1,4 @@
-﻿//汉化相关
+//汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <../depends/include/DirectXTex/d3dx12.h>
@@ -219,7 +219,7 @@ void
 __stdcall
 SK_D3D12_UpdateRenderStatsEx (ID3D12GraphicsCommandList *pList, IDXGISwapChain3 *pSwapChain)
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   SK_ReleaseAssert (rb.api == SK_RenderAPI::D3D12);
@@ -287,15 +287,6 @@ SK_D3D12_UpdateRenderStats (ID3D12GraphicsCommandList *pList, IDXGISwapChain3* p
 
 
 
-
-
-
-
-
-
-
-extern std::string
-SK_CountToString (uint64_t count);
 
 
 class SKWG_D3D12_Pipeline : public SK_Widget

@@ -1,12 +1,11 @@
 ﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
-
 #include <SpecialK/control_panel/input.h>
 
-#include <hidclass.h>
-
 #include <imgui/font_awesome.h>
+
+#include <hidclass.h>
 
 bool cursor_vis = false;
 
@@ -34,10 +33,6 @@ void SK_ImGui_UpdateCursor (void)
 
   SK_SetCursorPos (orig_pos.x, orig_pos.y);
 }
-
-extern bool SK_Window_IsCursorActive   (void);
-extern bool SK_Window_ActivateCursor   (bool changed      = false);
-extern bool SK_Window_DeactivateCursor (bool ignore_imgui = false);
 
 extern ImVec2& __SK_ImGui_LastWindowCenter (void);
 #define SK_ImGui_LastWindowCenter  __SK_ImGui_LastWindowCenter()
@@ -116,14 +111,52 @@ SK::ControlPanel::Input::Draw (void)
   auto& io =
     ImGui::GetIO ();
 
-  bool bHasPlayStation = (last_scepad != 0);
+  bool bHasPlayStation  = (last_scepad != 0);
+  bool bHasSimpleBluetooth = false;
+  bool bHasBluetooth       = false;
+  bool bHasNonBluetooth    = false;
+  bool bHasDualSense       = false;
+  bool bHasDualSenseEdge   = false;
+  bool bHasDualShock4      = false;
+  bool bHasDualShock4v2    = false;
+  bool bHasDualShock4v2_Bt = false;
 
   for ( auto& ps_controller : SK_HID_PlayStationControllers )
   {
     if (ps_controller.bConnected)
     {
+      if ( ps_controller.bDualSense ||
+           ps_controller.bDualSenseEdge )
+      {
+        bHasDualSense = true;
+
+        if (ps_controller.bDualSenseEdge)
+          bHasDualSenseEdge = true;
+      }
+
+      if (ps_controller.bDualShock4)
+      {
+        if (ps_controller.pid == SK_HID_PID_DUALSHOCK4_REV2)
+          bHasDualShock4v2 = true;
+        else
+          bHasDualShock4 = true;
+      }
+
+      if (ps_controller.bBluetooth)
+      {
+        if (ps_controller.pid == SK_HID_PID_DUALSHOCK4_REV2 &&
+            ps_controller.bSimpleMode)
+        {
+          bHasDualShock4v2_Bt = true;
+        }
+
+        bHasSimpleBluetooth = ps_controller.bSimpleMode;
+        bHasBluetooth       = true;
+      }
+      else
+        bHasNonBluetooth = true;
+
       bHasPlayStation = true;
-      break;
     }
   }
 
@@ -242,10 +275,10 @@ SK::ControlPanel::Input::Draw (void)
     if ( last_steam > current_time - 500UL ||
          hide_steam > current_time - 500UL )
     {
-      SETUP_LABEL_COLOR (steam, 500.0f);
-
       if (SK::SteamAPI::AppID () > 0)
       {
+        SETUP_LABEL_COLOR (steam, 500.0f);
+
         ImGui::SameLine ( );
         ImGui::Text ("       Steam");
         ImGui::PopStyleColor ( );
@@ -327,10 +360,31 @@ SK::ControlPanel::Input::Draw (void)
     if ( last_wgi > current_time - 500UL ||
          hide_wgi > current_time - 500UL )
     {
+      if (SK_HID_PlayStationControllers.empty ())
+        SK_WGI_EmulatedPlayStation = false;
+
+      else
+      {
+        bool bConnected = false;
+
+        for (auto& controller : SK_HID_PlayStationControllers)
+        {
+          if (controller.bConnected)
+          {
+            bConnected = true;
+            break;
+          }
+        }
+
+        if (! bConnected)
+          SK_WGI_EmulatedPlayStation = false;
+      }
+
       SETUP_LABEL_COLOR (wgi, 500.0f);
 
       ImGui::SameLine       ();
-      ImGui::Text           ("       Windows.Gaming.Input");
+      ImGui::Text           (SK_WGI_EmulatedPlayStation ? "    Windows.Gaming.Input  " ICON_FA_PLAYSTATION
+                                                        : "      Windows.Gaming.Input");
       ImGui::PopStyleColor  ();
 
       if (ImGui::IsItemHovered ( ))
@@ -700,6 +754,96 @@ SK::ControlPanel::Input::Draw (void)
     bool uncollapsed_gamepads =
       ImGui::CollapsingHeader ("游戏控制器", ImGuiTreeNodeFlags_AllowOverlap);
 
+    bool hooks_changed = false;
+
+    if (config.input.gamepad.hook_hid == false)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+
+      if (ImGui::Checkbox ("挂钩 HID", &config.input.gamepad.hook_hid))
+      {
+        hooks_changed = true;
+      }
+    }
+
+    if (config.input.gamepad.hook_dinput8 == false)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+
+      if (ImGui::Checkbox ("挂钩 DirectInput 8", &config.input.gamepad.hook_dinput8))
+      {
+        hooks_changed = true;
+      }
+    }
+
+    if (config.input.gamepad.hook_raw_input == false)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+
+      if (ImGui::Checkbox ("挂钩 RawInput", &config.input.gamepad.hook_raw_input))
+      {
+        hooks_changed = true;
+      }
+    }
+
+    if (config.input.gamepad.hook_windows_gaming == false)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+
+      if (ImGui::Checkbox ("挂钩 Windows.Gaming.Input", &config.input.gamepad.hook_windows_gaming))
+      {
+        hooks_changed = true;
+      }
+    }
+
+    if (config.input.gamepad.hook_winmm == false)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+
+      if (ImGui::Checkbox ("挂钩 WinMM", &config.input.gamepad.hook_winmm))
+      {
+        hooks_changed = true;
+      }
+    }
+
+    if (config.input.gamepad.hook_xinput == false)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+
+      if (ImGui::Checkbox ("挂钩 XInput", &config.input.gamepad.hook_xinput))
+      {
+        hooks_changed = true;
+      }
+    }
+
+    static bool restart_required = false;
+
+    if (hooks_changed)
+    {
+      config.utility.save_async ();
+      restart_required = true;
+    }
+
+    if (restart_required)
+    {
+      ImGui::SameLine        (    );
+      ImGui::TextUnformatted ("\t");
+      ImGui::SameLine        (    );
+      ImGui::BulletText      ("需要重启游戏");
+    }
+
   //SK_ImGui_ProcessGamepadStatusBar (true);
 
     if (uncollapsed_gamepads)
@@ -1025,6 +1169,9 @@ SK::ControlPanel::Input::Draw (void)
             else if (placehold_slot) state = 1;
             else                     state = 0;
 
+            const bool want_capture =
+              SK_ImGui_WantGamepadCapture ();
+
             if (disable_slot)
             {
               ImGui::PushStyleColor (ImGuiCol_FrameBgActive,  ImVec4 (1.0f, 0.1f, 0.1f, 1.0f));
@@ -1033,7 +1180,7 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::PushStyleColor (ImGuiCol_CheckMark,      ImVec4 (0.0f, 0.0f, 0.0f, 1.0f));
             }
 
-            else if (SK_ImGui_WantGamepadCapture ())
+            else if (want_capture)
             {
               ImGui::PushStyleColor (ImGuiCol_FrameBgActive,  ImVec4 (1.0f, 1.0f, 0.1f, 1.0f));
               ImGui::PushStyleColor (ImGuiCol_FrameBgHovered, ImVec4 (0.9f, 0.9f, 0.4f, 1.0f));
@@ -1067,7 +1214,7 @@ SK::ControlPanel::Input::Draw (void)
               }
             }
 
-            if (disable_slot || SK_ImGui_WantGamepadCapture ())
+            if (disable_slot || want_capture)
             {
               ImGui::PopStyleColor (4);
             }
@@ -1443,6 +1590,21 @@ SK::ControlPanel::Input::Draw (void)
                       }
                     }
 
+                    if (ImGui::SliderFloat ("电池临界电量", &config.input.gamepad.low_battery_percent, 0.0f, 45.0f, "%3.0f%% Remaining"))
+                    {
+                      config.utility.save_async ();
+                    }
+
+                    if (ImGui::IsItemHovered ())
+                    {
+                      ImGui::BeginTooltip    ();
+                      ImGui::TextUnformatted ("当 PlayStation 控制器电池电量严重不足时显示警告通知。");
+                      ImGui::Separator       ();
+                      ImGui::BulletText      ("仅当控制器使用电池运行时才会显示警告。");
+                      ImGui::BulletText      ("可以通过设置 0% 来禁用警告");
+                      ImGui::EndTooltip      ();
+                    }
+
                     if (ImGui::Checkbox ("蓝牙兼容模式",
                          &config.input.gamepad.bt_input_only))
                     { if (config.input.gamepad.bt_input_only)
@@ -1480,7 +1642,7 @@ SK::ControlPanel::Input::Draw (void)
           ImGui::Separator  (  );
           ImGui::BeginGroup (  );
 
-          if (bDualSense)
+          if (bDualSense && ((! bHasBluetooth) || (! bHasSimpleBluetooth) || bHasNonBluetooth))
             ImGui::Checkbox ("将静音按钮应用于游戏", &config.input.gamepad.scepad.mute_applies_to_game);
 
           ImGui::EndGroup   ();
@@ -1492,7 +1654,7 @@ SK::ControlPanel::Input::Draw (void)
             ImGui::SameLine    ();
 
             ImGui::BeginGroup  ();
-            if (ImGui::Checkbox("XInput 模式", &config.input.gamepad.xinput.emulate))
+            if (ImGui::Checkbox("Xbox 模式", &config.input.gamepad.xinput.emulate))
             {
               if (config.input.gamepad.xinput.emulate)
               {
@@ -1502,7 +1664,7 @@ SK::ControlPanel::Input::Draw (void)
                 {
                   SK_ImGui_WarningWithTitle (
                     L"XInput 被阻止进入游戏，它必须被解锁。"
-                    L" 使 XInput 模式正常工作。\r\n\r\n\t"
+                    L" 使 Xbox 模式正常工作。\r\n\r\n\t"
                     L"*可能需要重启游戏",
                       L"XInput 已解锁"
                   );
@@ -1531,7 +1693,14 @@ SK::ControlPanel::Input::Draw (void)
               ImGui::BulletText      ("对 DualShock 3 的支持有限。");
               ImGui::Separator       ();
               ImGui::BulletText      ("所有 PlayStation 控制器都映射到 Xbox 控制器串口 0。");
-              ImGui::BulletText      ("可能需要重启游戏。");
+
+              // Has the game ever tried to poll XInput slot 0?
+              //
+              //   * If not, maybe it thinks no Xbox controllers are connected.
+              //
+              if (! ReadAcquire (&SK_XInput_Backend->reads [0]))
+                ImGui::BulletText    ("可能需要重启游戏");
+
               ImGui::EndTooltip      ();
             }
 
@@ -1556,10 +1725,15 @@ SK::ControlPanel::Input::Draw (void)
               //ImGui::TreePop  (  );
             }
 
+            if (! config.input.gamepad.hook_hid)
+            {
+              ImGui::TextUnformatted (ICON_FA_EXCLAMATION_TRIANGLE " Rumble cannot be emulated unless HID hooks are enabled.");
+            }
+
             ImGui::EndGroup ();
           }
-          
-          if (bDualSense || bDualShock4)
+
+          if (config.input.gamepad.hook_hid && ((bDualSense || bDualShock4) && ((! bHasBluetooth) || (! bHasSimpleBluetooth) || bHasNonBluetooth)))
           {
             ImGui::SameLine    ();
             ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
@@ -1591,6 +1765,7 @@ SK::ControlPanel::Input::Draw (void)
               config.utility.save_async ();
             }
 
+            ImGui::BeginGroup ();
             ImGui::BeginGroup ();
             if (bOverrideRGB)
             {
@@ -1625,6 +1800,20 @@ SK::ControlPanel::Input::Draw (void)
             else {
               ImGui::SameLine ();
             }
+            ImGui::EndGroup ();
+
+            ///if (bHasBluetooth && bHasSimpleBluetooth && (! bHasNonBluetooth))
+            ///{
+            ///  if (ImGui::IsItemHovered ())
+            ///  {
+            ///    ImGui::BeginTooltip    ();
+            ///    ImGui::TextUnformatted ("Bluetooth Compatibility Mode is Active");
+            ///    ImGui::Separator       ();
+            ///    ImGui::BulletText      ("RGB Overrides may only apply after a game triggers rumble, or if you use USB.");
+            ///    ImGui::BulletText      ("This avoids changing your Bluetooth controller from DualShock3 mode to DualShock4/DualSense in games that do not use DualShock4+ features.");
+            ///    ImGui::EndTooltip      ();
+            ///  }
+            ///}
 
 #if 0
             bool changed =
@@ -1676,6 +1865,67 @@ SK::ControlPanel::Input::Draw (void)
             ImGui::EndGroup   ();
           }
 
+          else
+          {
+            ImGui::SameLine   ();
+            ImGui::BulletText ( ICON_FA_BLUETOOTH
+              " Compatibility Mode: Features newer than DualShock 3 are unusable."
+            );
+
+            if (ImGui::IsItemHovered ( ))
+            {
+              ImGui::BeginTooltip    ( );
+              ImGui::TextUnformatted (
+                "Plug your controller in, or trigger rumble in-game to put the "
+                "Bluetooth controller into DualShock 4 / DualSense mode."
+              );
+#define SK_HID_BROKEN_DUALSHOCK4_REV2
+#ifdef  SK_HID_BROKEN_DUALSHOCK4_REV2
+              if (bHasDualShock4v2_Bt)
+              {
+                ImGui::BulletText (
+                  "DualShock 4 v2 controllers will not work over Bluetooth with SK in compatibility mode"
+                );
+              }
+#endif
+              ImGui::Separator       ( );
+              ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.85f, .85f, .85f, 1.f));
+
+              ImGui::TextColored     (ImVec4 (.4f, .8f, 1.f, 1.f), " " ICON_FA_MOUSE);
+              ImGui::SameLine        ( );
+              ImGui::TextUnformatted ("Right-click to configure compatibility mode");
+              ImGui::PopStyleColor   ( );
+              ImGui::EndTooltip      ( );
+            }
+
+            if (SK_ImGui_IsItemRightClicked ())
+            {
+              ImGui::ClearActiveID   ( );
+              ImGui::OpenPopup       ("BluetoothCompatMenu2");
+            }
+
+            if (ImGui::BeginPopup ("BluetoothCompatMenu2"))
+            {
+              if (ImGui::Checkbox ( "Always Enable Full Capabilities in " ICON_FA_BLUETOOTH,
+                                    &config.input.gamepad.scepad.enable_full_bluetooth))
+              {
+                config.utility.save_async ();
+                ImGui::CloseCurrentPopup  ();
+              }
+
+              if (ImGui::IsItemHovered ())
+              {
+                ImGui::SetTooltip (
+                  "Your gamepad will no longer work correctly in DirectInput "
+                  "software until powered off...\r\nHowever, that is normal after running "
+                  "any game that supports Bluetooth DualShock/DualSense controllers."
+                );
+              }
+
+              ImGui::EndPopup ();
+            }
+          }
+
 #if 0
           if ( bDualSense &&
                ImGui::SliderFloat ( "振动电机功率水平",
@@ -1697,6 +1947,78 @@ SK::ControlPanel::Input::Draw (void)
         }
         else
           config.input.gamepad.hid.calc_latency = false;
+
+        if (bHasDualSenseEdge || bHasDualShock4v2 || bHasDualShock4)
+        {
+          if (ImGui::TreeNode ("Compatibility Options"))
+          {
+            bool hovered = false;
+            bool changed = false;
+
+            if (bHasDualSenseEdge)
+            {
+              bool spoof =
+                (config.input.gamepad.scepad.hide_ds_edge_pid == SK_Enabled);
+
+              if (ImGui::Checkbox ("Identify DualSense Edge as DualSense", &spoof))
+              {
+                changed = true;
+
+                config.input.gamepad.scepad.hide_ds_edge_pid = spoof ? SK_Enabled
+                                                                     : SK_Disabled;
+              }
+
+              hovered |= ImGui::IsItemHovered ();
+            }
+
+            if (bHasDualShock4v2)
+            {
+              bool spoof =
+                (config.input.gamepad.scepad.hide_ds4_v2_pid == SK_Enabled);
+
+              if (ImGui::Checkbox ("Identify DualShock 4 v2 as DualShock 4", &spoof))
+              {
+                changed = true;
+
+                config.input.gamepad.scepad.hide_ds4_v2_pid = spoof ? SK_Enabled
+                                                                    : SK_Disabled;
+              }
+
+              hovered |= ImGui::IsItemHovered ();
+            }
+
+            if (bHasDualShock4)
+            {
+              bool spoof =
+                (config.input.gamepad.scepad.show_ds4_v1_as_v2 == SK_Enabled);
+
+              if (ImGui::Checkbox ("Identify DualShock 4 as DualShock 4 v2", &spoof))
+              {
+                changed = true;
+
+                config.input.gamepad.scepad.show_ds4_v1_as_v2 = spoof ? SK_Enabled
+                                                                      : SK_Disabled;
+              }
+
+              hovered |= ImGui::IsItemHovered ();
+            }
+
+            if (hovered)
+            {
+              ImGui::BeginTooltip    ();
+              ImGui::TextUnformatted ("Identifying as an alternate product may help "
+                                      "to enable a game's native support for your controller");
+              ImGui::Separator       ();
+              ImGui::BulletText      ("Game restart required");
+              ImGui::EndTooltip      ();
+            }
+
+            if (changed)
+              config.utility.save_async ();
+
+            ImGui::TreePop  (  );
+          }
+        }
 
         ImGui::PopStyleColor (3);
       }
@@ -2477,7 +2799,7 @@ extern float SK_ImGui_PulseNav_Strength;
 bool
 SK_ImGui_KeybindSelect (SK_Keybind* keybind, const char* szLabel)
 {
-  (void)keybind;
+  std::ignore = keybind;
 
   bool ret = false;
 

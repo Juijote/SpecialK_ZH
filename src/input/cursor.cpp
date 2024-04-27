@@ -451,16 +451,19 @@ static constexpr const DWORD REASON_DISABLED = 0x4;
 bool
 SK_ImGui_WantMouseCaptureEx (DWORD dwReasonMask)
 {
-  // Allow mouse input while Steam overlay is active
-  if (SK::SteamAPI::GetOverlayState (true))
+  if (! SK_GImDefaultContext ())
     return false;
 
   // Allow mouse input while ReShade overlay is active
   if (SK_ReShadeAddOn_IsOverlayActive ())
     return false;
 
-  if (! SK_GImDefaultContext ())
+  // Allow mouse input while Steam /EOS overlays are active
+  if (SK::SteamAPI::GetOverlayState (true) ||
+           SK::EOS::GetOverlayState (true))
+  {
     return false;
+  }
 
   bool imgui_capture = false;
 
@@ -477,6 +480,9 @@ SK_ImGui_WantMouseCaptureEx (DWORD dwReasonMask)
 
     else if (config.input.ui.capture_hidden && (! SK_InputUtil_IsHWCursorVisible ()))
       imgui_capture = true;
+
+    if (game_window.active && ReadULong64Acquire (&config.input.mouse.temporarily_allow) > SK_GetFramesDrawn () - 20)
+      imgui_capture = false;
   }
 
   if ((! SK_IsGameWindowActive ()) && config.input.mouse.disabled_to_game == SK_InputEnablement::DisabledInBackground)
@@ -538,7 +544,7 @@ SK_IsGameWindowActive (void)
 #if 0
   if (! bActive)
   {
-    static auto &rb =
+    const SK_RenderBackend&
       SK_GetCurrentRenderBackend ();
 
     if ( rb.windows.device.hwnd   != 0 &&
@@ -1135,7 +1141,7 @@ SK_Window_ActivateCursor (bool changed = false)
 };
 
 bool
-SK_Window_DeactivateCursor (bool ignore_imgui = false)
+SK_Window_DeactivateCursor (bool ignore_imgui)
 {
   if (! ignore_imgui)
   {

@@ -1,4 +1,4 @@
-﻿// 汉化相关
+// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -11,7 +11,7 @@ SK::ControlPanel::Compatibility::Draw (void)
 {
   if ( ImGui::CollapsingHeader ("兼容性设置###SK_CPL") )
   {
-    static SK_RenderBackend& rb =
+    const SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
     ImGui::PushStyleColor (ImGuiCol_Header,        ImVec4 (0.02f, 0.68f, 0.90f, 0.45f));

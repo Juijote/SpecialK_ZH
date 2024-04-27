@@ -68,6 +68,7 @@ HidD_GetPreparsedData_pfn      HidD_GetPreparsedData_Original  = nullptr;
 HidD_FreePreparsedData_pfn     HidD_FreePreparsedData_Original = nullptr;
 HidD_GetFeature_pfn            HidD_GetFeature_Original        = nullptr;
 HidD_SetFeature_pfn            HidD_SetFeature_Original        = nullptr;
+HidD_GetAttributes_pfn         HidD_GetAttributes_Original     = nullptr;
 HidP_GetData_pfn               HidP_GetData_Original           = nullptr;
 HidP_GetCaps_pfn               HidP_GetCaps_Original           = nullptr;
 HidP_GetUsages_pfn             HidP_GetUsages_Original         = nullptr;
@@ -91,7 +92,6 @@ HidP_GetUsageValueArray_pfn    SK_HidP_GetUsageValueArray      = nullptr;
 
 
 #define __SK_HID_CalculateLatency
-
 
 enum class SK_Input_DeviceFileType
 {
@@ -283,6 +283,7 @@ SK_HID_DeviceFile::SK_HID_DeviceFile (HANDLE file, const wchar_t *wszPath)
 
           else
           {
+#if 0
             if (config.system.log_level > 0)
             {
               SK_DeviceIoControl (
@@ -307,6 +308,7 @@ SK_HID_DeviceFile::SK_HID_DeviceFile (HANDLE file, const wchar_t *wszPath)
                   wszProductName, hidpCaps.UsagePage, hidpCaps.Usage
               );
             }
+#endif
           }
         }
 
@@ -347,7 +349,8 @@ SK_HID_PlayStationDevice::~SK_HID_PlayStationDevice (void)
 
   if (pStats != nullptr)
   {
-    std::free (pStats);
+    delete
+      std::exchange (pStats, nullptr);
   }
 }
 
@@ -370,7 +373,7 @@ SK_HID_DeviceFile::setBufferCount (DWORD dwBuffers)
   if (dwBuffers < 2)
   {
     SK_LOGi0 (
-      L"Invalid Buffer Count (%d) passed to "
+      L"Invalid Buffer Count (%u) passed to "
       L"SK_HID_DeviceFile::setBufferCount (...); "
       L"Using minimum supported value (2) instead.",
       dwBuffers
@@ -491,6 +494,8 @@ void SK_Bluetooth_SetupPowerOff (void)
 
     bool OnVarChange (SK_IVariable* var, void* val = nullptr)
     {
+      if (var == nullptr) return false;
+
       if (var->getValuePointer () == &hwaddr)
       {
         std::scoped_lock <std::mutex> _(mutex);
@@ -522,9 +527,9 @@ void SK_Bluetooth_SetupPowerOff (void)
             ULONGLONG                           ullHWAddr = 0x0;
             swscanf (wszSerialNumber, L"%llx", &ullHWAddr);
 
-            if (bRequesting || (*(uint64*)val != 1 && ullHWAddr == *(uint64*)val))
+            if (bRequesting || (val != nullptr && *(uint64*)val != 1 && ullHWAddr == *(uint64*)val))
             {
-              SK_LOGi0 ( L"Attempting to disconnect Bluetooth MAC Address: %ws (%lld)",
+              SK_LOGi0 ( L"Attempting to disconnect Bluetooth MAC Address: %ws (%llu)",
                            wszSerialNumber, ullHWAddr );
 
               BLUETOOTH_FIND_RADIO_PARAMS findParams =
@@ -578,9 +583,9 @@ void SK_Bluetooth_SetupPowerOff (void)
               ULONGLONG                           ullHWAddr = 0x0;
               swscanf (wszSerialNumber, L"%llx", &ullHWAddr);
 
-              if ((*(uint64*)val == 1 || ullHWAddr == *(uint64*)val))
+              if (val != nullptr && (*(uint64 *)(val) == 1 || ullHWAddr == *(uint64*)(val)))
               {
-                SK_LOGi0 ( L"Attempting to disconnect Bluetooth MAC Address: %ws (%lld)",
+                SK_LOGi0 ( L"Attempting to disconnect Bluetooth MAC Address: %ws (%llu)",
                              wszSerialNumber, ullHWAddr );
 
                 BLUETOOTH_FIND_RADIO_PARAMS findParams =
@@ -590,33 +595,37 @@ void SK_Bluetooth_SetupPowerOff (void)
                 HANDLE hFindRadios =
                   BluetoothFindFirstRadio (&findParams, &hBtRadio);
 
-                BOOL   success  = FALSE;
-                while (success == FALSE && hBtRadio != 0)
+                if (hFindRadios != 0 && hFindRadios != INVALID_HANDLE_VALUE)
                 {
-                  success =
-                    SK_DeviceIoControl (
-                      hBtRadio, IOCTL_BTH_DISCONNECT_DEVICE, &ullHWAddr, 8,
-                                                             nullptr,    0,
-                                           &dwBytesReturned, nullptr );
+                  BOOL   success  = FALSE;
+                  while (success == FALSE && hBtRadio != 0 && hBtRadio != INVALID_HANDLE_VALUE)
+                  {
+                    success =
+                      SK_DeviceIoControl (
+                        hBtRadio, IOCTL_BTH_DISCONNECT_DEVICE, &ullHWAddr, 8,
+                                                               nullptr,    0,
+                                             &dwBytesReturned, nullptr );
 
-                  CloseHandle (hBtRadio);
+                    CloseHandle (hBtRadio);
 
-                  if (! success)
-                    if (! BluetoothFindNextRadio (hFindRadios, &hBtRadio))
-                      hBtRadio = 0;
+                    if (! success)
+                      if (! BluetoothFindNextRadio (hFindRadios, &hBtRadio))
+                        hBtRadio = 0;
 
-                  if (success)
-                    ++powered_off;
+                    if (success)
+                      ++powered_off;
+                  }
+
+                  BluetoothFindRadioClose (hFindRadios);
                 }
-
-                BluetoothFindRadioClose (hFindRadios);
               }
             }
           }
         }
       }
 
-      *((uint64*)var->getValuePointer ()) = *(uint64*)val;
+      if (val != nullptr)
+        *((uint64 *)(var->getValuePointer ())) = *(uint64 *)(val);
 
       return true;
     }
@@ -640,233 +649,248 @@ struct SK_HID_DualSense_GetHWAddr // 0x09 : USB
 
 void SK_HID_SetupPlayStationControllers (void)
 {
-  HDEVINFO hid_device_set = 
-    SK_SetupDiGetClassDevsW (&GUID_DEVINTERFACE_HID, nullptr, nullptr, DIGCF_DEVICEINTERFACE |
-                                                                       DIGCF_PRESENT);
-  
-  if (hid_device_set != INVALID_HANDLE_VALUE)
+  // Only do this once, and make all other threads trying to do it wait
+  //
+  static volatile LONG             _init  =  0;
+  if (InterlockedCompareExchange (&_init, 1, 0) == 0)
   {
-    SP_DEVINFO_DATA devInfoData = {
-      .cbSize = sizeof (SP_DEVINFO_DATA)
-    };
-  
-    SP_DEVICE_INTERFACE_DATA devInterfaceData = {
-      .cbSize = sizeof (SP_DEVICE_INTERFACE_DATA)
-    };
-  
-    for (                                     DWORD dwDevIdx = 0            ;
-          SK_SetupDiEnumDeviceInfo (hid_device_set, dwDevIdx, &devInfoData) ;
-                                                  ++dwDevIdx )
+    SK_Input_PreHookHID ();
+
+    HDEVINFO hid_device_set = 
+      SK_SetupDiGetClassDevsW (&GUID_DEVINTERFACE_HID, nullptr, nullptr, DIGCF_DEVICEINTERFACE |
+                                                                         DIGCF_PRESENT);
+    
+    if (hid_device_set != INVALID_HANDLE_VALUE)
     {
-      devInfoData.cbSize      = sizeof (SP_DEVINFO_DATA);
-      devInterfaceData.cbSize = sizeof (SP_DEVICE_INTERFACE_DATA);
-  
-      if (! SK_SetupDiEnumDeviceInterfaces ( hid_device_set, nullptr, &GUID_DEVINTERFACE_HID,
-                                                   dwDevIdx, &devInterfaceData) )
+      SP_DEVINFO_DATA devInfoData = {
+        .cbSize = sizeof (SP_DEVINFO_DATA)
+      };
+    
+      SP_DEVICE_INTERFACE_DATA devInterfaceData = {
+        .cbSize = sizeof (SP_DEVICE_INTERFACE_DATA)
+      };
+    
+      for (                                     DWORD dwDevIdx = 0            ;
+            SK_SetupDiEnumDeviceInfo (hid_device_set, dwDevIdx, &devInfoData) ;
+                                                    ++dwDevIdx )
       {
-        continue;
-      }
-  
-      static wchar_t devInterfaceDetailData [MAX_PATH + 2];
-  
-      ULONG ulMinimumSize = 0;
-  
-      SK_SetupDiGetDeviceInterfaceDetailW (
-        hid_device_set, &devInterfaceData, nullptr,
-          0, &ulMinimumSize, nullptr );
-  
-      if (GetLastError () != ERROR_INSUFFICIENT_BUFFER)
-        continue;
-  
-      if (ulMinimumSize > sizeof (wchar_t) * (MAX_PATH + 2))
-        continue;
-  
-      SP_DEVICE_INTERFACE_DETAIL_DATA *pDevInterfaceDetailData =
-        (SP_DEVICE_INTERFACE_DETAIL_DATA *)devInterfaceDetailData;
-  
-      pDevInterfaceDetailData->cbSize =
-        sizeof (SP_DEVICE_INTERFACE_DETAIL_DATA);
-  
-      if ( SK_SetupDiGetDeviceInterfaceDetailW (
-             hid_device_set, &devInterfaceData, pDevInterfaceDetailData,
-               ulMinimumSize, &ulMinimumSize, nullptr ) )
-      {
-        wchar_t *wszFileName =
-          pDevInterfaceDetailData->DevicePath;
-
-        HANDLE hDeviceFile (
-            SK_CreateFileW ( wszFileName, FILE_GENERIC_READ | FILE_GENERIC_WRITE,
-                                          FILE_SHARE_READ   | FILE_SHARE_WRITE,
-                                            nullptr, OPEN_EXISTING, FILE_FLAG_WRITE_THROUGH  |
-                                                                    FILE_ATTRIBUTE_TEMPORARY |
-                                                                    FILE_FLAG_OVERLAPPED, nullptr )
-                           );
-
-        HIDD_ATTRIBUTES hidAttribs      = {                      };
-                        hidAttribs.Size = sizeof (HIDD_ATTRIBUTES);
-
-        SK_HidD_GetAttributes (hDeviceFile, &hidAttribs);
-  
-        bool bSONY = 
-          hidAttribs.VendorID == SK_HID_VID_SONY ||
-          hidAttribs.VendorID == 0x2054c;
-          // The 0x2054c VID comes from Bluetooth service discovery.
-          //
-          //   * It should never actually show up through a call to
-          //       HidD_GetAttributes (...); only in UNC paths.
-
-        if (bSONY)
+        devInfoData.cbSize      = sizeof (SP_DEVINFO_DATA);
+        devInterfaceData.cbSize = sizeof (SP_DEVICE_INTERFACE_DATA);
+    
+        if (! SK_SetupDiEnumDeviceInterfaces ( hid_device_set, nullptr, &GUID_DEVINTERFACE_HID,
+                                                     dwDevIdx, &devInterfaceData) )
         {
-          SK_HID_PlayStationDevice controller (hDeviceFile);
+          continue;
+        }
+    
+        static wchar_t devInterfaceDetailData [MAX_PATH + 2];
+    
+        ULONG ulMinimumSize = 0;
+    
+        SK_SetupDiGetDeviceInterfaceDetailW (
+          hid_device_set, &devInterfaceData, nullptr,
+            0, &ulMinimumSize, nullptr );
+    
+        if (GetLastError () != ERROR_INSUFFICIENT_BUFFER)
+          continue;
+    
+        if (ulMinimumSize > sizeof (wchar_t) * (MAX_PATH + 2))
+          continue;
+    
+        SP_DEVICE_INTERFACE_DETAIL_DATA *pDevInterfaceDetailData =
+          (SP_DEVICE_INTERFACE_DETAIL_DATA *)devInterfaceDetailData;
+    
+        pDevInterfaceDetailData->cbSize =
+          sizeof (SP_DEVICE_INTERFACE_DETAIL_DATA);
+    
+        if ( SK_SetupDiGetDeviceInterfaceDetailW (
+               hid_device_set, &devInterfaceData, pDevInterfaceDetailData,
+                 ulMinimumSize, &ulMinimumSize, nullptr ) )
+        {
+          wchar_t *wszFileName =
+            pDevInterfaceDetailData->DevicePath;
 
-          controller.pid = hidAttribs.ProductID;
-          controller.vid = hidAttribs.VendorID;
+          HANDLE hDeviceFile (
+              SK_CreateFileW ( wszFileName, FILE_GENERIC_READ | FILE_GENERIC_WRITE,
+                                            FILE_SHARE_READ   | FILE_SHARE_WRITE,
+                                              nullptr, OPEN_EXISTING, FILE_FLAG_WRITE_THROUGH  |
+                                                                      FILE_ATTRIBUTE_TEMPORARY |
+                                                                      FILE_FLAG_OVERLAPPED, nullptr )
+                             );
 
-          controller.bBluetooth =
-            StrStrIW (
-              wszFileName, //Bluetooth_Base_UUID
-                           L"{00001124-0000-1000-8000-00805f9b34fb}"
-            );
+          HIDD_ATTRIBUTES hidAttribs      = {                      };
+                          hidAttribs.Size = sizeof (HIDD_ATTRIBUTES);
 
-          controller.bDualSense =
-            (controller.pid == SK_HID_PID_DUALSENSE_EDGE) ||
-            (controller.pid == SK_HID_PID_DUALSENSE);
+          SK_HidD_GetAttributes (hDeviceFile, &hidAttribs);
+    
+          bool bSONY = 
+            hidAttribs.VendorID == SK_HID_VID_SONY ||
+            hidAttribs.VendorID == 0x2054c;
+            // The 0x2054c VID comes from Bluetooth service discovery.
+            //
+            //   * It should never actually show up through a call to
+            //       HidD_GetAttributes (...); only in UNC paths.
 
-          controller.bDualSenseEdge =
-            controller.pid == SK_HID_PID_DUALSENSE_EDGE;
-
-          controller.bDualShock4 =
-            (controller.pid == SK_HID_PID_DUALSHOCK4)      ||
-            (controller.pid == SK_HID_PID_DUALSHOCK4_REV2) ||
-            (controller.pid == 0x0BA0); // Dongle
-
-          controller.bDualShock3 =
-            (controller.pid == SK_HID_PID_DUALSHOCK3);
-
-          if (! (controller.bDualSense || controller.bDualShock4 || controller.bDualShock3))
+          if (bSONY)
           {
-            SK_LOGi0 (L"SONY Controller with Unknown PID ignored: %ws", wszFileName);
-            continue;
-          }
-  
-          wcsncpy_s (controller.wszDevicePath, MAX_PATH,
-                                wszFileName,   _TRUNCATE);
+            SK_HID_PlayStationDevice controller (hDeviceFile);
 
-          controller.hDeviceFile =
-                     hDeviceFile;
-  
-          if (controller.hDeviceFile != INVALID_HANDLE_VALUE)
-          {
-            if (! SK_HidD_GetPreparsedData (controller.hDeviceFile, &controller.pPreparsedData))
-            	continue;
+            controller.pid = hidAttribs.ProductID;
+            controller.vid = hidAttribs.VendorID;
 
-#ifdef DEBUG
-            if (controller.bBluetooth)
-              SK_ImGui_Warning (L"Bluetooth");
-#endif
-
-            HIDP_CAPS                                      caps = { };
-              SK_HidP_GetCaps (controller.pPreparsedData, &caps);
-
-            controller.input_report.resize   (caps.InputReportByteLength);
-            controller.output_report.resize  (caps.OutputReportByteLength);
-            controller.feature_report.resize (caps.FeatureReportByteLength);
-
-            controller.initialize_serial ();
-
-            std::vector <HIDP_BUTTON_CAPS>
-              buttonCapsArray;
-              buttonCapsArray.resize (caps.NumberInputButtonCaps);
-
-            std::vector <HIDP_VALUE_CAPS>
-              valueCapsArray;
-              valueCapsArray.resize (caps.NumberInputValueCaps);
-
-            USHORT num_caps =
-              caps.NumberInputButtonCaps;
-
-            if (num_caps > 2)
-            {
-              SK_LOGi0 (
-                L"PlayStation Controller has too many button sets (%d);"
-                L" will ignore Device=%ws", num_caps, wszFileName
+            controller.bBluetooth =
+              StrStrIW (
+                wszFileName, //Bluetooth_Base_UUID
+                             L"{00001124-0000-1000-8000-00805f9b34fb}"
               );
 
+            controller.bDualSense =
+              (controller.pid == SK_HID_PID_DUALSENSE_EDGE) ||
+              (controller.pid == SK_HID_PID_DUALSENSE);
+
+            controller.bDualSenseEdge =
+              controller.pid == SK_HID_PID_DUALSENSE_EDGE;
+
+            controller.bDualShock4 =
+              (controller.pid == SK_HID_PID_DUALSHOCK4)      ||
+              (controller.pid == SK_HID_PID_DUALSHOCK4_REV2) ||
+              (controller.pid == SK_HID_PID_DUALSHOCK4_DONGLE);
+
+            controller.bDualShock3 =
+              (controller.pid == SK_HID_PID_DUALSHOCK3);
+
+            if (! (controller.bDualSense || controller.bDualShock4 || controller.bDualShock3))
+            {
+              SK_LOGi0 (L"SONY Controller with Unknown PID ignored: %ws", wszFileName);
               continue;
             }
+    
+            wcsncpy_s (controller.wszDevicePath, MAX_PATH,
+                                  wszFileName,   _TRUNCATE);
 
-            if ( HIDP_STATUS_SUCCESS ==
-              SK_HidP_GetButtonCaps ( HidP_Input,
-                                        buttonCapsArray.data (), &num_caps,
-                                          controller.pPreparsedData ) )
+            controller.hDeviceFile =
+                       hDeviceFile;
+    
+            if (controller.hDeviceFile != INVALID_HANDLE_VALUE)
             {
-              for (UINT i = 0 ; i < num_caps ; ++i)
+              if (! SK_HidD_GetPreparsedData (controller.hDeviceFile, &controller.pPreparsedData))
+              	continue;
+
+#ifdef DEBUG
+              if (controller.bBluetooth)
+                SK_ImGui_Warning (L"Bluetooth");
+#endif
+
+              HIDP_CAPS                                      caps = { };
+                SK_HidP_GetCaps (controller.pPreparsedData, &caps);
+
+              controller.input_report.resize   (caps.InputReportByteLength);
+              controller.output_report.resize  (caps.OutputReportByteLength);
+              controller.feature_report.resize (caps.FeatureReportByteLength);
+
+              controller.initialize_serial ();
+
+              std::vector <HIDP_BUTTON_CAPS>
+                buttonCapsArray;
+                buttonCapsArray.resize (caps.NumberInputButtonCaps);
+
+              std::vector <HIDP_VALUE_CAPS>
+                valueCapsArray;
+                valueCapsArray.resize (caps.NumberInputValueCaps);
+
+              USHORT num_caps =
+                caps.NumberInputButtonCaps;
+
+              if (num_caps > 2)
               {
-                // Face Buttons
-                if (buttonCapsArray [i].IsRange)
-                {
-                  controller.button_report_id =
-                    buttonCapsArray [i].ReportID;
-                  controller.button_usage_min =
-                    buttonCapsArray [i].Range.UsageMin;
-                  controller.button_usage_max =
-                    buttonCapsArray [i].Range.UsageMax;
+                SK_LOGi0 (
+                  L"PlayStation Controller has too many button sets (%u);"
+                  L" will ignore Device=%ws", num_caps, wszFileName
+                );
 
-                  controller.buttons.resize (
-                    static_cast <size_t> (
-                      controller.button_usage_max -
-                      controller.button_usage_min + 1
-                    )
-                  );
-                }
+                continue;
               }
-
-              USHORT value_caps_count =
-                sk::narrow_cast <USHORT> (valueCapsArray.size ());
 
               if ( HIDP_STATUS_SUCCESS ==
-                     SK_HidP_GetValueCaps ( HidP_Input, valueCapsArray.data (),
-                                                       &value_caps_count,
-                                                        controller.pPreparsedData ) )
+                SK_HidP_GetButtonCaps ( HidP_Input,
+                                          buttonCapsArray.data (), &num_caps,
+                                            controller.pPreparsedData ) )
               {
-                controller.value_caps.resize (value_caps_count);
-
-                for ( int idx = 0; idx < value_caps_count; ++idx )
+                for (UINT i = 0 ; i < num_caps ; ++i)
                 {
-                  controller.value_caps [idx] = valueCapsArray [idx];
+                  // Face Buttons
+                  if (buttonCapsArray [i].IsRange)
+                  {
+                    controller.button_report_id =
+                      buttonCapsArray [i].ReportID;
+                    controller.button_usage_min =
+                      buttonCapsArray [i].Range.UsageMin;
+                    controller.button_usage_max =
+                      buttonCapsArray [i].Range.UsageMax;
+
+                    controller.buttons.resize (
+                      static_cast <size_t> (
+                        controller.button_usage_max -
+                        controller.button_usage_min + 1
+                      )
+                    );
+                  }
+                }
+
+                USHORT value_caps_count =
+                  sk::narrow_cast <USHORT> (valueCapsArray.size ());
+
+                if ( HIDP_STATUS_SUCCESS ==
+                       SK_HidP_GetValueCaps ( HidP_Input, valueCapsArray.data (),
+                                                         &value_caps_count,
+                                                          controller.pPreparsedData ) )
+                {
+                  controller.value_caps.resize (value_caps_count);
+
+                  for ( int idx = 0; idx < value_caps_count; ++idx )
+                  {
+                    controller.value_caps [idx] = valueCapsArray [idx];
+                  }
+                }
+
+                // We need a contiguous array to read-back the set buttons,
+                //   rather than allocating it dynamically, do it once and reuse.
+                controller.button_usages.resize (controller.buttons.size ());
+
+                USAGE idx = 0;
+
+                for ( auto& button : controller.buttons )
+                {
+                  button.UsagePage = buttonCapsArray [0].UsagePage;
+                  button.Usage     = controller.button_usage_min + idx++;
+                  button.state     = false;
                 }
               }
 
-              // We need a contiguous array to read-back the set buttons,
-              //   rather than allocating it dynamically, do it once and reuse.
-              controller.button_usages.resize (controller.buttons.size ());
+              controller.bConnected         = true;
+              controller.output.last_crc32c = 0;
+    
+              auto iter =
+                SK_HID_PlayStationControllers.push_back (controller);
 
-              USAGE idx = 0;
+              iter->setPollingFrequency (0);
+              iter->setBufferCount      (config.input.gamepad.hid.max_allowed_buffers);
 
-              for ( auto& button : controller.buttons )
-              {
-                button.UsagePage = buttonCapsArray [0].UsagePage;
-                button.Usage     = controller.button_usage_min + idx++;
-                button.state     = false;
-              }
+              iter->write_output_report ();
             }
-
-            controller.bConnected         = true;
-            controller.output.last_crc32c = 0;
-  
-            auto iter =
-              SK_HID_PlayStationControllers.push_back (controller);
-
-            iter->setPollingFrequency (0);
-            iter->setBufferCount      (config.input.gamepad.hid.max_allowed_buffers);
-
-            iter->write_output_report ();
           }
         }
       }
+    
+      SK_SetupDiDestroyDeviceInfoList (hid_device_set);
     }
-  
-    SK_SetupDiDestroyDeviceInfoList (hid_device_set);
+
+    InterlockedIncrement (&_init);
+  }
+
+  else
+  {
+    SK_Thread_SpinUntilAtomicMin (&_init, 2);
   }
 }
 
@@ -945,6 +969,54 @@ SK_HID_FilterPreparsedData (PHIDP_PREPARSED_DATA pData)
               //L" HIDInput ");
 
   return filter;
+}
+
+BOOLEAN
+WINAPI
+HidD_GetAttributes_Detour (_In_  HANDLE           HidDeviceObject,
+                           _Out_ PHIDD_ATTRIBUTES Attributes)
+{
+  SK_LOG_FIRST_CALL
+
+  BOOLEAN ret =
+    HidD_GetAttributes_Original (HidDeviceObject, Attributes);
+
+  if (ret)
+  {
+    if (Attributes->VendorID == SK_HID_VID_SONY)
+    {
+      if (config.input.gamepad.scepad.show_ds4_v1_as_v2 == SK_Enabled)
+      {
+        if (Attributes->ProductID == SK_HID_PID_DUALSHOCK4)
+        {   Attributes->ProductID  = SK_HID_PID_DUALSHOCK4_REV2;
+            SK_LOGi0 (L"Identifying DualShock 4 controller as DualShock 4 v2 to game.");
+        }
+      }
+
+      if (config.input.gamepad.scepad.hide_ds4_v2_pid == SK_Enabled)
+      {
+        if (Attributes->ProductID == SK_HID_PID_DUALSHOCK4_REV2)
+        {   Attributes->ProductID  = SK_HID_PID_DUALSHOCK4;
+            SK_LOGi0 (L"Identifying DualShock 4 v2 controller as DualShock 4 to game.");
+        }
+
+        if (Attributes->ProductID == SK_HID_PID_DUALSHOCK4_DONGLE)
+        {   Attributes->ProductID  = SK_HID_PID_DUALSHOCK4;
+            SK_LOGi0 (L"Identifying DualShock 4 (via Dongle) controller as DualShock 4 to game.");
+        }
+      }
+
+      if (config.input.gamepad.scepad.hide_ds_edge_pid == SK_Enabled)
+      {
+        if (Attributes->ProductID == SK_HID_PID_DUALSENSE_EDGE)
+        {   Attributes->ProductID  = SK_HID_PID_DUALSENSE;
+            SK_LOGi0 (L"Identifying DualSense Edge controller as DualSense to game.");
+        }
+      }
+    }
+  }
+
+  return ret;
 }
 
 PHIDP_PREPARSED_DATA* SK_HID_PreparsedDataP = nullptr;
@@ -1303,242 +1375,244 @@ ReadFile_Detour (HANDLE       hFile,
   const auto &[ dev_file_type, dev_ptr, dev_allowed ] =
     SK_Input_GetDeviceFileAndState (hFile);
 
-  switch (dev_file_type)
+  if (dev_ptr != nullptr)
   {
-    case SK_Input_DeviceFileType::HID:
+    switch (dev_file_type)
     {
-      if (config.input.gamepad.disable_hid)
+      case SK_Input_DeviceFileType::HID:
       {
-        SetLastError (ERROR_DEVICE_NOT_CONNECTED);
-        return FALSE;
-      }
-
-      auto hid_file =
-        (SK_HID_DeviceFile *)dev_ptr;
-
-      BYTE report_id = 0;
-
-      if (lpBuffer != nullptr)
-      {
-        report_id = ((uint8_t *)lpBuffer)[0];
-
-        if (! report_id)
+        if (config.input.gamepad.disable_hid)
         {
-          report_id = (BYTE)nNumberOfBytesToRead;
+          SetLastError (ERROR_DEVICE_NOT_CONNECTED);
+          return FALSE;
         }
-      }
 
-      void* pBuffer = lpBuffer;
+        auto hid_file =
+          (SK_HID_DeviceFile *)(dev_ptr);
 
-      if (! dev_allowed)
-      {
-        if (nNumberOfBytesToRead > 0)
-        {
-          if (        hid_file->_blockedInputReportsBySize [nNumberOfBytesToRead].size () < nNumberOfBytesToRead)
-                      hid_file->_blockedInputReportsBySize [nNumberOfBytesToRead].resize (nNumberOfBytesToRead);
-            pBuffer = hid_file->_blockedInputReportsBySize [nNumberOfBytesToRead].data ();
-
-          if (report_id > 0 && hid_file->_cachedInputReportsByReportId [report_id].size () >= nNumberOfBytesToRead)
-          {
-            if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead))
-            {
-              if (                   lpBuffer != nullptr)
-                SK_UNTRUSTED_memcpy (lpBuffer, hid_file->_cachedInputReportsByReportId [report_id].data (), nNumberOfBytesToRead);
-            }
-          }
-        }
-      }
-
-      BOOL bRet =
-        ReadFile_Original (
-          hFile, pBuffer, nNumberOfBytesToRead,
-            lpNumberOfBytesRead, lpOverlapped
-        );
-
-      if (lpOverlapped != nullptr && bRet)
-      {
-        auto& overlapped = hid_file->_overlappedRequests [lpOverlapped];
-
-        overlapped.dwNumberOfBytesToRead = nNumberOfBytesToRead;
-        overlapped.hFile                 = hFile;
-        overlapped.lpBuffer              = lpBuffer;
-      }
-
-#if 0
-      SK_LOGi0 (
-        L"ReadFile (%ws, %p, %d, %p, {overlapped: %p} => %hs",
-          hid_file->wszDevicePath, lpBuffer, nNumberOfBytesToRead,
-              lpNumberOfBytesRead, lpOverlapped, bRet ? "Success" : "Fail"
-      );
-      SK_LOGi0 ("Report ID: %x", report_id);
-#endif
-
-      if (bRet)
-      {
-        size_t nNumberOfBytesRead = lpNumberOfBytesRead != nullptr ?
-                           (size_t)*lpNumberOfBytesRead : (size_t)nNumberOfBytesToRead;
-
+        BYTE report_id = 0;
 
         if (lpBuffer != nullptr)
         {
-          report_id = ((uint8_t *)lpBuffer)[0];
+          report_id = ((uint8_t *)(lpBuffer))[0];
 
           if (! report_id)
-          {
-            report_id = lpNumberOfBytesRead != nullptr ?
-              (uint8_t)*lpNumberOfBytesRead : (BYTE)nNumberOfBytesToRead;
+          {     report_id = sk::narrow_cast <BYTE> (nNumberOfBytesToRead);
           }
         }
 
-        auto& cached_report =
-          hid_file->_cachedInputReportsByReportId [report_id];
+        void* pBuffer = lpBuffer;
 
-        if ((! lpOverlapped) && dev_allowed)
+        if (! dev_allowed)
         {
-          if (                   cached_report.size   ()          < nNumberOfBytesRead)
-                                 cached_report.resize (             nNumberOfBytesRead);
-            SK_UNTRUSTED_memcpy (cached_report.data   (), lpBuffer, nNumberOfBytesRead);
-        }
-
-        bool bDeviceAllowed = dev_allowed;
-
-        if (report_id > 0 && lpOverlapped != nullptr)
-        {
-          ///if (hid_file->_cachedInputReportsByReportId [report_id].size () < nNumberOfBytesRead)
-          ///{   hid_file->_cachedInputReportsByReportId [report_id].resize (  nNumberOfBytesRead);
-          ///}
-          ///
-          ///if (((uint8_t *)lpBuffer)[0] != 0)
-          ///{
-          ///  hid_file->_cachedInputReportsByReportId [report_id].data ()[0] = ((uint8_t *)lpBuffer)[0];
-          ///}
-          ///
-          ///if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesRead))
-          ///{
-          ///  SK_UNTRUSTED_memcpy (
-          ///    lpBuffer, hid_file->_cachedInputReportsByReportId [report_id].data (),
-          ///        nNumberOfBytesToRead );
-          ///}
-        }
-
-        if (! bDeviceAllowed)
-        {
-          SK_ReleaseAssert (lpBuffer != nullptr);
-
-          SK_HID_HIDE (hid_file->device_type);
-
-          if (lpOverlapped == nullptr) // lpNumberOfBytesRead MUST be non-null
+          if (nNumberOfBytesToRead > 0)
           {
-            if (report_id > 0 && cached_report.size () >= nNumberOfBytesToRead)
-            {
-              // Give the game old data, from before we started blocking stuff...
-              int num_bytes_read =
-                hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead);
-            
-              if (num_bytes_read > 0)
-              {
-                if (lpNumberOfBytesRead != nullptr)
-                   *lpNumberOfBytesRead = num_bytes_read;
-              }
+            if (        hid_file->_blockedInputReportsBySize [nNumberOfBytesToRead].size () < nNumberOfBytesToRead)
+                        hid_file->_blockedInputReportsBySize [nNumberOfBytesToRead].resize (nNumberOfBytesToRead);
+              pBuffer = hid_file->_blockedInputReportsBySize [nNumberOfBytesToRead].data ();
 
-              else
+            if (report_id > 0 && hid_file->_cachedInputReportsByReportId [report_id].size () >= nNumberOfBytesToRead)
+            {
+              if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead))
               {
-                num_bytes_read = lpNumberOfBytesRead != nullptr ?
-                           (int)*lpNumberOfBytesRead : num_bytes_read;
-              }
-            
-              if (lpBuffer != nullptr && num_bytes_read > 0)
-              {
-                SK_UNTRUSTED_memcpy (
-                  lpBuffer, cached_report.data (),
-                 std::min ((int)nNumberOfBytesToRead,
-                                      num_bytes_read)
-                );
+                if (                   lpBuffer != nullptr)
+                  SK_UNTRUSTED_memcpy (lpBuffer, hid_file->_cachedInputReportsByReportId [report_id].data (), nNumberOfBytesToRead);
               }
             }
+          }
+        }
+
+        BOOL bRet =
+          ReadFile_Original (
+            hFile, pBuffer, nNumberOfBytesToRead,
+              lpNumberOfBytesRead, lpOverlapped
+          );
+
+        if (lpOverlapped != nullptr && bRet)
+        {
+          auto& overlapped = hid_file->_overlappedRequests [lpOverlapped];
+
+          overlapped.dwNumberOfBytesToRead = nNumberOfBytesToRead;
+          overlapped.hFile                 = hFile;
+          overlapped.lpBuffer              = lpBuffer;
+        }
+
+#if 0
+        SK_LOGi0 (
+          L"ReadFile (%ws, %p, %d, %p, {overlapped: %p} => %hs",
+            hid_file->wszDevicePath, lpBuffer, nNumberOfBytesToRead,
+                lpNumberOfBytesRead, lpOverlapped, bRet ? "Success" : "Fail"
+        );
+        SK_LOGi0 ("Report ID: %x", report_id);
+#endif
+
+        if (bRet)
+        {
+          size_t nNumberOfBytesRead = lpNumberOfBytesRead != nullptr ?
+                             (size_t)*lpNumberOfBytesRead : (size_t)nNumberOfBytesToRead;
+
+
+          if (lpBuffer != nullptr)
+          {
+            report_id = ((uint8_t *)(lpBuffer))[0];
+
+            if (! report_id)
+            {
+              report_id = lpNumberOfBytesRead != nullptr ?
+                (uint8_t)*lpNumberOfBytesRead : (BYTE)nNumberOfBytesToRead;
+            }
+          }
+
+          auto& cached_report =
+            hid_file->_cachedInputReportsByReportId [report_id];
+
+          if ((! lpOverlapped) && dev_allowed)
+          {
+            if (                   cached_report.size   ()          < nNumberOfBytesRead)
+                                   cached_report.resize (             nNumberOfBytesRead);
+              SK_UNTRUSTED_memcpy (cached_report.data   (), lpBuffer, nNumberOfBytesRead);
+          }
+
+          bool bDeviceAllowed = dev_allowed;
+
+          if (report_id > 0 && lpOverlapped != nullptr)
+          {
+            ///if (hid_file->_cachedInputReportsByReportId [report_id].size () < nNumberOfBytesRead)
+            ///{   hid_file->_cachedInputReportsByReportId [report_id].resize (  nNumberOfBytesRead);
+            ///}
+            ///
+            ///if (((uint8_t *)lpBuffer)[0] != 0)
+            ///{
+            ///  hid_file->_cachedInputReportsByReportId [report_id].data ()[0] = ((uint8_t *)lpBuffer)[0];
+            ///}
+            ///
+            ///if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesRead))
+            ///{
+            ///  SK_UNTRUSTED_memcpy (
+            ///    lpBuffer, hid_file->_cachedInputReportsByReportId [report_id].data (),
+            ///        nNumberOfBytesToRead );
+            ///}
+          }
+
+          if (! bDeviceAllowed)
+          {
+            SK_ReleaseAssert (lpBuffer != nullptr);
+
+            SK_HID_HIDE (hid_file->device_type);
+
+            if (lpOverlapped == nullptr) // lpNumberOfBytesRead MUST be non-null
+            {
+              if (report_id > 0 && cached_report.size () >= nNumberOfBytesToRead)
+              {
+                // Give the game old data, from before we started blocking stuff...
+                int num_bytes_read =
+                  hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead);
+              
+                if (num_bytes_read > 0)
+                {
+                  if (lpNumberOfBytesRead != nullptr)
+                     *lpNumberOfBytesRead = num_bytes_read;
+                }
+
+                else
+                {
+                  num_bytes_read = lpNumberOfBytesRead != nullptr ?
+                             (int)*lpNumberOfBytesRead : num_bytes_read;
+                }
+              
+                if (lpBuffer != nullptr && num_bytes_read > 0)
+                {
+                  SK_UNTRUSTED_memcpy (
+                    lpBuffer, cached_report.data (),
+                   std::min ((int)nNumberOfBytesToRead,
+                                        num_bytes_read)
+                  );
+                }
+              }
+            }
+
+            else
+            {
+              SK_RunOnce (
+                SK_LOGi0 (L"ReadFile HID IO Cancelled")
+              );
+
+              if (report_id > 0 && cached_report.size () >= nNumberOfBytesToRead)
+              {
+                // Give the game old data, from before we started blocking stuff...
+                int num_bytes_read =
+                  hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead);
+
+                //if (num_bytes_read == 0)
+                //{
+                //  num_bytes_read = nNumberOfBytesToRead;
+                //}
+
+                if (num_bytes_read > 0)
+                {
+                  if (lpNumberOfBytesRead != nullptr)
+                     *lpNumberOfBytesRead = num_bytes_read;
+                }
+
+                if (lpBuffer != nullptr && num_bytes_read > 0)
+                {
+                  SK_UNTRUSTED_memcpy (
+                    lpBuffer, cached_report.data (),
+                   std::min ((int)nNumberOfBytesToRead,
+                                        num_bytes_read)
+                  );
+                }
+              }
+            }
+
+            return bRet;
           }
 
           else
           {
-            SK_RunOnce (
-              SK_LOGi0 (L"ReadFile HID IO Cancelled")
-            );
+            SK_HID_READ (hid_file->device_type);
 
-            if (report_id > 0 && cached_report.size () >= nNumberOfBytesToRead)
+            if (lpOverlapped == nullptr && lpBuffer != nullptr)
             {
-              // Give the game old data, from before we started blocking stuff...
-              int num_bytes_read =
-                hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead);
+              report_id = ((uint8_t *)(lpBuffer))[0];
+            }
 
-              //if (num_bytes_read == 0)
-              //{
-              //  num_bytes_read = nNumberOfBytesToRead;
-              //}
+            DWORD dwBytesRead = 0;
 
-              if (num_bytes_read > 0)
-              {
-                if (lpNumberOfBytesRead != nullptr)
-                   *lpNumberOfBytesRead = num_bytes_read;
-              }
+            if (lpNumberOfBytesRead != nullptr)
+               dwBytesRead = *lpNumberOfBytesRead;
+            else
+               dwBytesRead = nNumberOfBytesToRead;
 
-              if (lpBuffer != nullptr && num_bytes_read > 0)
+            if (lpOverlapped == nullptr && report_id > 0 && lpBuffer != nullptr)
+            {
+              if (hid_file->_cachedInputReportsByReportId [report_id].size () <= dwBytesRead)
+                  hid_file->_cachedInputReportsByReportId [report_id].resize (   dwBytesRead);
+
+              hid_file->_cachedInputReportsByReportId [report_id].data ()[0] = report_id;
+
+              //if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead))
               {
                 SK_UNTRUSTED_memcpy (
-                  lpBuffer, cached_report.data (),
-                 std::min ((int)nNumberOfBytesToRead,
-                                      num_bytes_read)
-                );
+                  hid_file->_cachedInputReportsByReportId [report_id].data (), lpBuffer,
+                      dwBytesRead );
+
+                hid_file->neutralizeHidInput (report_id, dwBytesRead);
               }
             }
-          }
 
-          return bRet;
+            SK_HID_VIEW (hid_file->device_type);
+          }
         }
 
-        else
-        {
-          SK_HID_READ (hid_file->device_type);
+        return bRet;
+      } break;
 
-          if (lpOverlapped == nullptr)
-          {
-            report_id = ((uint8_t *)lpBuffer)[0];
-          }
-
-          DWORD dwBytesRead = 0;
-
-          if (lpNumberOfBytesRead != nullptr)
-             dwBytesRead = *lpNumberOfBytesRead;
-          else
-             dwBytesRead = nNumberOfBytesToRead;
-
-          if (lpOverlapped == nullptr && report_id > 0)
-          {
-            if (hid_file->_cachedInputReportsByReportId [report_id].size () <= dwBytesRead)
-                hid_file->_cachedInputReportsByReportId [report_id].resize (   dwBytesRead);
-
-            hid_file->_cachedInputReportsByReportId [report_id].data ()[0] = report_id;
-
-            //if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead))
-            {
-              SK_UNTRUSTED_memcpy (
-                hid_file->_cachedInputReportsByReportId [report_id].data (), lpBuffer,
-                    dwBytesRead );
-
-              hid_file->neutralizeHidInput (report_id, dwBytesRead);
-            }
-          }
-
-          SK_HID_VIEW (hid_file->device_type);
-        }
-      }
-
-      return bRet;
-    } break;
-
-    case SK_Input_DeviceFileType::NVIDIA:
-    {
-      SK_MessageBus_Backend->markRead (2);
-    } break;
+      case SK_Input_DeviceFileType::NVIDIA:
+      {
+        SK_MessageBus_Backend->markRead (2);
+      } break;
+    }
   }
 
   return
@@ -1662,7 +1736,7 @@ CreateFileA_Detour (LPCSTR                lpFileName,
         lpSecurityAttributes, dwCreationDisposition,
           dwFlagsAndAttributes, hTemplateFile );
 
-  const bool bSuccess = (LONG_PTR)hRet > 0;
+  const bool bSuccess = LONG_PTR (hRet) > 0;
 
   // Examine all UNC paths closely, some of these files are
   //   input devices in disguise...
@@ -1965,6 +2039,7 @@ GetOverlappedResultEx_Detour (HANDLE       hFile,
   const auto &[ dev_file_type, dev_ptr, dev_allowed ] =
     SK_Input_GetDeviceFileAndState (hFile);
 
+  if (    dev_ptr != nullptr)
   switch (dev_file_type)
   {
     case SK_Input_DeviceFileType::HID:
@@ -2028,7 +2103,8 @@ GetOverlappedResultEx_Detour (HANDLE       hFile,
             auto& cached_report =
               hid_file->_cachedInputReportsByReportId [report_id];
 
-            if (                     cached_report.size () < overlapped_request.dwNumberOfBytesToRead)
+            if (              overlapped_request.lpBuffer != nullptr
+                                  && cached_report.size () < overlapped_request.dwNumberOfBytesToRead)
             {
               if (((uint8_t *)overlapped_request.lpBuffer)[0] == 0x0 || ((uint8_t *)overlapped_request.lpBuffer)[0] == report_id)
               {
@@ -2153,7 +2229,8 @@ GetOverlappedResult_Detour (HANDLE       hFile,
             auto& cached_report =
               hid_file->_cachedInputReportsByReportId [report_id];
 
-            if (                     cached_report.size () < overlapped_request.dwNumberOfBytesToRead)
+            if (              overlapped_request.lpBuffer != nullptr 
+                                 &&  cached_report.size () < overlapped_request.dwNumberOfBytesToRead)
             {
               if (((uint8_t *)overlapped_request.lpBuffer)[0] == 0x0 || ((uint8_t *)overlapped_request.lpBuffer)[0] == report_id)
               {
@@ -2222,7 +2299,7 @@ DeviceIoControl_Detour (HANDLE       hDevice,
         dwFunctionNum =       (dwIoControlCode >> 2) & 0xFFF;
 
   SK_LOGi2 (
-    L"DeviceIoControl %p (Type: %x, Function: %d)", hDevice,
+    L"DeviceIoControl %p (Type: %x, Function: %u", hDevice,
       dwDeviceType, dwFunctionNum
   );
 
@@ -2458,6 +2535,11 @@ SK_Input_HookHID (void)
     }
 
     SK_CreateDLLHook2 (     L"HID.DLL",
+                             "HidD_GetAttributes",
+                              HidD_GetAttributes_Detour,
+     static_cast_p2p <void> (&HidD_GetAttributes_Original) );
+
+    SK_CreateDLLHook2 (     L"HID.DLL",
                              "HidD_GetFeature",
                               HidD_GetFeature_Detour,
      static_cast_p2p <void> (&HidD_GetFeature_Original) );
@@ -2539,6 +2621,10 @@ SK_Input_HookHID (void)
 bool
 SK_Input_PreHookHID (void)
 {
+  static bool        once = false;
+  if (std::exchange (once,  true))
+    return true;
+
   static std::filesystem::path path_to_driver_base =
         (std::filesystem::path (SK_GetInstallPath ()) /
                                LR"(Drivers\HID)"),
@@ -3305,14 +3391,14 @@ struct SK_HID_DualShock4_GetStateData : SK_HID_DualShock4_BasicGetStateData {
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct USBGetStateData : SK_HID_DualShock4_GetStateData {
+struct SK_HID_DualShock4_GetStateDataUSB : SK_HID_DualShock4_GetStateData {
   TouchData TouchData [3];
   uint8_t   Pad       [3];
 };
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct BTGetStateData : SK_HID_DualShock4_GetStateData {
+struct SK_HID_DualShock4_GetStateDataBt : SK_HID_DualShock4_GetStateData {
   TouchData TouchData [4];
   uint8_t Pad         [6];
 };
@@ -3336,13 +3422,13 @@ SK_HID_PlayStationDevice::setVibration (
   }
 
   WriteULongRelease (&_vibration.left,
-      static_cast  <ULONG> (255.0 *
+      sk::narrow_cast <ULONG> (255.0 *
         std::clamp (
           (static_cast <double> (left)/
            static_cast <double> (max_val)), 0.0, 1.0)));
   
   WriteULongRelease (&_vibration.right,
-      static_cast  <ULONG> (255.0 *
+      sk::narrow_cast <ULONG> (255.0 *
         std::clamp (
           (static_cast <double> (right)/
            static_cast <double> (max_val)), 0.0, 1.0)));
@@ -3369,7 +3455,7 @@ SK_HID_PlayStationDevice::setBufferCount (DWORD dwBuffers)
   if (dwBuffers < 2)
   {
     SK_LOGi0 (
-      L"Invalid Buffer Count (%d) passed to "
+      L"Invalid Buffer Count (%u) passed to "
       L"SK_HID_DeviceFile::setBufferCount (...); "
       L"Using minimum supported value (2) instead.",
       dwBuffers
@@ -3389,6 +3475,66 @@ SK_HID_PlayStationDevice::setBufferCount (DWORD dwBuffers)
     );
 }
 
+struct cfg_binding_map_s {
+  std::wstring* wszValName   = nullptr;
+  UINT           uiVirtKey   = 0;
+  UINT           uiButtonIdx = 0;
+  bool           lastFrame   = false;
+  bool           thisFrame   = false;
+  UINT64         frameNum    = 0;
+} static binding_map [5] = {
+    { &config.input.gamepad.scepad.touch_click,  0, 13 },
+    // Mute (14, on DualSense) is already reserved...
+    { &config.input.gamepad.scepad.left_fn,      0, 15 },
+    { &config.input.gamepad.scepad.right_fn,     0, 16 },
+    { &config.input.gamepad.scepad.left_paddle,  0, 17 },
+    { &config.input.gamepad.scepad.right_paddle, 0, 18 } };
+
+void
+SK_HID_ProcessGamepadButtonBindings (void)
+{
+  const auto frames_drawn =
+    SK_GetFramesDrawn ();
+
+  for ( auto& binding : binding_map )
+  {
+    UINT VirtualKey  = binding.uiVirtKey;
+    if ( VirtualKey != 0 ) // A user-configured binding exists
+    {
+      const bool bPressed  = (binding.thisFrame && (! binding.lastFrame));
+      const bool bReleased = (binding.lastFrame && (! binding.thisFrame));
+
+      if (bPressed || bReleased)
+      {
+        const BYTE bScancode =
+          (BYTE)MapVirtualKey (VirtualKey, 0);
+
+        const DWORD dwFlags =
+          ( ( bScancode & 0xE0 ) == 0   ?
+              static_cast <DWORD> (0x0) :
+              static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY) ) |
+                     ( bReleased ? KEYEVENTF_KEYUP
+                                 : 0x0 );
+
+        WriteULong64Release (
+          &config.input.keyboard.temporarily_allow,
+            frames_drawn + 40
+        );
+
+        SK_keybd_event (sk::narrow_cast <BYTE> (VirtualKey),
+                                                  bScancode, dwFlags, 0);
+
+        binding.lastFrame = binding.thisFrame;
+      }
+
+      SK_ReleaseAssert ( binding.frameNum == 0 ||
+                         binding.frameNum <= frames_drawn );
+
+      binding.frameNum = frames_drawn;
+    }
+  }
+}
+
 bool
 SK_HID_PlayStationDevice::request_input_report (void)
 {
@@ -3403,7 +3549,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
   if (latency.pollrate == nullptr)
   {
     latency.pollrate =
-      new SK::Framerate::Stats ();
+      new (std::nothrow) SK::Framerate::Stats ();
   }
 
   // If user is overriding RGB, we need to write an output report for every input report
@@ -3498,7 +3644,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
 
         BOOL bReadAsync =
           SK_ReadFile ( pDevice->hDeviceFile, pDevice->input_report.data (),
-                         static_cast <DWORD> (pDevice->input_report.size ()), nullptr, &async_input_request );
+                     sk::narrow_cast <DWORD> (pDevice->input_report.size ()), nullptr, &async_input_request );
 
         if (! bReadAsync)
         {
@@ -3521,7 +3667,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
 
             SK_LOGs0 (
               L"InputBkEnd",
-              L"SK_ReadFile ({%ws}, InputReport) failed, Error=%d [%ws]",
+              L"SK_ReadFile ({%ws}, InputReport) failed, Error=%u [%ws]",
                 pDevice->wszDevicePath, dwLastErr,
                   err.ErrorMessage ()
             );
@@ -3536,7 +3682,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
                    dwLastErr != ERROR_NO_SUCH_DEVICE )
                 SK_CancelIoEx (pDevice->hDeviceFile, &async_input_request);
 
-              SK_SleepEx (100UL, TRUE); // Prevent runaway CPU usage on failure
+              SK_SleepEx (333UL, TRUE); // Prevent runaway CPU usage on failure
 
               continue;
             }
@@ -3590,7 +3736,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
 
                 SK_LOGs0 (
                   L"InputBkEnd",
-                  L"SK_GetOverlappedResult ({%ws}, InputReport) failed, Error=%d [%ws]",
+                  L"SK_GetOverlappedResult ({%ws}, InputReport) failed, Error=%u [%ws]",
                     pDevice->wszDevicePath, dwLastErr,
                       err.ErrorMessage ()
                 );
@@ -3627,7 +3773,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
             ////}
 
             ULONG num_usages =
-              static_cast <ULONG> (pDevice->button_usages.size ());
+              ULONG (pDevice->button_usages.size ());
 
             pDevice->xinput.report.Gamepad = { };
 
@@ -3636,7 +3782,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
                 (pDevice->latency.last_syn > pDevice->latency.last_ack || pDevice->latency.last_ack == 0))
             {
               uint32_t ack =
-                static_cast <uint32_t> (SK_QueryPerf ().QuadPart - pDevice->latency.timestamp_epoch);
+                uint32_t (SK_QueryPerf ().QuadPart - pDevice->latency.timestamp_epoch);
 
               pDevice->latency.last_ack = ack;
               pDevice->latency.ping     = pDevice->latency.last_ack -
@@ -3655,15 +3801,18 @@ SK_HID_PlayStationDevice::request_input_report (void)
                                                 pDevice->button_usages.data (),
                                                                 &num_usages,
                                                 pDevice->pPreparsedData,
-                                         (PCHAR)pDevice->input_report.data  (),
-                           static_cast <ULONG> (pDevice->input_report.size  ()) )
+                                          PCHAR(pDevice->input_report.data ()),
+                                          ULONG(pDevice->input_report.size ()) )
                  )
               {
                 for ( UINT i = 0; i < num_usages; ++i )
                 {
+                  if (i >= pDevice->button_usages.size ())
+                    continue;
+
                   pDevice->buttons [
-                    pDevice->button_usages [i] -
-                    pDevice->buttons       [0].Usage
+                    ULONG (pDevice->button_usages [i]) -
+                    ULONG (pDevice->buttons       [0].Usage)
                   ].state = true;
                 }
               }
@@ -3769,29 +3918,89 @@ SK_HID_PlayStationDevice::request_input_report (void)
               // Report 0x1, USB Mode
               if (dwBytesTransferred == 64)
               {
-                SK_HID_DualSense_GetStateData* pData = 
+                SK_HID_DualSense_GetStateData* pDualSense = 
                   (SK_HID_DualSense_GetStateData *)&(pDevice->input_report.data ()[1]);
 
-                pDevice->battery.state =
-                  (SK_HID_PlayStationDevice::PowerState)((((BYTE *)pData)[52] & 0xF0) >> 4);
+                auto pDualShock4 =
+                  (SK_HID_DualShock4_GetStateData *)pDualSense;
 
-                const float batteryPercent =
-                  ( std::min (((((BYTE *)pData)[52] & 0xF) /*- ((((BYTE *)pData)[53] & 0x10) ? 1 : 0)*/) * 10.0f + 5.0f, 100.0f) );
+                float batteryPercent = 0.0f;
+
+                if (! pDevice->bDualShock4)
+                {
+                  pDevice->battery.state =
+                    (SK_HID_PlayStationDevice::PowerState)((((BYTE *)pDualSense)[52] & 0xF0) >> 4);
+
+                  batteryPercent =
+                    std::clamp (
+                      ( pDevice->battery.state == Charging    ? static_cast <float> (std::min (11, ((BYTE *)pDualSense)[52] & 0xF)) - 1 :
+                        pDevice->battery.state == Discharging ? static_cast <float> (std::min (10, ((BYTE *)pDualSense)[52] & 0xF))     :
+                                                                                                          0.0f) * 10.0f +
+                      ( pDevice->battery.state == Charging    ? 0.0f :
+                        pDevice->battery.state == Discharging ? 5.0f :
+                                                                0.0f ), 0.0f, 100.0f );
+                }
+
+                else
+                {
+                  pDevice->battery.state =
+                    pDualShock4->PluggedPowerCable ?
+                                          Charging :
+                                       Discharging;
+
+                  batteryPercent =
+                    std::clamp (
+                      ( pDevice->battery.state == Charging    ? static_cast <float> (std::min (11, (pDualShock4->PowerPercent & 0xF))) - 1 :
+                        pDevice->battery.state == Discharging ? static_cast <float> (std::min (10, (pDualShock4->PowerPercent & 0xF)))     :
+                                                                                                          0.0f) * 10.0f +
+                      ( pDevice->battery.state == Charging    ? 0.0f :
+                        pDevice->battery.state == Discharging ? 5.0f :
+                                                                0.0f ), 0.0f, 100.0f );
+
+                  // Implicitly assign Charging Complete status if battery is full and plugged-in
+                  if ( batteryPercent         >= 100.0f &&
+                       pDevice->battery.state == Charging )
+                       pDevice->battery.state  = Complete;
+                }
 
                 if (pDevice->battery.state == Discharging || 
                     pDevice->battery.state == Charging    ||
                     pDevice->battery.state == Complete)
                 {
                   pDevice->battery.percentage = batteryPercent;
+
+                  if (pDevice->battery.state == Complete)
+                      pDevice->battery.percentage = 100.0f;
+                }
+
+                else
+                {
+                  SK_ReleaseAssert (!"Unknown PlayStation Charging Status");
+                  pDevice->battery.percentage = 100.0f;
                 }
 
                 if (pDevice->buttons.size () < 19)
                     pDevice->buttons.resize (  19);
 
-                pDevice->buttons [15].state = pData->ButtonLeftFunction  != 0;
-                pDevice->buttons [16].state = pData->ButtonRightFunction != 0;
-                pDevice->buttons [17].state = pData->ButtonLeftPaddle    != 0;
-                pDevice->buttons [18].state = pData->ButtonRightPaddle   != 0;
+                if (pDevice->bDualSense)
+                {
+                  pDevice->buttons [13].state = pDualSense->ButtonPad           != 0;
+                  pDevice->buttons [15].state = pDualSense->ButtonLeftFunction  != 0;
+                  pDevice->buttons [16].state = pDualSense->ButtonRightFunction != 0;
+                  pDevice->buttons [17].state = pDualSense->ButtonLeftPaddle    != 0;
+                  pDevice->buttons [18].state = pDualSense->ButtonRightPaddle   != 0;
+                }
+
+                else
+                {
+                  pDevice->buttons [13].state = pDualShock4->ButtonPad != 0;
+                  // These buttons do not exist...
+                  pDevice->buttons [14].state = false;
+                  pDevice->buttons [15].state = false;
+                  pDevice->buttons [16].state = false;
+                  pDevice->buttons [17].state = false;
+                  pDevice->buttons [18].state = false;
+                }
               }
             }
 
@@ -3834,6 +4043,11 @@ SK_HID_PlayStationDevice::request_input_report (void)
                                  SK_ImGui_Toast::ShowCaption | SK_ImGui_Toast::ShowNewest );
 
                   SK_DeferCommand ("Input.Gamepad.PowerOff 1");
+                }
+
+                else
+                {
+                  pDevice->bSimpleMode = false;
                 }
 
                 pDevice->xinput.report.Gamepad.sThumbLX =
@@ -3911,6 +4125,10 @@ SK_HID_PlayStationDevice::request_input_report (void)
 
               else
               {
+                // Prevent battery warnings, we can't actually get battery status in simple mode.
+                pDevice->battery.state      = Complete;
+                pDevice->battery.percentage = 100.0f;
+
                 SK_HID_DualSense_GetSimpleStateDataBt *pSimpleData =
                   (SK_HID_DualSense_GetSimpleStateDataBt *)&pInputRaw [1];
 
@@ -3980,13 +4198,28 @@ SK_HID_PlayStationDevice::request_input_report (void)
                 (SK_HID_PlayStationDevice::PowerState)((((BYTE *)pData)[52] & 0xF0) >> 4);
 
               const float batteryPercent =
-                ( std::min (((((BYTE *)pData)[52] & 0xF) /*- ((((BYTE *)pData)[53] & 0x10) ? 1 : 0)*/) * 10.0f + 5.0f, 100.0f) );
+               std::clamp (
+                ( pDevice->battery.state == Charging    ? static_cast <float> (std::min (11, ((BYTE *)pData)[52] & 0xF)) - 1 :
+                  pDevice->battery.state == Discharging ? static_cast <float> (std::min (10, ((BYTE *)pData)[52] & 0xF))     :
+                                                                                                    0.0f) * 10.0f +
+                ( pDevice->battery.state == Charging    ? 0.0f :
+                  pDevice->battery.state == Discharging ? 5.0f :
+                                                          0.0f ), 0.0f, 100.0f
+               );
 
               if (pDevice->battery.state == Discharging || 
                   pDevice->battery.state == Charging    ||
                   pDevice->battery.state == Complete)
               {
                 pDevice->battery.percentage = batteryPercent;
+
+                if (pDevice->battery.state == Complete)
+                    pDevice->battery.percentage = 100.0f;
+              }
+
+              else
+              {
+                pDevice->battery.percentage = 100.0f;
               }
 
               switch (pDevice->battery.state)
@@ -3994,7 +4227,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
                 case Charging:
                 case Discharging:
                 {
-                  if (pDevice->battery.percentage >= 30.0f)
+                  if (pDevice->battery.percentage >= config.input.gamepad.low_battery_percent || pDevice->battery.state == Charging)
                     SK_ImGui_DismissNotification ("DualSense.BatteryCharge");
                   else
                     SK_ImGui_CreateNotificationEx (
@@ -4029,7 +4262,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
                           (pBatteryState->percentage > 10.0f) ? 1 : 0;
 
                         // Battery charge is high enough, don't bother showing this...
-                        if (pBatteryState->percentage > 30.0f)
+                        if (pBatteryState->percentage >= config.input.gamepad.low_battery_percent)
                           return true;
 
                         auto batteryColor =
@@ -4074,9 +4307,9 @@ SK_HID_PlayStationDevice::request_input_report (void)
 
             else if (pDevice->bDualShock4)
             {
-                pDevice->bBluetooth = true;
-                      bHasBluetooth = true;
-                    
+              pDevice->bBluetooth = true;
+                    bHasBluetooth = true;
+
               SK_RunOnce (SK_Bluetooth_SetupPowerOff ());
 
               if (! config.input.gamepad.bt_input_only)
@@ -4102,7 +4335,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
 
               pDevice->xinput.report.Gamepad.sThumbRY =
                 static_cast <SHORT> (32767.0 * static_cast <double> (128 - static_cast <LONG> (pData->RightStickY)) / 128.0);
-              
+
               pDevice->xinput.report.Gamepad.bLeftTrigger =
                 static_cast <BYTE> (static_cast <BYTE> (pData->TriggerLeft));
 
@@ -4156,22 +4389,46 @@ SK_HID_PlayStationDevice::request_input_report (void)
               //    pDevice->reset_rgb = false;
 
               pDevice->battery.state =
-                (SK_HID_PlayStationDevice::PowerState)pData->PluggedPowerCable ?
-                                SK_HID_PlayStationDevice::PowerState::Charging :
-                             SK_HID_PlayStationDevice::PowerState::Discharging;
+                pData->PluggedPowerCable ?
+                                Charging :
+                             Discharging;
 
-              const float batteryPercent =
-                (float)(pData->PluggedPowerCable ? (pData->PowerPercent & 0xF) - 1
-                                                 : (pData->PowerPercent & 0xF)) * 10.0f;
+              float batteryPercent =
+                std::clamp (
+                  ( pDevice->battery.state == Charging    ? static_cast <float> (std::min (11, (pData->PowerPercent & 0xF))) - 1 :
+                    pDevice->battery.state == Discharging ? static_cast <float> (std::min (10, (pData->PowerPercent & 0xF)))     :
+                                                                                                      0.0f) * 10.0f +
+                  ( pDevice->battery.state == Charging    ? 0.0f :
+                    pDevice->battery.state == Discharging ? 5.0f :
+                                                            0.0f ), 0.0f, 100.0f );
 
-              pDevice->battery.percentage = batteryPercent;
+              // Implicitly assign Charging Complete status if battery is full and plugged-in
+              if ( batteryPercent         >= 100.0f &&
+                   pDevice->battery.state == Charging )
+                   pDevice->battery.state  = Complete;
+
+              if (pDevice->battery.state == Discharging || 
+                  pDevice->battery.state == Charging    ||
+                  pDevice->battery.state == Complete)
+              {
+                pDevice->battery.percentage = batteryPercent;
+
+                if (pDevice->battery.state == Complete)
+                    pDevice->battery.percentage = 100.0f;
+              }
+
+              else
+              {
+                SK_ReleaseAssert (!"Unknown PlayStation Charging Status");
+                pDevice->battery.percentage = 100.0f;
+              }
 
               switch (pDevice->battery.state)
               {
                 case Charging:
                 case Discharging:
                 {
-                  if (pDevice->battery.percentage >= 30.0f)
+                  if (pDevice->battery.percentage >= config.input.gamepad.low_battery_percent || pDevice->battery.state == Charging)
                     SK_ImGui_DismissNotification ("DualShock.BatteryCharge");
                   else
                     SK_ImGui_CreateNotificationEx (
@@ -4206,7 +4463,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
                           (pBatteryState->percentage > 10.0f) ? 1 : 0;
 
                         // Battery charge is high enough, don't bother showing this...
-                        if (pBatteryState->percentage > 30.0f)
+                        if (pBatteryState->percentage >= config.input.gamepad.low_battery_percent)
                           return true;
 
                         auto batteryColor =
@@ -4302,96 +4559,113 @@ SK_HID_PlayStationDevice::request_input_report (void)
             if (pDevice->buttons.size () >= 13 &&
                 pDevice->buttons [12].state) pDevice->xinput.report.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE;
 
+            //
+            // Apply an aggressive deadzone, moreso than necessary for gameplay, to
+            //   filter out stick drift and accidentally bumping controllers when
+            //     determining which gamepad was most recently interacted with...
+            //
 #pragma region (deadzone)
-            if (config.input.gamepad.xinput.standard_deadzone)
+            pDevice->xinput.deadzoned.report = pDevice->xinput.report;
+
+            float LX   = pDevice->xinput.deadzoned.report.Gamepad.sThumbLX;
+            float LY   = pDevice->xinput.deadzoned.report.Gamepad.sThumbLY;
+            float norm = sqrt ( LX*LX + LY*LY );
+//#if 0
+            float unit = 1.0f;
+
+            if (norm > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
             {
-              float LX   = pDevice->xinput.report.Gamepad.sThumbLX;
-              float LY   = pDevice->xinput.report.Gamepad.sThumbLY;
-              float norm = sqrt ( LX*LX + LY*LY );
-//#if 0
-              float unit = 1.0f;
+              norm = std::min (norm, 32767.0f) - XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE;
+              unit =           norm/(32767.0f  - XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+            }
+            else
+            {
+              norm = 0.0f;
+              unit = 0.0f;
+            }
 
-              if (norm > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
-              {
-                norm = std::min (norm, 32767.0f) - XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE;
-                unit =           norm/(32767.0f  - XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-              }
-              else
-              {
-                norm = 0.0f;
-                unit = 0.0f;
-              }
+            float uLX = (LX / 32767.0f) * unit;
+            float uLY = (LY / 32767.0f) * unit;
 
-              float uLX = (LX / 32767.0f) * unit;
-              float uLY = (LY / 32767.0f) * unit;
-
-              pDevice->xinput.report.Gamepad.sThumbLX = static_cast <SHORT> (uLX < 0 ? 32768.0f * uLX
-                                                                                     : 32767.0f * uLX);
-              pDevice->xinput.report.Gamepad.sThumbLY = static_cast <SHORT> (uLY < 0 ? 32768.0f * uLY
-                                                                                     : 32767.0f * uLY);
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbLX = static_cast <SHORT> (uLX < 0 ? 32768.0f * uLX
+                                                                                             : 32767.0f * uLX);
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbLY = static_cast <SHORT> (uLY < 0 ? 32768.0f * uLY
+                                                                                             : 32767.0f * uLY);
 #if 0
-              pDevice->xinput.report.Gamepad.sThumbLX = (abs (pDevice->xinput.report.Gamepad.sThumbLX) < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE) ? 0 :
-              pDevice->xinput.report.Gamepad.sThumbLX;
-              pDevice->xinput.report.Gamepad.sThumbLY = (abs (pDevice->xinput.report.Gamepad.sThumbLY) < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE) ? 0 :
-              pDevice->xinput.report.Gamepad.sThumbLY;
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbLX = (abs (pDevice->xinput.report.Gamepad.sThumbLX) < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE) ? 0 :
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbLX;
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbLY = (abs (pDevice->xinput.report.Gamepad.sThumbLY) < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE) ? 0 :
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbLY;
 #endif
 
-              float RX   = pDevice->xinput.report.Gamepad.sThumbRX;
-              float RY   = pDevice->xinput.report.Gamepad.sThumbRY;
-                    norm = sqrt ( RX*RX + RY*RY );
+            float RX   = pDevice->xinput.deadzoned.report.Gamepad.sThumbRX;
+            float RY   = pDevice->xinput.deadzoned.report.Gamepad.sThumbRY;
+                  norm = sqrt ( RX*RX + RY*RY );
 
 //#if 0
-              unit = 1.0f;
-              if (norm > XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE)
-              {
-                norm = std::min (norm, 32767.0f) - XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE;
-                unit =           norm/(32767.0f  - XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-              }
-              else
-              {
-                norm = 0.0f;
-                unit = 0.0f;
-              }
+            unit = 1.0f;
+            if (norm > XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE)
+            {
+              norm = std::min (norm, 32767.0f) - XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE;
+              unit =           norm/(32767.0f  - XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+            }
+            else
+            {
+              norm = 0.0f;
+              unit = 0.0f;
+            }
 
-              float uRX = (RX / 32767.0f) * unit;
-              float uRY = (RY / 32767.0f) * unit;
+            float uRX = (RX / 32767.0f) * unit;
+            float uRY = (RY / 32767.0f) * unit;
 
-              pDevice->xinput.report.Gamepad.sThumbRX = static_cast <SHORT> (uRX < 0 ? 32768.0f * uRX
-                                                                                     : 32767.0f * uRX);
-              pDevice->xinput.report.Gamepad.sThumbRY = static_cast <SHORT> (uRY < 0 ? 32768.0f * uRY
-                                                                                     : 32767.0f * uRY);
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbRX = static_cast <SHORT> (uRX < 0 ? 32768.0f * uRX
+                                                                                             : 32767.0f * uRX);
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbRY = static_cast <SHORT> (uRY < 0 ? 32768.0f * uRY
+                                                                                             : 32767.0f * uRY);
 #if 0
-              pDevice->xinput.report.Gamepad.sThumbRX = (abs (pDevice->xinput.report.Gamepad.sThumbRX) < XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE) ? 0 :
-              pDevice->xinput.report.Gamepad.sThumbRX;
-              pDevice->xinput.report.Gamepad.sThumbRY = (abs (pDevice->xinput.report.Gamepad.sThumbRY) < XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE) ? 0 :
-              pDevice->xinput.report.Gamepad.sThumbRY;
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbRX = (abs (pDevice->xinput.report.Gamepad.sThumbRX) < XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE) ? 0 :
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbRX;
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbRY = (abs (pDevice->xinput.report.Gamepad.sThumbRY) < XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE) ? 0 :
+            pDevice->xinput.deadzoned.report.Gamepad.sThumbRY;
 #endif
 
-              if (  pDevice->xinput.report.Gamepad.bLeftTrigger   < XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-                    pDevice->xinput.report.Gamepad.bLeftTrigger  = 0;
-              else
-              {
-                pDevice->xinput.report.Gamepad.bLeftTrigger =
-                  static_cast <BYTE> (                             255.0  *
-                     (((float)pDevice->xinput.report.Gamepad.bLeftTrigger - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD) /
-                                                                  (255.0f - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD)));
-              }
-              if (  pDevice->xinput.report.Gamepad.bRightTrigger  < XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
-                    pDevice->xinput.report.Gamepad.bRightTrigger = 0;
-              else
-              {
-                pDevice->xinput.report.Gamepad.bRightTrigger =
-                  static_cast <BYTE> (                              255.0  *
-                     (((float)pDevice->xinput.report.Gamepad.bRightTrigger - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD) /
-                                                                   (255.0f - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD)));
-              }
+            if (  pDevice->xinput.deadzoned.report.Gamepad.bLeftTrigger   < XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
+                  pDevice->xinput.deadzoned.report.Gamepad.bLeftTrigger  = 0;
+            else
+            {
+              pDevice->xinput.deadzoned.report.Gamepad.bLeftTrigger =
+                static_cast <BYTE> (                             255.0  * std::clamp (
+                   (((float)pDevice->xinput.deadzoned.report.Gamepad.bLeftTrigger - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD) /
+                                                                          (255.0f - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD)), 0.0f, 1.0f)
+                                   );
+            }
+            if (  pDevice->xinput.deadzoned.report.Gamepad.bRightTrigger  < XINPUT_GAMEPAD_TRIGGER_THRESHOLD)
+                  pDevice->xinput.deadzoned.report.Gamepad.bRightTrigger = 0;
+            else
+            {
+              pDevice->xinput.deadzoned.report.Gamepad.bRightTrigger =
+                static_cast <BYTE> (                              255.0  * std::clamp (
+                   (((float)pDevice->xinput.deadzoned.report.Gamepad.bRightTrigger - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD) /
+                                                                           (255.0f - (float)XINPUT_GAMEPAD_TRIGGER_THRESHOLD)), 0.0f, 1.0f)
+                                   );
             }
 #pragma endregion
 
+#define SK_HID_BROKEN_DUALSHOCK4_REV2
+#ifdef  SK_HID_BROKEN_DUALSHOCK4_REV2
+            if ( pDevice->pid == SK_HID_PID_DUALSHOCK4_REV2 &&
+                 pDevice->bBluetooth                        &&
+                 pDevice->bSimpleMode )
+            {
+              ResetEvent (pDevice->hInputEvent);
+              continue;
+            }
+#endif
+
             bool bIsInputActive = false;
             bool bIsInputNew    =
-              memcmp ( &pDevice->xinput.prev_report.Gamepad,
-                       &pDevice->xinput.     report.Gamepad, sizeof (XINPUT_GAMEPAD) );
+              memcmp ( &pDevice->xinput.deadzoned.prev_report.Gamepad,
+                       &pDevice->xinput.deadzoned.     report.Gamepad, sizeof (XINPUT_GAMEPAD) );
 
             bool bIsAnyButtonDown =
               (pDevice->xinput.report.Gamepad.wButtons != 0);
@@ -4401,24 +4675,92 @@ SK_HID_PlayStationDevice::request_input_report (void)
             {
               if (bIsInputNew)
               {
-                pDevice->xinput.report.dwPacketNumber++;
-                pDevice->xinput.prev_report = pDevice->xinput.report;
+                pDevice->xinput.          report.dwPacketNumber++;
+                pDevice->xinput.deadzoned.report.dwPacketNumber++;
+
+                pDevice->xinput.prev_report           = pDevice->xinput.report;
+                pDevice->xinput.deadzoned.prev_report = pDevice->xinput.deadzoned.report;
+
+                // Apply the same deadzone that SK uses to filter out analog jitter
+                //   as the actual input the game sees if this option is enabled.
+                if (config.input.gamepad.xinput.standard_deadzone)
+                {
+                  pDevice->xinput.report      = pDevice->xinput.deadzoned.report;
+                  pDevice->xinput.prev_report = pDevice->xinput.deadzoned.prev_report;
+                }
               }
 
               bIsInputActive = true;
             }
 
-            // Handle some special buttons that DualSense controllers have that don't map to XInput
-            else if (pDevice->bDualSense)
-            {
-              if (pDevice->buttons [14].state && (! pDevice->buttons [14].last_state)) bIsInputActive = true;
+            const bool bHasNewExtraButtonData =
+              (pDevice->buttons [13].state != pDevice->buttons [13].last_state) ||
+              (pDevice->buttons [14].state != pDevice->buttons [14].last_state) ||
+              (pDevice->buttons [15].state != pDevice->buttons [15].last_state) ||
+              (pDevice->buttons [16].state != pDevice->buttons [16].last_state) ||
+              (pDevice->buttons [17].state != pDevice->buttons [17].last_state) ||
+              (pDevice->buttons [18].state != pDevice->buttons [18].last_state);
 
-              if (pDevice->bDualSenseEdge)
+
+            // Handle some special buttons that DualSense controllers have that don't map to XInput
+            if (bHasNewExtraButtonData)
+            {
+              bIsInputActive = true;
+
+              SK_RunOnce (
               {
-                if (pDevice->buttons [15].state && (! pDevice->buttons [15].last_state)) bIsInputActive = true;
-                if (pDevice->buttons [16].state && (! pDevice->buttons [16].last_state)) bIsInputActive = true;
-                if (pDevice->buttons [17].state && (! pDevice->buttons [17].last_state)) bIsInputActive = true;
-                if (pDevice->buttons [18].state && (! pDevice->buttons [18].last_state)) bIsInputActive = true;
+                for ( auto& cfg_binding : binding_map )
+                {
+                  auto& binding =
+                    *cfg_binding.wszValName;
+
+                  if (! (         binding.empty () ||
+                        StrStrIW (binding.c_str (), L"<Not Bound>")) )
+                  {
+                    cfg_binding.uiVirtKey =
+                      (UINT)humanKeyNameToVirtKeyCode.get ()[
+                        hash_string (binding.c_str ())];
+                  }
+                }
+              });
+
+              for ( auto& binding : binding_map )
+              {
+                if (! pDevice->bDualSenseEdge)
+                {
+                  // DualSense Edge and DualShock 4 do not have these buttons...
+                  if (binding.uiButtonIdx > 14)
+                    continue;
+                }
+
+                const UINT VirtualKey  = binding.uiVirtKey;
+                if (       VirtualKey != 0 ) // A user-configured binding exists
+                {
+                  bool bPressed  = false;
+                  bool bReleased = false;
+
+                  if (pDevice->buttons [binding.uiButtonIdx].state)
+                  {
+                    if (! pDevice->buttons [binding.uiButtonIdx].last_state)
+                    {
+                      bPressed = true;
+                    }
+
+                    bIsInputActive    = true;
+                    binding.thisFrame = true;
+                    binding.frameNum  = SK_GetFramesDrawn ();
+                  }
+
+                  else if (! pDevice->buttons [binding.uiButtonIdx].     state)
+                  { if (     pDevice->buttons [binding.uiButtonIdx].last_state)
+                    {
+                      bReleased      = true;
+                      bIsInputActive = true;
+                    }
+                    binding.thisFrame = false;
+                    binding.frameNum  = SK_GetFramesDrawn ();
+                  }
+                }
               }
             }
 
@@ -4503,7 +4845,7 @@ SK_HID_PlayStationDevice::request_input_report (void)
 }
 
 bool
-SK_HID_PlayStationDevice::write_output_report (void)
+SK_HID_PlayStationDevice::write_output_report (bool force)
 {
   if (ReadAcquire (&__SK_DLL_Ending))
   {
@@ -4513,6 +4855,26 @@ SK_HID_PlayStationDevice::write_output_report (void)
 
   if (! bConnected)
     return false;
+
+  if (! config.input.gamepad.hook_hid)
+    return false;
+
+  if (bBluetooth)
+  {
+    if (config.input.gamepad.bt_input_only)
+      return false;
+
+    if (config.input.gamepad.scepad.enable_full_bluetooth)
+        force = true;
+
+    if (bSimpleMode && (! force))
+    {
+      return false;
+    }
+
+    if (force)
+      bSimpleMode = false;
+  }
 
   if (bDualSense)
   {
@@ -4654,7 +5016,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
                                                pDevice->latency.last_syn ) ) / 20;
 
             pDevice->latency.last_syn =
-              static_cast <uint32_t> (SK_QueryPerf ().QuadPart - pDevice->latency.timestamp_epoch);
+              sk::narrow_cast <uint32_t> (SK_QueryPerf ().QuadPart - pDevice->latency.timestamp_epoch);
 
             //output->HostTimestamp = pDevice->latency.last_syn;
           }
@@ -4991,9 +5353,9 @@ SK_HID_PlayStationDevice::write_output_report (void)
           async_output_request        = { };
           async_output_request.hEvent = pDevice->hOutputFinished;
 
-          BOOL bWriteAsync=
+          const BOOL bWriteAsync =
             SK_WriteFile ( pDevice->hDeviceFile, pDevice->output_report.data (),
-                            static_cast <DWORD> (pDevice->bBluetooth ? 78 :
+                                          DWORD (pDevice->bBluetooth ? 78 :
                                                  pDevice->output_report.size ()), nullptr, &async_output_request );
 
           if (! bWriteAsync)
@@ -5013,7 +5375,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
 
               SK_LOGs0 (
                 L"InputBkEnd",
-                L"SK_WriteFile ({%ws}, OutputReport) failed, Error=%d [%ws]",
+                L"SK_WriteFile ({%ws}, OutputReport) failed, Error=%u [%ws]",
                   pDevice->wszDevicePath, dwLastErr,
                     err.ErrorMessage ()
               );
@@ -5024,7 +5386,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
               if (dwLastErr != ERROR_INVALID_HANDLE)
                 SK_CancelIoEx (pDevice->hDeviceFile, &async_output_request);
 
-              SK_SleepEx (125UL, TRUE); // Prevent runaway CPU usage on failure
+              SK_SleepEx (333UL, TRUE); // Prevent runaway CPU usage on failure
 
               SetEvent (pDevice->hOutputFinished);
               continue;
@@ -5033,7 +5395,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
             else
             {
               DWORD                                                                         dwBytesRead = 0x0;
-              if (! SK_GetOverlappedResultEx (pDevice->hDeviceFile, &async_output_request, &dwBytesRead, 100UL, FALSE))
+              if (! SK_GetOverlappedResultEx (pDevice->hDeviceFile, &async_output_request, &dwBytesRead, 333UL, FALSE))
               {
                 dwLastErr = GetLastError ();
 
@@ -5050,7 +5412,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
 
                       SK_LOGs0 (
                         L"InputBkEnd",
-                        L"SK_GetOverlappedResultEx ({%ws}, OutputReport) failed, Error=%d [%ws]",
+                        L"SK_GetOverlappedResultEx ({%ws}, OutputReport) failed, Error=%u [%ws]",
                           pDevice->wszDevicePath, dwLastErr,
                             err.ErrorMessage ()
                       );
@@ -5060,7 +5422,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
                       SK_CancelIoEx (pDevice->hDeviceFile, &async_output_request);
 
                     if (dwLastErr == ERROR_GEN_FAILURE || dwLastErr == ERROR_OPERATION_ABORTED)
-                      SK_SleepEx (150UL, TRUE);
+                      SK_SleepEx (333UL, TRUE);
                   }
 
                   SetEvent (pDevice->hOutputFinished);
@@ -5404,9 +5766,9 @@ SK_HID_PlayStationDevice::write_output_report (void)
           async_output_request        = { };
           async_output_request.hEvent = pDevice->hOutputFinished;
 
-          BOOL bWriteAsync =
+          const BOOL bWriteAsync =
             SK_WriteFile ( pDevice->hDeviceFile, pDevice->output_report.data (),
-                            static_cast <DWORD> (pDevice->bBluetooth ? 78 :
+                                          DWORD (pDevice->bBluetooth ? 78 :
                                                                        32), nullptr, &async_output_request );
 
           if (! bWriteAsync)
@@ -5428,7 +5790,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
 
               SK_LOGs0 (
                 L"InputBkEnd",
-                L"SK_WriteFile ({%ws}, OutputReport) failed, Error=%d [%ws]",
+                L"SK_WriteFile ({%ws}, OutputReport) failed, Error=%u [%ws]",
                   pDevice->wszDevicePath, dwLastErr,
                     err.ErrorMessage ()
               );
@@ -5439,7 +5801,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
               if (dwLastErr != ERROR_INVALID_HANDLE)
                 SK_CancelIoEx (pDevice->hDeviceFile, &async_output_request);
 
-              SK_SleepEx (125UL, TRUE); // Prevent runaway CPU usage on failure
+              SK_SleepEx (333UL, TRUE); // Prevent runaway CPU usage on failure
 
               SetEvent (pDevice->hOutputFinished);
               continue;
@@ -5448,7 +5810,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
             else
             {
               DWORD                                                                         dwBytesRead = 0x0;
-              if (! SK_GetOverlappedResultEx (pDevice->hDeviceFile, &async_output_request, &dwBytesRead, 100UL, FALSE))
+              if (! SK_GetOverlappedResultEx (pDevice->hDeviceFile, &async_output_request, &dwBytesRead, 333UL, FALSE))
               {
                 dwLastErr = GetLastError ();
 
@@ -5465,7 +5827,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
 
                       SK_LOGs0 (
                         L"InputBkEnd",
-                        L"SK_GetOverlappedResultEx ({%ws}, OutputReport) failed, Error=%d [%ws]",
+                        L"SK_GetOverlappedResultEx ({%ws}, OutputReport) failed, Error=%u [%ws]",
                           pDevice->wszDevicePath, dwLastErr,
                             err.ErrorMessage ()
                       );
@@ -5475,7 +5837,7 @@ SK_HID_PlayStationDevice::write_output_report (void)
                       SK_CancelIoEx (pDevice->hDeviceFile, &async_output_request);
 
                     if (dwLastErr == ERROR_GEN_FAILURE || dwLastErr == ERROR_OPERATION_ABORTED)
-                      SK_SleepEx (150UL, TRUE);
+                      SK_SleepEx (333UL, TRUE);
                   }
 
                   SetEvent (pDevice->hOutputFinished);
@@ -5599,7 +5961,9 @@ int SK_HID_DeviceFile::neutralizeHidInput (uint8_t report_id, DWORD dwSize)
             return 64;
           }
 
-          if (_cachedInputReportsByReportId [report_id].data ()[0] == report_id && (report_id == 49 || report_id == 1))
+          if (_cachedInputReportsByReportId [report_id].data ()    != nullptr   &&
+              _cachedInputReportsByReportId [report_id].data ()[0] == report_id &&
+                                                  (report_id == 49 || report_id == 1))
           //if (dwSize >= 78 && (report_id == 1 || report_id == 49 || report_id == dwSize))
           {
             //SK_ReleaseAssert (
@@ -5611,18 +5975,19 @@ int SK_HID_DeviceFile::neutralizeHidInput (uint8_t report_id, DWORD dwSize)
             BYTE* pInputRaw =
               (BYTE *)_cachedInputReportsByReportId [report_id].data ();
 
-            SK_HID_DualSense_GetStateData *pData =
-              (SK_HID_DualSense_GetStateData *)&pInputRaw [2];
+            SK_HID_DualSense_GetStateData *pData = pInputRaw == nullptr ?
+                                                                nullptr :
+                 (SK_HID_DualSense_GetStateData *)&pInputRaw [2];
 
             bool bSimple = false;
 
             // We're in simplified mode...
-            if (pInputRaw [0] == 0x1)
+            if (pData != nullptr && pInputRaw [0] == 0x1)
             {
               bSimple = true;
             }
 
-            if (! bSimple)
+            if (pData != nullptr && (! bSimple))
             {
               // The analog axes
               memset (
@@ -5656,7 +6021,7 @@ int SK_HID_DeviceFile::neutralizeHidInput (uint8_t report_id, DWORD dwSize)
                 &pData->AngularVelocityX, 0, 12);
             }
 
-            else
+            else if (pInputRaw != nullptr)
             {
               SK_HID_DualSense_GetSimpleStateDataBt *pSimpleData =
                 (SK_HID_DualSense_GetSimpleStateDataBt *)&pInputRaw [1];
@@ -5690,7 +6055,7 @@ int SK_HID_DeviceFile::neutralizeHidInput (uint8_t report_id, DWORD dwSize)
           else
           {
             SK_LOGi0 (
-              L"Cannot neutralize a DualSense HID Input Report (id=%d) with Unexpected Size=%d-bytes",
+              L"Cannot neutralize a DualSense HID Input Report (id=%u) with Unexpected Size=%u-bytes",
                 report_id, dwSize
             );
           }
@@ -5787,6 +6152,7 @@ SK_HID_PlayStationDevice::reset_device (void)
   ulLastFrameOutput = 0;
 
   bNeedOutput = false;
+  bSimpleMode =  true;
 
   for ( auto& button : buttons )
   {

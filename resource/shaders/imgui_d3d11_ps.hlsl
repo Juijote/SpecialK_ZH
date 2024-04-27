@@ -38,7 +38,7 @@ float4 main (PS_INPUT input) : SV_Target
   }
 
   float4 orig_col =
-          out_col;
+     abs (out_col);
 
   float  ui_alpha = saturate (input.col.a ) * saturate (out_col.a );
   float3 ui_color =           input.col.rgb *           out_col.rgb;
@@ -77,16 +77,20 @@ float4 main (PS_INPUT input) : SV_Target
     float4 hdr_out =
       float4 (   ( hdr10 ?
         LinearToST2084 (
-          REC709toREC2020 (              out_col.rgb * ui_alpha ) * hdr_scale ) :
-     Clamp_scRGB_StripNaN ( expandGamut (out_col.rgb * hdr_scale, 0.0333) )
+          REC709toREC2020 ( expandGamut (out_col.rgb            , 0.08) * ui_alpha) * hdr_scale) :
+     Clamp_scRGB_StripNaN ( expandGamut (out_col.rgb * hdr_scale, 0.08) )
                  )                                   + hdr_offset, 
                    hdr10 ?         LinearToPQY (       ui_alpha, 5.5)
                          :                             out_col.a );
 
-    hdr_out.g = (orig_col.g <= 0.00013 && orig_col.g >= -0.00013) ? 0.0f : hdr_out.g;
-    hdr_out.r = (orig_col.r <= 0.00013 && orig_col.r >= -0.00013) ? 0.0f : hdr_out.r;
-    hdr_out.b = (orig_col.b <= 0.00013 && orig_col.b >= -0.00013) ? 0.0f : hdr_out.b;
-    hdr_out.a = (orig_col.a <= 0.00013 && orig_col.a >= -0.00013) ? 0.0f : hdr_out.a;
+    // Keep pure black pixels as-per scRGB's limited ability to
+    //   represent a black pixel w/ FP16 precision
+    hdr_out.rgb *=
+      ( (orig_col.r > FP16_MIN) +
+        (orig_col.g > FP16_MIN) +
+        (orig_col.b > FP16_MIN) > 0.0f );
+
+    hdr_out.a *= (orig_col.a > FP16_MIN);
 
     float alpha_mul =
       (hdr10 ? 1.0
@@ -94,10 +98,7 @@ float4 main (PS_INPUT input) : SV_Target
     
     if (hdr10)
     {
-      hdr_out.rgba =    clamp (hdr_out.rgba, 0.0, 1.0);
-      hdr_out.rgba *=
-        smoothstep ( 0.006978,
-                     0.016667, hdr_out.rgba );
+      hdr_out.rgba = clamp (hdr_out.rgba, 0.0, 1.0);
     }
 
     return
@@ -118,6 +119,6 @@ float4 main (PS_INPUT input) : SV_Target
     out_col = float4 (ui_color * ui_alpha,
                                  ui_alpha);
   }
-  
+
   return out_col;
 };

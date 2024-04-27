@@ -74,6 +74,7 @@ public:
 
         __except (EXCEPTION_EXECUTE_HANDLER)
         {
+          std::ignore = m_h;
         }
       }
 
@@ -205,7 +206,8 @@ std::wstring   SK_EvalEnvironmentVars       (const wchar_t* wszEvaluateMe);
 bool           SK_GetUserProfileDir         (wchar_t*       buf, uint32_t* pdwLen);
 bool           SK_IsTrue                    (const wchar_t* string);
 bool           SK_IsAdmin                   (void);
-void           SK_ElevateToAdmin            (const wchar_t* wszCmd     = nullptr);
+void           SK_ElevateToAdmin            (const wchar_t* wszCmd     = nullptr,
+                                             bool           bRestart   = true);
 void           SK_RestartGame               (const wchar_t* wszDLL     = nullptr,
                                              const wchar_t* wszFailMsg = nullptr);
 int            SK_MessageBox                (std::wstring caption,
@@ -480,10 +482,9 @@ SK_ImGui_DrawNotifications (void);
                    (_msg), (_file), (_line), (_func)                      \
               ), L" SpecialK ");                                          \
                                                                           \
-    if (sk::logs::base_log_lvl > 1)                                       \
+    if (sk::logs::base_log_lvl > 1 && SK_IsDebuggerPresent ())            \
     {                                                                     \
-      if (SK_IsDebuggerPresent ())                                        \
-             __debugbreak      ();                                        \
+      __debugbreak ();                                                    \
     }                                                                     \
                                                                           \
     else                                                                  \
@@ -976,7 +977,7 @@ DWORD
   constexpr
         DWORD     LSHIFT      = sizeof (ULONG_PTR) * 8 - 1;
         DWORD     bitSetCount = 0;
-        ULONG_PTR bitTest     =        (ULONG_PTR)1 << LSHIFT;
+        ULONG_PTR bitTest     =         ULONG_PTR (1) << LSHIFT;
         DWORD     i;
 
   for (i = 0; i <= LSHIFT; ++i)
@@ -1079,11 +1080,11 @@ namespace SK
           return 0;
         };
 
-        _Tp   out;
-        DWORD dwOutLen;
+        _Tp   out      = { };
+        DWORD dwOutLen =  0;
 
         auto type_idx =
-          std::type_index (typeid (_Tp));;
+          std::type_index (typeid (_Tp));
 
         if ( type_idx == std::type_index (typeid (std::wstring)) )
         {
@@ -1147,9 +1148,9 @@ namespace SK
           return 0;
         };
 
-        _Tp   out;
-        DWORD dwOutLen = _SizeofData();
-        std::wstring _out(dwOutLen, '\0');
+        _Tp   out      = { };
+        DWORD dwOutLen = _SizeofData ();
+        std::wstring _out (dwOutLen, '\0');
 
         auto type_idx =
           std::type_index (typeid (_Tp));
@@ -1165,10 +1166,14 @@ namespace SK
                                _desc.wszKeyValue,
                                _desc.dwFlags,
                                  &_desc.dwType,
-                                   _out.data(), &dwOutLen)) return std::wstring();
+                                   _out.data (), &dwOutLen )
+             ) return std::wstring ();
 
           // Strip null terminators
-          _out.erase(std::find(_out.begin(), _out.end(), '\0'), _out.end());
+          _out.erase  (
+            std::find ( _out.begin(),
+                        _out.end  (), '\0'
+                      ),_out.end  () );
         }
 
         return _out;
@@ -1262,17 +1267,17 @@ namespace SK
 
           if ( type_idx == std::type_index (typeid (std::wstring)) )
           {
-            std::wstring _in = std::wstringstream(in).str();
+            std::wstring _in = std::wstringstream (in).str();
 
             _desc.dwType     = REG_SZ;
-                  dwDataSize = (DWORD) _in.size ( ) * sizeof(wchar_t);
+                  dwDataSize = (DWORD) _in.size ( ) * sizeof (wchar_t);
 
             lStat =
               RegSetKeyValueW ( hKeyToSet,
                                   nullptr,
                                   _desc.wszKeyValue,
                                   _desc.dwType,
-                           (LPBYTE) _in.data(), dwDataSize);
+                           (LPBYTE) _in.data(), dwDataSize );
             
             RegCloseKey (hKeyToSet);
 
@@ -1347,9 +1352,9 @@ namespace SK
     };
   };
 
-#define SK_MakeRegKeyF  SK::WindowsRegistry::KeyValue <float>::MakeKeyValue
-#define SK_MakeRegKeyB  SK::WindowsRegistry::KeyValue <bool>::MakeKeyValue
-#define SK_MakeRegKeyI  SK::WindowsRegistry::KeyValue <int>::MakeKeyValue
+#define SK_MakeRegKeyF  SK::WindowsRegistry::KeyValue <float       >::MakeKeyValue
+#define SK_MakeRegKeyB  SK::WindowsRegistry::KeyValue <bool        >::MakeKeyValue
+#define SK_MakeRegKeyI  SK::WindowsRegistry::KeyValue <int         >::MakeKeyValue
 #define SK_MakeRegKeyWS SK::WindowsRegistry::KeyValue <std::wstring>::MakeKeyValue
 };
 
@@ -1376,6 +1381,13 @@ void SK_Win32_NotifyHWND   (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 // Avoids a call to IsWindowUnicode (...) if the Unicode status is known
 void SK_Win32_NotifyHWND_W (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void SK_Win32_NotifyHWND_A (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+void SK_WinSock_GoOffline (void);
+
+std::string SK_CountToString (uint64_t count);
+
+std::string_view
+SK_FormatTemperature (double in_temp, SK_UNITS in_unit, SK_UNITS out_unit, SK_TLS* pTLS);
 
 #endif /* __SK__UTILITY_H__ */
 

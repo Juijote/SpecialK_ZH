@@ -1,4 +1,4 @@
-﻿//汉化相关
+//汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -1023,7 +1023,7 @@ SK_ImGui_WidgetRegistry::DispatchKeybinds ( BOOL Control,
 
       else if (  keybind == &config.monitors.monitor_primary_keybind )
       {
-        static auto& rb =
+        const SK_RenderBackend& rb =
           SK_GetCurrentRenderBackend ();
 
         for ( auto& display : rb.displays )
@@ -1051,7 +1051,7 @@ SK_ImGui_WidgetRegistry::DispatchKeybinds ( BOOL Control,
 
       else if (  keybind == &config.monitors.monitor_toggle_hdr )
       {
-        static auto& rb =
+        SK_RenderBackend& rb =
           SK_GetCurrentRenderBackend ();
 
         if (rb.displays [rb.active_display].hdr.supported)
@@ -1068,7 +1068,7 @@ SK_ImGui_WidgetRegistry::DispatchKeybinds ( BOOL Control,
 
             setHdrState.enableAdvancedColor = hdr_enable;
 
-          if ( ERROR_SUCCESS == DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
+          if ( ERROR_SUCCESS == SK_DisplayConfigSetDeviceInfo ( (DISPLAYCONFIG_DEVICE_INFO_HEADER *)&setHdrState ) )
           {
             rb.displays [rb.active_display].hdr.enabled = hdr_enable;
           }

@@ -28,6 +28,7 @@
 
 #include <SpecialK/render/d3d11/d3d11_core.h>
 #include <SpecialK/render/d3d11/d3d11_tex_mgr.h>
+#include <SpecialK/render/d3d11/d3d11_screenshot.h>
 #include <SpecialK/render/dxgi/dxgi_util.h>
 
 #include <execution>
@@ -109,8 +110,7 @@ SK_D3D11_InitTextures (void)
     //
     // Legacy Hack for Untitled Project X (FFX/FFX-2)
     //
-  //extern bool SK_D3D11_inject_textures_ffx;
-    if       (! SK_D3D11_inject_textures_ffx)
+    if (! SK_D3D11_inject_textures_ffx)
     {
       SK_D3D11_EnableTexCache  (config.textures.d3d11.cache);
       SK_D3D11_EnableTexDump   (config.textures.d3d11.dump);
@@ -162,8 +162,7 @@ SK_D3D11_InitTextures (void)
 
     if (bOkami)
     {
-      extern void SK_Okami_LoadConfig (void);
-                  SK_Okami_LoadConfig ();
+      SK_Okami_LoadConfig ();
     }
 #endif
 
@@ -390,7 +389,6 @@ IUnknown_Release (IUnknown* This)
       SK_GetCurrentGameID () == SK_GAME_ID::YakuzaKiwami2 ||
       SK_GetCurrentGameID () == SK_GAME_ID::YakuzaUnderflow );
 
-  extern bool  __SK_Y0_SafetyLeak;
   if ( __yk && __SK_Y0_SafetyLeak )
   {
     LONG count =
@@ -878,7 +876,7 @@ SK_D3D11_DumpTexture2D ( _In_ ID3D11Texture2D* pTex, uint32_t crc32c )
   if (pTex == nullptr)
     return E_POINTER;
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   auto pDev =
@@ -940,26 +938,46 @@ SK_D3D11_DumpTexture2D ( _In_ ID3D11Texture2D* pTex, uint32_t crc32c )
 
       wchar_t wszOutName [MAX_PATH + 2] = { };
 
-      // Use filename to denote compression (not needed if metadata is spitout)
-#if 1
-      if (compressed)
+      bool         bHasDebugName = false;
+      std::wstring wszSubDir     = L"";
+
+      if (SK_D3D11_HasDebugName (pTex))
       {
-        swprintf ( wszOutName, typeless ? LR"(%s\Compressed_%08X_TYPELESS.dds)"
-                                        : LR"(%s\Compressed_%08X.dds)",
-                     wszPath, crc32c );
+        wszSubDir =           SK_D3D11_GetDebugNameW (pTex) .empty () ?
+           SK_UTF8ToWideChar (SK_D3D11_GetDebugNameA (pTex)) :
+                              SK_D3D11_GetDebugNameW (pTex);
+
+        if (wcslen (wszSubDir.c_str ()))
+        {
+          PathAppendW (wszPath, wszSubDir.c_str ());
+          lstrcatW    (wszPath, L"/");
+          bHasDebugName = true;
+        }
       }
 
+      // Use filename to denote compression (not needed if metadata is spit-out)
+      if (! bHasDebugName)
+      {
+        if (compressed)
+        {
+          swprintf ( wszOutName, typeless ? LR"(%s\Compressed_%08X_TYPELESS.dds)"
+                                          : LR"(%s\Compressed_%08X.dds)",
+                       wszPath, crc32c );
+        }
+
+        else
+        {
+          swprintf ( wszOutName, typeless ? LR"(%s\Uncompressed_%08X_TYPELESS.dds)"
+                                          : LR"(%s\Uncompressed_%08X.dds)",
+                       wszPath, crc32c );
+        }
+      }
       else
       {
-        swprintf ( wszOutName, typeless ? LR"(%s\Uncompressed_%08X_TYPELESS.dds)"
-                                        : LR"(%s\Uncompressed_%08X.dds)",
+        swprintf ( wszOutName, typeless ? LR"(%s\%08X_TYPELESS.dds)"
+                                        : LR"(%s\%08X.dds)",
                      wszPath, crc32c );
       }
-#else
-      swprintf ( wszOutName, typeless ? LR"(%s\%08X_TYPELESS.dds)"
-                                      : LR"(%s\%08X.dds)",
-                   wszPath, crc32c );
-#endif
 
       SK_CreateDirectories (wszPath);
 
@@ -990,8 +1008,10 @@ SK_D3D11_DumpTexture2D ( _In_ ID3D11Texture2D* pTex, uint32_t crc32c )
         SK_D3D11_AddDumped (crc32c, crc32c);
 
 
-        wchar_t   wszMetaFilename [ MAX_PATH + 2 ] = { };
-        swprintf (wszMetaFilename, L"%s.txt", wszOutName);
+        wchar_t               wszMetaFilename [ MAX_PATH + 2 ] = { };
+        swprintf (            wszMetaFilename, L"%s", wszOutName);
+        PathRemoveExtensionW (wszMetaFilename);
+        PathAddExtensionW    (wszMetaFilename, L".txt");
 
         FILE* fMetaData =
           _wfopen (wszMetaFilename, L"w+");
@@ -1236,14 +1256,13 @@ SK_D3D11_MipmapCacheTexture2DEx ( DirectX::ScratchImage&   img,
   if (SUCCEEDED (ret))
   {
     if (ppOutImg != nullptr)
-      *ppOutImg = mipmaps;
+       *ppOutImg = mipmaps;
 
     delete mipmaps;
 
     if (config.textures.d3d11.cache_gen_mips)
     {
-      extern uint64_t SK_D3D11_MipmapCacheSize;
-                      SK_D3D11_MipmapCacheSize += size;
+      SK_D3D11_MipmapCacheSize += size;
 
       SK_D3D11_AddDumped  (crc32c,     crc32c   );
       SK_D3D11_AddTexHash (wszOutName, crc32c, 0);
@@ -1758,13 +1777,6 @@ SK_D3D11_DumpTexture2D (  _In_ const D3D11_TEXTURE2D_DESC   *pDesc,
 }
 
 
-extern void
-SK_D3D11_ProcessScreenshotQueueEx (
-  SK_ScreenshotStage stage_ = SK_ScreenshotStage::EndOfFrame,
-  bool                 wait = false,
-  bool                purge = false );
-
-
 SK_LazyGlobal <SK_D3D11_TexMgr> SK_D3D11_Textures;
 
 
@@ -1835,7 +1847,7 @@ SK_D3D11_TexCacheCheckpoint (void)
   static auto& textures =
     SK_D3D11_Textures;
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static auto& Entries_2D  = textures->Entries_2D;
@@ -3580,7 +3592,7 @@ SK_D3D11_ReloadTexture ( ID3D11Texture2D* pTex,
   static auto& textures =
     SK_D3D11_Textures;
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 
   HRESULT hr =

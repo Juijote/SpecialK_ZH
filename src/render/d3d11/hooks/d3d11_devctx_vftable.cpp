@@ -840,7 +840,7 @@ D3D11_RSSetScissorRects_Override (
 
         if (pRects->right == 1280)
         {
-          static auto& rb =
+          const SK_RenderBackend& rb =
             SK_GetCurrentRenderBackend ();
         
           SK_ComQIPtr <IDXGISwapChain>
@@ -2083,7 +2083,7 @@ D3D11_RSSetViewports_Override (
     if (NumViewports        == 1 &&
           pViewports->Width == 1280)
     {
-      static auto& rb =
+      const SK_RenderBackend& rb =
         SK_GetCurrentRenderBackend ();
     
       SK_ComQIPtr <IDXGISwapChain>
@@ -2110,7 +2110,7 @@ D3D11_RSSetViewports_Override (
     //if (NumViewports        == 1 &&
     //      pViewports->Width == 1920)
     //{
-    //  static auto& rb =
+    //  const SK_RenderBackend& rb =
     //    SK_GetCurrentRenderBackend ();
     //
     //  SK_ComQIPtr <IDXGISwapChain>
@@ -2514,7 +2514,6 @@ SetCurrentThreadDescription (L"[SK] DXGI Hook Crawler");
       SK_ApplyQueuedHooks ();
 
 
-      extern volatile LONG          SK_D3D11_initialized;
       InterlockedIncrementRelease (&SK_D3D11_initialized);
 
       if (config.apis.dxgi.d3d11.hook) SK_D3D11_EnableHooks ();

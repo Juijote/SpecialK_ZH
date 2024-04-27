@@ -1,10 +1,398 @@
-﻿24.3.30.1
+﻿24.4.26
+=======
+ + Do not display battery level warnings on DualSense controllers in DualShock 3
+     mode connected over Bluetooth, because the data is invalid garbage left in
+       the Windows HID driver from the last time the controller was in full mode.
+
+24.4.25.2
+=========
+ + Auto-identify SONY PlayStation controllers as the base model in Unity engine
+     games because they often cannot recognize newer models.
+ + Auto-identify DualShock 4 v2 controllers as DualShock 4 to Arkham Knight
+ + Added Compatibility Options section to control panel for PlayStation
+     controllers, where alternate controller identification can be configured.
+ + Changed controller identification override INI settings to an integer:
+
+     -1=No Preference  (Default)
+      0=Do Not Apply
+      1=Apply
+
+    >> This is necessary so that auto-enabling the feature for specific engines
+         is possible, and users can reverse the auto-enable decision.
+
+       * Auto-enablement only applies if -1 is set.
+
+24.4.25.1
+=========
+ + Adjust timing on Epic Game Store Achievement screenshots to catch
+     the EOS unlock graphics
+ + Place EOS achievement screenshots in Achievements\ subdirectory as
+     done with Steam achievement screenshots
+
+24.4.25
+=======
+ + Added named achievement screenshots for Epic Game Store games
+ + Disabled SteamAPI integration in Yakuza 0 by default
+
+24.4.24.5
+=========
+ + Correctly disable HID output reports for non-Bluetooth devices when
+     HID hooks are disabled.
+
+24.4.24.4
+=========
+ + Disable DualShock 4 v2 controllers running in simplified Bluetooth
+     mode.
+
+24.4.24.3
+=========
+ + Added option to enable full DualShock4 / DualSense capabilities over
+     Bluetooth even if a game has not yet put the controller in that mode.
+
+24.4.24.2
+=========
+ + Added bulletpoint explaining why some DualShock4 / DualSense features
+     no longer work over Bluetooth.
+
+24.4.24.1
+=========
+ + Do not use haptics or LEDs on Bluetooth PlayStation controllers until a
+     game first uses rumble, or if the controller is already in
+       DualShock4/DualSense mode.
+
+24.4.24
+=======
+ + Added stupid hack for systems with broken PresentMon running D3D12, where
+     VRR status cannot be determined. VBlank rate < Reflex rate is assumed
+       VRR active.
+
+24.4.23.5
+=========
+ + Prevent setting LED color in DualShock 3 Bluetooth Compatibility mode on
+     DualShock 4 controllers.
+
+24.4.23.4
+=========
+ + Slim down NVSDK_NGX_Parameter_GetI_Detour hook, it does not work correctly
+     for DLSS resolution scaling.
+ + Prevent crashing if DLSS text OSD is enabled, but game has not yet
+     fully initialized DLSS.
+
+24.4.23.3
+=========
+ + Add option to report v1 DualShock 4s as v2, disabled by default because it
+     will break games.
+
+24.4.23.2
+=========
+ + Do not block gamepad/keyboard input (unless set to always disable) during
+     the first frame drawn.
+
+    >> Helps some Unity games w/ HID gamepad initialization.
+
+24.4.23.1
+=========
+ + Do not hook NVSDK_NGX_D3D12_GetFeatureRequirements or
+     NVSDK_NGX_D3D11_GetFeatureRequirements unless DLSS feature support
+       spoofing is enabled, because the APIs will not return correct values
+         if NGX detects they have been hooked.
+
+24.4.23
+=======
+ + Added options to identify DualShock 4 v2 and DualSense Edge controllers
+     to games as DualShock 4 and DualSense respectively, for games that
+       understand the general DualShock4 / DualSense protocols but are too
+         old to recognize the newer model.
+
+    [Input.libScePad]
+    IdentifyDualShock4v2AsDualShock4={true|false}  Default: true
+    IdentifyDualSenseEdgeAsDualSense={true|false}  Default: true
+
+    This feature is enabled by default since the communication protocol
+      between these different models is the same, and games generally do
+        not make use of special features like DualSense Edge's paddles.
+
+﻿24.4.21
+=======
+ + Added hooks on NGX Get/SetULL, GetI, SetD for DLSS completeness
+ + Apply analog input deadzone to idle controller determination, even if
+     deadzone is not being applied to input readings sent to games.
+ + Reverted default Forza Horizon 5 settings to workaround anti-debug.
+
+24.4.20.2
+=========
+ + Fixed AVIF HDR screenshots with content that exceeds 10k nits or
+     125.0 (scRGB) in a single color channel producing inverted color.
+
+24.4.20.1
+=========
+ + Fixed rare ImGui color overflow if gamepad capture status changes
+     in the middle of drawing the control panel's input management tab.
+ + Give Windows Media Foundation (HW video acceleration) surfaces a
+     fast-path that avoids texture caching hooks in D3D11.
+ + Added DLSS config parameter to spoof HW feature support for some
+     broken DLSS implementations (i.e. Harold Halibut's Unity DLSS).
+
+       [NVIDIA.DLSS]
+       SpoofFeatureSupport={true|false}  Default: false
+
+    * Only works for D3D11/D3D12, SK ignores broken Vulkan stuff :)
+
+24.4.20
+=======
+ + Merge pull request #165 from audaki:fix-hdr10-gamut-visualizer
+    * Fix hdr10 gamut visualizer
+ + When enabling HDR image processing on native HDR games, processing
+     will now stay enabled on future launches. Making it easier to
+       do simple fixes like rescale maximum luminance without ReShade
+ + Made Resizable BAR easier to right-click in Display menu
+
+24.4.19.3
+=========
+ + Add current game's relative executable path to DRS profile on NVIDIA
+     GPUs if the fully-qualified path is not present when attempting to
+       read a driver setting DWORD.
+
+24.4.19.2
+=========
+ + Added Resizable BAR status to Display menu on NVIDIA GPUs
+     >> Setting can be changed (per-game) by right-clicking it
+
+24.4.19.1
+=========
+ + Added SDR White Level slider to the control panel's Display menu
+     >> This sets the OS SDR white level for the current display
+ + Automatically apply system SDR white level preference at game start
+     >> Fixes bug in Windows caused by OpenGL and Vulkan apps setting SDR
+          white level to 80.0 nits temporarily and never restoring it at exit.
+
+24.4.19
+=======
+ + Allow XInput emulation setting to apply even for real Xbox controllers
+     in games that use Windows.Gaming.Input. This allows background input,
+       which is impossible in the native UWP API.
+ + Reduced the strictness of Rec 2020 color clamp and limit FP16 black pixel
+     fix logic only to -pure- black pixels, not pixels that have one or two
+       ~0.0 color channels.
+    >> Should improve appearance and gradiation of highly saturated colors
+
+24.4.18
+=======
+ + Merge pull request #164 from audaki:main
+    * Fix gamut visualizers
+ + Dump textures with actual names to subdirectories honoring their name,
+     to make working with named textures simpler.
+ + Prevent selecting 11-bpc Render Pass Remastering in Tales of Arise
+ + Ignore Windows Media Foundation D3D11 devices for video playback in games.
+ + Improved support for Windows.Gaming.Input emulation, includes rumble
+     and secondary trigger rumble (impulse trigger) data is added as
+       additional mild rumble.
+       
+      >> Will attempt to simulate the secondary trigger rumble using haptics
+           waveform stuff in the future, current solution is adequate.
+
+24.4.17.3
+=========
+ + Added full support for HDR remastering in Harold Halibut, with
+     the exception of 8-bpc Compute Shader Passes.
+
+24.4.17.2
+=========
+ + Added OBS's hook caching executables (get-graphics-offsets{32|64}.exe)
+     to SK's internal injection blacklist.
+ + Added support for XInput Emulation for PlayStation controllers in games
+     that use Windows.Gaming.Input (mostly Microsoft Store games).
+
+    >> The Windows.Gaming.Input API is not currently emulated, instead this
+         causes games to resort to XInput fallback code...
+
+       This means a few Windows.Gaming.Input features (i.e. Impulse Triggers)
+         for real Xbox controllers will not work.
+
+    * The plan is to eventually emulate the Windows.Gaming.Input API proper,
+        and translate Impulse Triggers to DualSense Force Feedback Triggers.
+
+24.4.17.1
+=========
+ + AutoVRR re-application no longer requires having the control panel open
+
+24.4.17
+=======
+ + Added feature to reapply AutoVRR optimization if the display device or
+     its refresh rate change after the framerate limit was originally setup.
+ + A global policy controlling whether AutoVRR is reapplied has been added
+     to the AutoVRR config menu (policy is on by default).
+ + If AutoVRR is not set to re-apply, a warning icon will be shown next to
+     the framerate limit slider to indicate it was set when the display had
+       different settings.
+ + Added a notification toast to indicate when AutoVRR has been applied.
+
+24.4.16
+=======
+ + Fixed ImGui color stack overflow when displaying Frametime Method tooltip
+
+24.4.15.3
+=========
+ + Added warning dialog if SK is injected into a D3D10 game; standard Windows
+     MessageBox, since SK cannot draw anything in D3D10 :)
+
+ + If SK is injected into two or more games at once and one of the games is
+     currently in the foreground, gamepad input will be blocked to the 
+       games running in the background.
+
+ + Added mechanism to disable VRR while SK is applying a background FPS limit,
+     so that the game does not cause all applications on the system to run at
+       a low framerate.
+
+     >> It is critical that you never force VSYNC on in driver settings, or
+          applications that want to opt-out of VRR will be unable to and they
+            will harm the performance of all other applications on the system.
+
+24.4.15.2
+=========
+ + Added Auto Exposure to DLSS control panel
+ + Hide Auto Exposure and Alpha Upscaling overrides unless the game uses them,
+     or they were already forced on/off in SK's INI for the current game
+
+24.4.15.1
+=========
+ + Removed option to force DLSS Alpha Upscaling -On- in DLSS 3.7.0, only
+     forcing it Off or not overriding it at all are valid options.
+ + Added options to use UNORM rather than FLOAT Render Targets for HDR remastering
+     >> Right-click the HDR widget
+
+24.4.15
+=======
+ + Removed ImGui nav focus on plot widgets (i.e. Framepacing Graph) when using
+     keyboard or gamepad in the control panel
+ + Condensed Frametime calculation selection in advanced Framerate Limiter view
+ + Blacklist openxr_load.dll while SK is injected into games, because it will
+     deadlock when the game exits. It's optional and for VR, so not a big deal.
+
+24.4.14
+=======
+ + Fixed incorrect battery level for DualShock 4 Bluetooth controllers
+ + Added support for binding DualShock 4 trackpad click to keyboard input
+ + Correctly handle DualSense (Edge) / DualShock 4 macro binds when multiple
+     gamepads are connected or if the same gamepad is connected via USB and Bt
+
+24.4.13.4
+=========
+ + Fixed unintentional repeated keyboard input if a gamepad button -> key
+     binding is held for more than a couple of frames
+ + Only send KeyUp notifications for bound gamepad buttons when transitioning
+     from down to up (duh?)
+ + Give gamepad -> keyboard input synthesis a dedicated thread in order to
+     avoid synchronous OS input queue work on render/game-critical threads.
+
+24.4.13.3
+=========
+ + Added sanity checks for CPU/GPU/Disk update intervals in case INI files
+     have acquired values of 0.0; Sane Range = [0.125,2.5] (in seconds).
+ + Turned XInput deadzone compensation -Off- by default, only a handful of
+     games actually need this... and it makes those that don't harder.
+
+24.4.13.2
+=========
+ + Achievement popups no longer steal input focus away from the control panel,
+     and always raise their popup over top any widgets below them.
+ + Fixed several menu items in the Control Panel that might not be selectable
+     using a gamepad or keyboard (i.e. "File | Exit" and Latency Analysis).
+
+24.4.13.1
+=========
+ + Improved support for ReShade overlay while SK is blocking keyboard input
+ + Improved handling of DualSense Edge macro keybinds
+ + Added TouchpadClick macro binding for DualSense + DualSense Edge
+
+24.4.13
+=======
+ + Removed unnecesary load of dxgidebug.dll when user did not request
+     SK's D3D11/12 debugger.
+
+24.4.12.4
+=========
+ + For users using the default Steam Overlay, ReShade and Epic Game Store
+     overlay activation keybinds (Shift+Tab, Home, Shift+F3), SK always
+       allows these button combos to pass-through and activate the overlays.
+
+ + Added support for activating gamepad button -> keyboard bindings even when
+     a user has disabled keyboard input to the game.
+
+   >> Gamepad generated kbd input will pass-through the normal input blocking
+
+ + Added implicit Latency Waitable SwapChain support to D3D12 games that do
+     not use the feature; since it is not possible to control device latency
+       in D3D12 (only SwapChain latency).
+
+24.4.12.3
+=========
+ + Disable Mipmap Generation on BC6H or BC7 textures, it's -too damn slow-!
+ + Preliminary support for narrowing down the textures shown in the D3D11
+     Render Mod Toolkit based on resolution, format, mipmaps, usage, etc.
+
+24.4.12.2
+=========
+ + DualSense Edge users can now bind the Left/Right Function buttons and
+     Left/Right Paddles to a single button on your keyboard.
+
+    (e.g.)
+
+      [Input.libScePad]
+      LeftFunction=F5
+      RightFunction=F6
+      LeftPaddle=Tab
+      RightPaddle=Enter
+
+    This applies to individual game INIs, and is not stored in Global/input.ini
+
+     * Future versions will allow multiple keys to be bound, or instead of
+         creating keyboard input, send a command to the command console.
+
+24.4.12.1
+=========
+ + Added explicit wait for frames drawing an achievement popup to finish
+     GPU-side before unloading the achievement icon; stability improvement.
+
+24.4.12
+=======
+ + Disabled redundant mode change skip code if NV's Streamline Interposer
+     is loaded. (Helps prevent crashes in Horizon: Forbidden West (Steam))
+ + Remove code that prevents games that natively use a Latency Waitable
+     SwapChain from using IDXGISwapChain::ResizeTarget (...).
+ + Extended the range of the FPS limit slider to 1.25x Refresh Rate
+ + Revert parts of battery level measurement changes from 24.4.11
+
+24.4.11.1
+=========
+ + Added more logging if achievement statistics are not working because of
+     server-side problems on https://backend.special-k.info
+
+24.4.11
+=======
+ + Improved PlayStation controller battery measurement;
+     Percentage = 3.1 fixed-point instead of Percentage = Level/0xA
+ + Made PlayStation controller critical battery level a user-configurable
+     setting (right-click the Bluetooth PlayStation controller battery).
+ + Battery level warnings will go away after plugging the controller in.
+
+24.4.6.1
+========
+ + Improved fit of Alpha Upscaling override option in control panel, and
+     add indicator for its current state.
+
+24.4.6
+======
+ + Changed description of DLSS Preset E from Invalid to (DLSS 3.7.0+)
+ + Added option to force alpha upscaling on/off if DLSS 3.7.0 is present
+
+24.3.30.1
 =========
  + Permit local injection in Ratchet and Clank, as it no longer crashes the game's
      launcher for the CreateDXGIFactory mismatch issue mentioned in 24.3.30.
 
     * Turning HDR on/off using local injection will still crash the game, so it is
-        not suggested.
+        not suggested if you have an RTX 4xxx GPU (Streamline issue).
 
 24.3.30
 =======

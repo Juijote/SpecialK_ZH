@@ -2104,6 +2104,30 @@ ZwSetInformationThread_Detour (
 
 
 
+void
+SK_Thread_NotifyCreation (HANDLE  ThreadHandle,
+                          DWORD   ThreadId,
+                          PVOID   StartRoutine,
+                          HMODULE hModStart)
+{
+  // We may use these in the future...
+  std::ignore = ThreadHandle;
+  std::ignore = StartRoutine;
+
+  if (config.input.gamepad.hook_windows_gaming)
+  {
+    // Identify WGI thread(s?)
+    if (StrStrIW (SK_GetModuleName (hModStart).c_str (), L"Windows.Gaming.Input"))
+    {
+      SK_RunOnce (
+        extern DWORD SK_WGI_GamePollingThreadId;
+                     SK_WGI_GamePollingThreadId = ThreadId;
+      );
+    }
+  }
+}
+
+
 NTSTATUS
 NTAPI
 ZwCreateThreadEx_Detour (
@@ -2275,6 +2299,8 @@ ZwCreateThreadEx_Detour (
     {
       ResumeThread (*ThreadHandle);
     }
+
+    SK_Thread_NotifyCreation (*ThreadHandle, tid, StartRoutine, hModStart);
   }
 
   return ret;
@@ -3134,11 +3160,9 @@ SK_Exception_HandleThreadName (
           {
             static volatile LONG count = 0;
 
-            InterlockedIncrement (&count);
-
             auto* task =
               SK_MMCS_GetTaskForThreadIDEx ( dwTid,
-                SK_FormatString ("Render Thread #%li", count).c_str (),
+                SK_FormatString ("Render Thread #%li", InterlockedIncrement (&count)).c_str (),
                   "Games",
                   "DisplayPostProcessing"
               );
@@ -3696,7 +3720,11 @@ RaiseException_Detour (
     // TODO: Add config setting for interactive debug
     if (config.system.log_level > 1 && SK_IsDebuggerPresent ())
     {
-      __debugbreak ();
+      // Ignore Unity
+      if (! SK_GetCurrentRenderBackend ().windows.unity)
+      {
+        __debugbreak ();
+      }
     }
 
     SK::Diagnostics::CrashHandler::Reinstall ();
@@ -4111,14 +4139,19 @@ SK_IsDebuggerPresent (void)
     return _IsDebuggerPresent ();
   }
 
+  bool bDebugger = false;
+
   // Now we get serious, and avoid anti-debug stuff...
   __try {
-    return _IsDebuggerPresent ();
+    bDebugger = _IsDebuggerPresent ();
   }
 
-  __finally {
+  __except (EXCEPTION_EXECUTE_HANDLER)
+  {
     return FALSE;
   }
+
+  return bDebugger;
 }
 
 
@@ -4865,7 +4898,7 @@ SK_Win32_FormatMessageForException (
     if (lpMsgBuf != nullptr)
     {
       va_list      args = nullptr;
-      va_start    (args,           lpMsgFormat);
+      va_start    (args,              nExceptionCode);
       vswprintf_s (lpMsgBuf, 4096, lpMsgFormat, args);
       va_end      (args);
 

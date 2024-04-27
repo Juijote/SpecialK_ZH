@@ -3498,7 +3498,7 @@ D3DXPLANE::operator != ( CONST D3DXPLANE& p ) const
 D3DXINLINE
 D3DXCOLOR::D3DXCOLOR( DWORD dw )
 {
-    CONST FLOAT f = 1.0f / 255.0f;
+   constexpr FLOAT f = 1.0f / 255.0f;
     r = f * (FLOAT) (unsigned char) (dw >> 16);
     g = f * (FLOAT) (unsigned char) (dw >>  8);
     b = f * (FLOAT) (unsigned char) (dw >>  0);
@@ -8889,7 +8889,7 @@ DEFINE_GUID(IID_ID3DXTextureGutterHelper,
 DEFINE_GUID(IID_ID3DXPRTEngine, 
 0x683a4278, 0xcd5f, 0x4d24, 0x90, 0xad, 0xc4, 0xe1, 0xb6, 0x85, 0x5d, 0x53);
 
-// interface defenitions
+// interface definitions
 
 typedef interface ID3DXTextureGutterHelper ID3DXTextureGutterHelper;
 typedef interface ID3DXPRTBuffer ID3DXPRTBuffer;
@@ -9845,10 +9845,10 @@ HRESULT WINAPI
 //
 //  D3DXConcatenateMeshes:
 //  --------------------
-//  Concatenates a group of meshes into one common mesh.  This can optionaly transform
+//  Concatenates a group of meshes into one common mesh.  This can optionally transform
 //  each sub mesh or its texture coordinates.  If no DECL is given it will
 //  generate a union of all of the DECL's of the sub meshes, promoting channels
-//  and types if neccesary.  It will create an AttributeTable if possible, one can
+//  and types if necessary.  It will create an AttributeTable if possible, one can
 //  call OptimizeMesh with attribute sort and compacting enabled to ensure this.
 //
 //  Parameters:

@@ -539,6 +539,18 @@ SK_TraceLoadLibrary (       HMODULE hCallingMod,
     {
       SK_COMPAT_CheckStreamlineSupport ();
     }
+    else if (   StrStrI ( lpFileName, SK_TEXT("msmpeg2vdec.dll")) ||
+                StrStrIW (wszModName,        L"msmpeg2vdec.dll"))
+    {
+      extern HMODULE SK_KnownModule_MSMPEG2VDEC;
+                     SK_KnownModule_MSMPEG2VDEC = SK_GetModuleHandle (L"msmpeg2vdec.dll");
+    }
+    else if (   StrStrI ( lpFileName, SK_TEXT("mfplat.dll")) ||
+                StrStrIW (wszModName,        L"mfplat.dll"))
+    {
+      extern HMODULE SK_KnownModule_MFPLAT;
+                     SK_KnownModule_MFPLAT = SK_GetModuleHandleW (L"mfplat.dll");
+    }
     else if (   StrStrI ( lpFileName, SK_TEXT("_nvngx.dll")) ||
                 StrStrIW (wszModName,        L"_nvngx.dll") )
     {
@@ -787,6 +799,7 @@ LoadLibrary_Marshal ( LPVOID   lpRet,
     if (hModEarly == nullptr && BlacklistLibrary (compliant_path))
     {
       SK_UnlockDllLoader ();
+      SK_SetLastError (ERROR_MOD_NOT_FOUND);
       return nullptr;
     }
 
@@ -2414,6 +2427,14 @@ BlacklistLibrary (const _T* lpFileName)
         return TRUE;
       }
     }
+  }
+
+  if (StrStrI (lpFileName, SK_TEXT("openxr_loader.dll")))
+  {
+    SK_LOGs0 ( L"DLL Loader",
+                 L"OpenXR DLL Blocked to Prevent Deadlock at Shutdown" );
+
+    return TRUE;
   }
 
   return FALSE;

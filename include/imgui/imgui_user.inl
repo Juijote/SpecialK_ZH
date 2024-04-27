@@ -31,12 +31,6 @@ volatile LONG
 
 #include <SpecialK/control_panel.h>
 
-extern bool           SK_ImGui_IsMouseRelevant (void);
-
-extern HWND           SK_GetParentWindow    (HWND);
-extern bool __stdcall SK_IsGameWindowActive (void);
-
-extern void __stdcall SK_ImGui_DrawEULA (LPVOID reserved);
 show_eula_s eula;
 
 const ImWchar*
@@ -210,12 +204,8 @@ SK_ImGui_LoadFonts (void)
 #include <windowsx.h>
 #include <SpecialK/hooks.h>
 
-
-extern bool SK_Input_DetermineMouseIdleState (MSG * lpMsg);
-extern bool SK_Window_IsCursorActive         (void);
-extern bool SK_WantBackgroundRender          (void);
-
-extern float analog_sensitivity;
+float analog_sensitivity = 0.00333f;
+bool  nav_usable         = false;
 
 #include <set>
 #include <SpecialK/log.h>
@@ -771,18 +761,6 @@ void SK_ImGui_InputLanguage_s::update (void)
 }
 SK_ImGui_InputLanguage_s SK_ImGui_InputLanguage;
 //^^^^^^^^ This is per-thread, but we only process input on one.
-
-
-
-extern UINT
-SK_Input_ClassifyRawInput ( HRAWINPUT lParam, bool& mouse,
-                                              bool& keyboard,
-                                              bool& gamepad );
-
-LRESULT
-WINAPI
-ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
-                       WPARAM wParam, LPARAM lParam );
 
 static POINTS last_pos;
 
@@ -1372,8 +1350,6 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
             if (hLastClassCursor == (HCURSOR)(-1))
                 hLastClassCursor  = (HCURSOR)GetClassLongPtrW (game_window.hWnd, GCLP_HCURSOR);
 
-            HCURSOR ImGui_DesiredCursor (void);
-
             if (config.input.ui.use_hw_cursor)
             {
               SetClassLongPtrW (game_window.hWnd, GCLP_HCURSOR, (LONG_PTR)ImGui_DesiredCursor ());
@@ -1391,8 +1367,6 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
 
             if (config.input.cursor.manage)
             {
-              extern bool SK_Input_DetermineMouseIdleState (MSG * lpMsg);
-
               MSG
                 msg_ = { };
                 msg_.message = msg;
@@ -1438,9 +1412,6 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
       SK_ImGui_UpdateMouseTracker ();
     }
   }
-
-  extern bool
-  SK_ImGui_WantExit;
 
   if (msg == WM_SYSCOMMAND)
   {
@@ -1499,8 +1470,13 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
 
             if (SK_ImGui_Active () || config.input.keyboard.override_alt_f4)
             {
+              if (! config.input.keyboard.override_alt_f4)
+                WriteULong64Release (&config.input.keyboard.temporarily_allow, SK_GetFramesDrawn () + 40);
+
               SK_ImGui_WantExit = true;
-              return 1;
+
+              if (config.input.keyboard.override_alt_f4)
+                return 1;
             }
           }
         }
@@ -1555,7 +1531,7 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
           {
             if (LOWORD (wParam & 0xFFF0) == SC_SCREENSAVE)
             {
-              static auto& rb =
+              const SK_RenderBackend& rb =
                 SK_GetCurrentRenderBackend ();
 
               auto& display =
@@ -1645,8 +1621,6 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
               if ( config.input.gamepad.xinput.placehold [0] || config.input.gamepad.xinput.placehold [1] ||
                    config.input.gamepad.xinput.placehold [2] || config.input.gamepad.xinput.placehold [3] )
               {
-                extern void SK_XInput_Refresh (UINT iJoyID);
-
                 if (arrival)
                 {
                   SK_LOG0 ( ( L" (Input Device Connected)" ),
@@ -1749,10 +1723,6 @@ ImGui_WndProcHandler ( HWND   hWnd,    UINT  msg,
   return 0;
 }
 
-
-float analog_sensitivity = 0.00333f;
-bool  nav_usable         = false;
-
 bool
 _Success_(false)
 SK_ImGui_FilterXInput (
@@ -1821,9 +1791,6 @@ struct {
 bool
 SK_ImGui_HasXboxController (void)
 {
-  extern int
-  SK_ImGui_ProcessGamepadStatusBar (bool bDraw);
-
   return
     SK_ImGui_ProcessGamepadStatusBar (false) > 0;
 }
@@ -1868,8 +1835,6 @@ SK_ImGui_HasDualSenseEdgeController (void)
 
 
 #include <SpecialK/steam_api.h>
-
-extern void SK_ImGui_Toggle (void);
 
 bool
 WINAPI
@@ -1944,7 +1909,6 @@ SK_joyGetPosEx ( _In_  UINT        uJoyID,
 {
   if (_joyGetPosEx == nullptr)
   {
-    extern void SK_Input_HookWinMM (void);
     SK_RunOnce (SK_Input_HookWinMM ());
   }
 
@@ -1962,7 +1926,6 @@ SK_joyGetDevCapsW ( _In_                     UINT_PTR   uJoyID,
 {
   if (_joyGetDevCapsW == nullptr)
   {
-    extern void SK_Input_HookWinMM (void);
     SK_RunOnce (SK_Input_HookWinMM ());
   }
 
@@ -1978,7 +1941,6 @@ SK_joyGetNumDevs (void)
 {
   if (_joyGetNumDevs == nullptr)
   {
-    extern void SK_Input_HookWinMM (void);
     SK_RunOnce (SK_Input_HookWinMM ());
   }
 
@@ -2151,7 +2113,7 @@ SK_ImGui_PollGamepad_EndFrame (XINPUT_STATE* pState)
       {
         for ( auto& ps_controller : SK_HID_PlayStationControllers )
         {
-          if (ps_controller.bConnected)
+          if (ps_controller.bConnected)// && (ps_controller.bSimpleMode == false || ps_controller.bBluetooth == false))
               ps_controller.write_output_report ();
         }
         //pLastActiveController->write_output_report ();
@@ -2273,106 +2235,106 @@ SK_ImGui_PollGamepad_EndFrame (XINPUT_STATE* pState)
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_A) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_A)))
             {
-              BYTE bScancode =
+              const BYTE bScancode =
                 (BYTE)MapVirtualKey (VK_MEDIA_PLAY_PAUSE, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
 
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT)))
             {
-              BYTE bScancode =
-               (BYTE)MapVirtualKey (VK_LEFT, 0);
+              const BYTE bScancode =
+                (BYTE)MapVirtualKey (VK_LEFT, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_LEFT, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_LEFT, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_LEFT, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_LEFT, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
 
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT)))
             {
-              BYTE bScancode =
-               (BYTE)MapVirtualKey (VK_RIGHT, 0);
+              const BYTE bScancode =
+                (BYTE)MapVirtualKey (VK_RIGHT, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_RIGHT, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_RIGHT, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_RIGHT, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_RIGHT, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
 
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN)))
             {
-              BYTE bScancode =
-               (BYTE)MapVirtualKey (VK_DOWN, 0);
+              const BYTE bScancode =
+                (BYTE)MapVirtualKey (VK_DOWN, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_DOWN, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_DOWN, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_DOWN, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_DOWN, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
 
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP)))
             {
-              BYTE bScancode =
-               (BYTE)MapVirtualKey (VK_UP, 0);
+              const BYTE bScancode =
+                (BYTE)MapVirtualKey (VK_UP, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_UP, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_UP, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_UP, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_UP, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
 
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER)))
             {
-              BYTE bScancode =
-               (BYTE)MapVirtualKey (VK_MEDIA_PREV_TRACK, 0);
+              const BYTE bScancode =
+                (BYTE)MapVirtualKey (VK_MEDIA_PREV_TRACK, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_MEDIA_PREV_TRACK, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_MEDIA_PREV_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_MEDIA_PREV_TRACK, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_MEDIA_PREV_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
 
             if ((     state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
               (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER)))
             {
-              BYTE bScancode =
-               (BYTE)MapVirtualKey (VK_MEDIA_NEXT_TRACK, 0);
+              const BYTE bScancode =
+                (BYTE)MapVirtualKey (VK_MEDIA_NEXT_TRACK, 0);
 
-              DWORD dwFlags =
+              const DWORD dwFlags =
                 ( bScancode & 0xE0 ) == 0   ?
                   static_cast <DWORD> (0x0) :
                   static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-              keybd_event_Original (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags,                   0);
-              keybd_event_Original (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+              SK_keybd_event (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags,                   0);
+              SK_keybd_event (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
             }
           }
 #endif
@@ -2404,16 +2366,16 @@ SK_ImGui_PollGamepad_EndFrame (XINPUT_STATE* pState)
               (     state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) &&
             (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB)))
           {
-            BYTE bScancode =
+            const BYTE bScancode =
               (BYTE)MapVirtualKey (VK_MEDIA_PLAY_PAUSE, 0);
 
-            DWORD dwFlags =
+            const DWORD dwFlags =
               ( bScancode & 0xE0 ) == 0   ?
                 static_cast <DWORD> (0x0) :
                 static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-            keybd_event_Original (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags,                   0);
-            keybd_event_Original (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+            SK_keybd_event (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags,                   0);
+            SK_keybd_event (VK_MEDIA_PLAY_PAUSE, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
 
             bChordActivated = true;
           }
@@ -2422,16 +2384,16 @@ SK_ImGui_PollGamepad_EndFrame (XINPUT_STATE* pState)
               (     state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) &&
             (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER)))
           {
-            BYTE bScancode =
-             (BYTE)MapVirtualKey (VK_MEDIA_PREV_TRACK, 0);
+            const BYTE bScancode =
+              (BYTE)MapVirtualKey (VK_MEDIA_PREV_TRACK, 0);
 
-            DWORD dwFlags =
+            const DWORD dwFlags =
               ( bScancode & 0xE0 ) == 0   ?
                 static_cast <DWORD> (0x0) :
                 static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-            keybd_event_Original (VK_MEDIA_PREV_TRACK, bScancode, dwFlags,                   0);
-            keybd_event_Original (VK_MEDIA_PREV_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+            SK_keybd_event (VK_MEDIA_PREV_TRACK, bScancode, dwFlags,                   0);
+            SK_keybd_event (VK_MEDIA_PREV_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
 
             bChordActivated = true;
           }
@@ -2440,16 +2402,16 @@ SK_ImGui_PollGamepad_EndFrame (XINPUT_STATE* pState)
               (     state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
             (!(last_state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER)))
           {
-            BYTE bScancode =
-             (BYTE)MapVirtualKey (VK_MEDIA_NEXT_TRACK, 0);
+            const BYTE bScancode =
+              (BYTE)MapVirtualKey (VK_MEDIA_NEXT_TRACK, 0);
 
-            DWORD dwFlags =
+            const DWORD dwFlags =
               ( bScancode & 0xE0 ) == 0   ?
                 static_cast <DWORD> (0x0) :
                 static_cast <DWORD> (KEYEVENTF_EXTENDEDKEY);
 
-            keybd_event_Original (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags,                   0);
-            keybd_event_Original (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
+            SK_keybd_event (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags,                   0);
+            SK_keybd_event (VK_MEDIA_NEXT_TRACK, bScancode, dwFlags | KEYEVENTF_KEYUP, 0);
 
             bChordActivated = true;
           }
@@ -3254,8 +3216,9 @@ SK_ImGui_FallbackTrackMouseEvent (POINT& cursor_pos)
 void
 SK_ImGui_User_NewFrame (void)
 {
-  extern bool __SK_EnableSetCursor;
-              __SK_EnableSetCursor = true;
+  SK_HID_ProcessGamepadButtonBindings ();
+
+  __SK_EnableSetCursor = true;
 
   static auto& io =
     ImGui::GetIO ();
@@ -3555,9 +3518,6 @@ SK_ImGui_User_NewFrame (void)
                                                         // Disabled to game is a form of capture,
                                                         //   but it is exempt from idle cursor logic
 
-
-    extern bool
-  SK_Window_DeactivateCursor (bool ignore_imgui = false);
   if (config.input.cursor.manage && config.input.cursor.gamepad_deactivates && SK_Window_IsCursorActive ())
   {
     extern XINPUT_STATE
@@ -3666,8 +3626,7 @@ SK_ImGui_User_NewFrame (void)
   {
     if (SK_ImGui_WantMouseCapture () && SK_ImGui_IsAnythingHovered ())
     {
-      extern HCURSOR ImGui_DesiredCursor (void);
-      SK_SetCursor  (ImGui_DesiredCursor ());
+      SK_SetCursor (ImGui_DesiredCursor ());
     }
 
     io.MouseDrawCursor =
@@ -3709,8 +3668,12 @@ SK_ImGui_User_NewFrame (void)
          ImGui::GetKeyData   (ImGuiKey_Menu)->DownDuration == 0.0f )
          )
       {
-        extern bool SK_ImGui_WantExit;
-                    SK_ImGui_WantExit = true;
+        WriteULong64Release (
+          &config.input.keyboard.temporarily_allow,
+            SK_GetFramesDrawn () + 40
+        );
+
+        SK_ImGui_WantExit = true;
       }
     }
   }
@@ -3747,9 +3710,10 @@ SK_ImGui_User_NewFrame (void)
     }
   }
 
+  SK_ImGui_ExemptOverlaysFromKeyboardCapture ();
+
   // Warn on low gamepad battery
-  extern void SK_Battery_UpdateRemainingPowerForAllDevices (void);
-              SK_Battery_UpdateRemainingPowerForAllDevices ();
+  SK_Battery_UpdateRemainingPowerForAllDevices ();
 }
 
 bool

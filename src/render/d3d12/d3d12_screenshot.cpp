@@ -338,7 +338,7 @@ SK_D3D12_Screenshot::SK_D3D12_Screenshot ( const SK_ComPtr <ID3D12Device>&      
     readback_ctx.pCmdQueue = pCmdQueue;
 
 #ifdef HDR_CONVERT
-    static auto& rb =
+    const SK_RenderBackend& rb =
       SK_GetCurrentRenderBackend ();
 #endif
 
@@ -679,9 +679,7 @@ SK_D3D12_Screenshot::SK_D3D12_Screenshot ( const SK_ComPtr <ID3D12Device>&      
     }
   }
 
-
-  extern void SK_Steam_CatastropicScreenshotFail (void);
-              SK_Steam_CatastropicScreenshotFail ();
+  SK_Steam_CatastropicScreenshotFail ();
 
   // Something went wrong, crap!
   dispose ();
@@ -739,6 +737,9 @@ SK_D3D12_TransitionResource (
   if (stateBefore == stateAfter)
       return;
 
+  if (pCmdList == nullptr)
+      return;
+
   D3D12_RESOURCE_BARRIER
     barrier_desc                        = {                                    };
     barrier_desc.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -762,14 +763,17 @@ SK_D3D12_CaptureScreenshot (
   D3D12_RESOURCE_STATES  afterState
 )
 {
+  if (pScreenshot == nullptr)
+    return E_POINTER;
+
   auto pStagingCtx =
     pScreenshot->getReadbackContext ();
 
-  auto pCmdQueue =
-    pStagingCtx->pCmdQueue;
+  SK_ComPtr <ID3D12CommandQueue> pCmdQueue =
+                    pStagingCtx->pCmdQueue;
 
-  auto pSource =
-    pStagingCtx->pBackbufferSurface;
+  SK_ComPtr <ID3D12Resource> pSource =
+     pStagingCtx->pBackbufferSurface;
 
   /// TODO: This should be a passed argument, rather than stored.
   pStagingCtx->pBackbufferSurface.Release ();
@@ -1037,11 +1041,11 @@ SK_D3D12_Screenshot::getData ( UINT* const pWidth,
     MemcpySubresource ( &destData, &srcData,
            (SIZE_T)RowSizeInBytes,  NumRows, 1 );
 
-    SK_LOGi0 ( L"Screenshot Readback Complete after %li frames",
+    SK_LOGi0 ( L"Screenshot Readback Complete after %llu frames",
                 SK_GetFramesDrawn () - ulCommandIssuedOnFrame );
 
-    *pWidth  = static_cast <UINT> (framebuffer.Width);
-    *pHeight = static_cast <UINT> (framebuffer.Height);
+    *pWidth  = { framebuffer.Width  };
+    *pHeight = { framebuffer.Height };
     *ppData  =
       framebuffer.PixelBuffer.get ();
 
@@ -1059,8 +1063,8 @@ SK_D3D12_Screenshot::getData ( UINT* const pWidth,
     SK_ReleaseAssert ( bytesPerPixel * framebuffer.Width <= framebuffer.PackedDstPitch );
 
     size_t src_row_pitch =
-      ( layout.Footprint.RowPitch / std::max (1u, framebuffer.Height) ) +
-      ( layout.Footprint.RowPitch / std::max (1u, framebuffer.Height) ) % D3D12_TEXTURE_DATA_PITCH_ALIGNMENT,
+      ( static_cast <size_t> (layout.Footprint.RowPitch) / std::max (static_cast <size_t> (1), static_cast <size_t> (framebuffer.Height)) ) +
+      ( static_cast <size_t> (layout.Footprint.RowPitch) / std::max (static_cast <size_t> (1), static_cast <size_t> (framebuffer.Height)) ) % D3D12_TEXTURE_DATA_PITCH_ALIGNMENT,
            dst_row_pitch = ( bytesPerPixel * framebuffer.Width );
 
     SK_ReleaseAssert ( src_row_pitch >=
@@ -1211,11 +1215,8 @@ SK_D3D12_Screenshot::getData ( UINT* const pWidth,
                              false         );
 }
 
-
-extern volatile LONG __SK_ScreenShot_CapturingHUDless;
-
-volatile LONG __SK_D3D12_QueuedShots           = 0;
-volatile LONG __SK_D3D12_InitiateHudFreeShot   = 0;
+volatile LONG __SK_D3D12_QueuedShots         = 0;
+volatile LONG __SK_D3D12_InitiateHudFreeShot = 0;
 
 SK_LazyGlobal <concurrency::concurrent_queue <SK_D3D12_Screenshot *>> screenshot_queue;
 SK_LazyGlobal <concurrency::concurrent_queue <SK_D3D12_Screenshot *>> screenshot_write_queue;
@@ -1397,7 +1398,7 @@ SK_D3D12_CaptureScreenshot  ( SK_ScreenshotStage when =
                               bool               allow_sound = true,
                               std::string        title       = "" )
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if ( ((int)rb.api & (int)SK_RenderAPI::D3D12)
@@ -1460,7 +1461,7 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                                     bool               wait   = false,
                                     bool               purge  = false )
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   constexpr int __MaxStage = ARRAYSIZE (SK_ScreenshotQueue::stages) - 1;
@@ -1582,6 +1583,9 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
     hWriteThread =
     SK_Thread_CreateEx ([](LPVOID) -> DWORD
     {
+      SK_RenderBackend& rb =
+        SK_GetCurrentRenderBackend ();
+
       SetThreadPriority ( SK_GetCurrentThread (), THREAD_PRIORITY_NORMAL );
       do
       {
@@ -1795,6 +1799,12 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                       {
                         UNREFERENCED_PARAMETER(y);
 
+                        if ( outPixels == nullptr ||
+                              inPixels == nullptr )
+                        {
+                          return;
+                        }
+
                         for (size_t j = 0; j < width; ++j)
                         {
                           XMVECTOR value = inPixels [j];
@@ -1819,14 +1829,14 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                 hr = S_OK;
 
                 static const XMVECTORF32 s_luminance_2020 =
-                  { 0.2627,   0.678,    0.0593,   0.f };
+                  { 0.2627f,   0.678f,    0.0593f,   0.f };
 
                 static const XMMATRIX c_from709to2020 =
                 {
-                  { 0.627225305694944,  0.329476882715808,  0.0432978115892484, 0.0 },
-                  { 0.0690418812810714, 0.919605681354755,  0.0113524373641739, 0.0 },
-                  { 0.0163911702607078, 0.0880887513437058, 0.895520078395586,  0.0 },
-                  { 0.0,                0.0,                0.0,                1.0 }
+                  { 0.627225305694944f,  0.329476882715808f,  0.0432978115892484f, 0.0f },
+                  { 0.0690418812810714f, 0.919605681354755f,  0.0113524373641739f, 0.0f },
+                  { 0.0163911702607078f, 0.0880887513437058f, 0.895520078395586f,  0.0f },
+                  { 0.0f,                0.0f,                0.0f,                1.0f }
                 };
 
                 //if ( un_srgb.GetImageCount () == 1 &&
@@ -1860,7 +1870,7 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                            maxRGB = XMVectorZero          ();
 
                   static const XMVECTORF32 s_luminance =
-                    { 0.2126729, 0.7151522, 0.0721750, 0.f };
+                    { 0.2126729f, 0.7151522f, 0.0721750f, 0.f };
 
                   float lumTotal   = 0.0f;
                   float N          = 0.0f;
@@ -2061,7 +2071,7 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                               (int)pFrameData->Width, (int)pFrameData->Height,
                                 true );
 
-                      SK_LOG1 ( ( L"Finished Steam Screenshot Import for Handle: '%x' (%lu frame latency)",
+                      SK_LOG1 ( ( L"Finished Steam Screenshot Import for Handle: '%x' (%llu frame latency)",
                                   screenshot, SK_GetFramesDrawn () - pop_off->getStartFrame () ),
                                     L"SteamSShot" );
 
@@ -2153,9 +2163,12 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
 
             if (InterlockedCompareExchangePointer (&hThread, 0, INVALID_HANDLE_VALUE) == INVALID_HANDLE_VALUE)
             {                                     SK_Thread_CreateEx ([](LPVOID pUser)->DWORD {
+              SK_RenderBackend& rb =
+                SK_GetCurrentRenderBackend ();
+
               concurrency::concurrent_queue <SK_Screenshot::framebuffer_s *>*
                 images_to_write =
-                  (concurrency::concurrent_queue <SK_Screenshot::framebuffer_s *>*)pUser;
+                  (concurrency::concurrent_queue <SK_Screenshot::framebuffer_s *>*)(pUser);
 
               SetThreadPriority           ( SK_GetCurrentThread (), THREAD_MODE_BACKGROUND_BEGIN );
               SetThreadPriority           ( SK_GetCurrentThread (), THREAD_PRIORITY_BELOW_NORMAL );
@@ -2319,10 +2332,10 @@ SK_D3D12_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
 
                         static const XMMATRIX c_from709to2020 =
                         {
-                          { 0.627225305694944,  0.329476882715808,  0.0432978115892484, 0.0 },
-                          { 0.0690418812810714, 0.919605681354755,  0.0113524373641739, 0.0 },
-                          { 0.0163911702607078, 0.0880887513437058, 0.895520078395586,  0.0 },
-                          { 0.0,                0.0,                0.0,                1.0 }
+                          { 0.627225305694944f,  0.329476882715808f,  0.0432978115892484f, 0.0f },
+                          { 0.0690418812810714f, 0.919605681354755f,  0.0113524373641739f, 0.0f },
+                          { 0.0163911702607078f, 0.0880887513437058f, 0.895520078395586f,  0.0f },
+                          { 0.0f,                0.0f,                0.0f,                1.0f }
                         };
 
                         struct ParamsPQ
@@ -2603,7 +2616,6 @@ SK_D3D12_WaitOnAllScreenshots (void)
 
 void SK_Screenshot_D3D12_EndFrame (void)
 {
-  extern bool   SK_D3D12_ShouldSkipHUD (void);
   std::ignore = SK_D3D12_ShouldSkipHUD (    );
 
   if (InterlockedCompareExchange (&__SK_D3D12_InitiateHudFreeShot, 0, -1) == -1)
@@ -2678,7 +2690,8 @@ SK_D3D12_EndFrame (SK_TLS* /* pTLS = SK_TLS_Bottom ()*/)
 {
   for ( auto end_frame_fn : plugin_mgr->end_frame_fns )
   {
-    end_frame_fn ();
+    if (end_frame_fn != nullptr)
+        end_frame_fn ();
   }
 
   dwFrameTime = SK::ControlPanel::current_time;

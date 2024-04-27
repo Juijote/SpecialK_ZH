@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file is part of Special K.
  *
  * Special K is free software : you can redistribute it
@@ -43,8 +43,6 @@ const GUID IID_IUnwrappedDXGISwapChain =
 const GUID IID_IWrapDXGISwapChain =
 { 0x24430a12, 0x6e3c, 0x4706, { 0xaf, 0xfa, 0xb3, 0xee, 0xf2, 0xdf, 0x41, 0x2 } };
 
-extern bool bOriginallyFlip;
-
 void
 __stdcall
 SK_DXGI_SwapChainDestructionCallback (void *pSwapChain);
@@ -59,6 +57,9 @@ IWrapDXGISwapChain : IDXGISwapChain4
   {
     if (pSwapChain == nullptr || pDevice == nullptr)
       return;
+
+    auto& rb =
+      SK_GetCurrentRenderBackend ();
 
     DXGI_SWAP_CHAIN_DESC            sd = { };
     if (SUCCEEDED (pReal->GetDesc (&sd)))
@@ -122,12 +123,17 @@ IWrapDXGISwapChain : IDXGISwapChain4
     flip_model.active =
       ( sd.SwapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD ||
         sd.SwapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL );
-    flip_model.native = bOriginallyFlip;
+    flip_model.native = rb.active_traits.bOriginallyFlip;
 
     SetPrivateDataInterface (IID_IUnwrappedDXGISwapChain, pReal);
 
     SK_DXGI_SetDebugName ( pReal,
         SK_FormatStringW ( L"SK_IWrapDXGISwapChain: pReal=%p", pReal ) );
+
+    SK_ComQIPtr <IDXGISwapChain2> pSwapChain2 (pReal);
+
+    if (pSwapChain2.p != nullptr)
+        pSwapChain2->GetMaximumFrameLatency (&gameFrameLatency_);
 
     RegisterDestructionCallback ();
 
@@ -161,6 +167,9 @@ IWrapDXGISwapChain : IDXGISwapChain4
   {
     if (pSwapChain == nullptr || pDevice == nullptr)
       return;
+
+    auto& rb =
+      SK_GetCurrentRenderBackend ();
 
     ///creation_desc.actual    = *pOverrideDesc;
     ///creation_desc.requested = *pOrigDesc;
@@ -221,12 +230,17 @@ IWrapDXGISwapChain : IDXGISwapChain4
     flip_model.active =
       ( sd.SwapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD ||
         sd.SwapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL );
-    flip_model.native = bOriginallyFlip;
+    flip_model.native = rb.active_traits.bOriginallyFlip;
 
     SetPrivateDataInterface (IID_IUnwrappedDXGISwapChain, pReal);
 
     SK_DXGI_SetDebugName ( pReal,
         SK_FormatStringW ( L"SK_IWrapDXGISwapChain: pReal=%p", pReal ) );
+
+    SK_ComQIPtr <IDXGISwapChain2> pSwapChain2 (pReal);
+
+    if (pSwapChain2.p != nullptr)
+        pSwapChain2->GetMaximumFrameLatency (&gameFrameLatency_);
 
     RegisterDestructionCallback ();
 
@@ -251,9 +265,9 @@ IWrapDXGISwapChain : IDXGISwapChain4
   }
 
 
-  virtual ~IWrapDXGISwapChain (void)
-  {
-  }
+  //virtual ~IWrapDXGISwapChain (void)
+  //{
+  //}
 
 
   IWrapDXGISwapChain            (const IWrapDXGISwapChain &) = delete;
@@ -349,8 +363,9 @@ IWrapDXGISwapChain : IDXGISwapChain4
     }
   } flip_model;
 
-  UINT                  gameWidth_      = 0;
-  UINT                  gameHeight_     = 0;
+  UINT                  gameWidth_        = 0;
+  UINT                  gameHeight_       = 0;
+  UINT                  gameFrameLatency_ = 2; // The latency the game expects
 
   struct state_cache_s {
     DXGI_FORMAT           lastRequested_      = DXGI_FORMAT_UNKNOWN;
@@ -378,6 +393,14 @@ IWrapDXGISwapChain : IDXGISwapChain4
 
   HRESULT                 RegisterDestructionCallback (void);
 };
+
+bool SK_DXGI_IsSwapChainReal (const DXGI_SWAP_CHAIN_DESC& desc) noexcept;
+void ResetImGui_D3D12        (IDXGISwapChain *This);
+void ResetImGui_D3D11        (IDXGISwapChain *This);
+
+extern SetFullscreenState_pfn SetFullscreenState_Original;
+extern ResizeTarget_pfn       ResizeTarget_Original;
+extern ResizeBuffers_pfn      ResizeBuffers_Original;
 
 
 #endif /* __SK__DXGI_SWAPCHAIN_H__ */

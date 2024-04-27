@@ -315,7 +315,7 @@ SK_D3D11_Screenshot::SK_D3D11_Screenshot (const SK_ComPtr <ID3D11Device>& pDevic
 
   if (pDev != nullptr)
   {
-    static SK_RenderBackend& rb =
+    SK_RenderBackend_V2 &rb =
       SK_GetCurrentRenderBackend ();
 
     auto pTestDev =
@@ -808,9 +808,9 @@ SK_D3D11_Screenshot::getData ( UINT* const pWidth,
       framebuffer.PackedDstPitch      = PackedDstPitch;
 
       size_t allocSize =
-        (framebuffer.Height + 1)
-                            *
-         framebuffer.PackedDstPitch;
+        (static_cast <size_t> (framebuffer.Height) + 1ULL)
+                                                   *
+                               framebuffer.PackedDstPitch;
 
       try
       {
@@ -1071,7 +1071,7 @@ SK_D3D11_CaptureScreenshot  ( SK_ScreenshotStage when =
                               bool               allow_sound = true,
                               std::string        title       = "" )
 {
-  static const SK_RenderBackend_V2& rb =
+  const SK_RenderBackend_V2& rb =
     SK_GetCurrentRenderBackend ();
 
   if ( ((int)rb.api & (int)SK_RenderAPI::D3D11)
@@ -1137,11 +1137,11 @@ float _cSdrPower  = 0.74f;//0.84f;
 float _cLerpScale = 1.3f; //2.5f;
 
 void
-SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotStage::EndOfFrame,
-                                    bool               wait   = false,
-                                    bool               purge  = false )
+SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
+                                    bool               wait,
+                                    bool               purge)
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   constexpr int __MaxStage = ARRAYSIZE (SK_ScreenshotQueue::stages) - 1;
@@ -1257,6 +1257,9 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
     hWriteThread =
     SK_Thread_CreateEx ([](LPVOID) -> DWORD
     {
+      SK_RenderBackend& rb =
+        SK_GetCurrentRenderBackend ();
+
       SetThreadPriority ( SK_GetCurrentThread (), THREAD_PRIORITY_NORMAL );
 
       do
@@ -1399,22 +1402,22 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                   { 10000.0f, 10000.0f, 10000.0f, 1.f };
 
                 static const XMVECTORF32 s_luminance_2020 =
-                  { 0.2627,   0.678,    0.0593,   0.f };
+                  { 0.2627f,   0.678f,    0.0593f,   0.f };
 
                 static const XMMATRIX c_from2020to709 =
                 {
-                  { 1.6604910f,  -0.1245505f, -0.0181508f, 0.f },
+                  {  1.6604910f, -0.1245505f, -0.0181508f, 0.f },
                   { -0.5876411f,  1.1328999f, -0.1005789f, 0.f },
                   { -0.0728499f, -0.0083494f,  1.1187297f, 0.f },
-                  { 0.f,          0.f,         0.f,        1.f }
+                  {  0.f,         0.f,         0.f,        1.f }
                 };
 
                 static const XMMATRIX c_from709to2020 =
                 {
-                  { 0.627225305694944,  0.329476882715808,  0.0432978115892484, 0.0 },
-                  { 0.0690418812810714, 0.919605681354755,  0.0113524373641739, 0.0 },
-                  { 0.0163911702607078, 0.0880887513437058, 0.895520078395586,  0.0 },
-                  { 0.0,                0.0,                0.0,                1.0 }
+                  { 0.627225305694944f,  0.329476882715808f,  0.0432978115892484f, 0.0f },
+                  { 0.0690418812810714f, 0.919605681354755f,  0.0113524373641739f, 0.0f },
+                  { 0.0163911702607078f, 0.0880887513437058f, 0.895520078395586f,  0.0f },
+                  { 0.0f,                0.0f,                0.0f,                1.0f }
                 };
 
                 HRESULT hr = S_OK;
@@ -1450,7 +1453,7 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
                            maxRGB = XMVectorZero          ();
 
                   static const XMVECTORF32 s_luminance =
-                    { 0.2126729, 0.7151522, 0.0721750, 0.f };
+                    { 0.2126729f, 0.7151522f, 0.0721750f, 0.f };
 
                   float lumTotal   = 0.0f;
                   float N          = 0.0f;
@@ -1739,6 +1742,9 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
 
             if (InterlockedCompareExchangePointer (&hThread, 0, INVALID_HANDLE_VALUE) == INVALID_HANDLE_VALUE)
             {                                     SK_Thread_CreateEx ([](LPVOID pUser)->DWORD {
+              SK_RenderBackend& rb =
+                SK_GetCurrentRenderBackend ();
+
               concurrency::concurrent_queue <SK_Screenshot::framebuffer_s *>*
                 images_to_write =
                   (concurrency::concurrent_queue <SK_Screenshot::framebuffer_s *>*)pUser;
@@ -1879,8 +1885,8 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_ = SK_ScreenshotSta
 
                       if (hdr && config.screenshots.use_avif)
                       {
-                        SK_Screenshot_SaveAVIF (un_srgb, wszAbsolutePathToLossless, static_cast <uint16_t> (pFrameData->hdr.max_cll_nits),
-                                                                                    static_cast <uint16_t> (pFrameData->hdr.avg_cll_nits));
+                        SK_Screenshot_SaveAVIF (un_srgb, wszAbsolutePathToLossless, static_cast <uint16_t> (std::max (0.0f, pFrameData->hdr.max_cll_nits)),
+                                                                                    static_cast <uint16_t> (std::max (0.0f, pFrameData->hdr.avg_cll_nits)));
                       }
 
                       HRESULT hrSaveToWIC = S_OK;

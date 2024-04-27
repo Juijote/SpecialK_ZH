@@ -323,7 +323,7 @@ SK::ControlPanel::D3D11::Draw (void)
   if (show_shader_mod_dlg)
       show_shader_mod_dlg = SK_D3D11_ShaderModDlg ();
 
-  static auto &rb =
+  const SK_RenderBackend &rb =
     SK_GetCurrentRenderBackend ();
 
   const bool d3d11 =
@@ -1874,7 +1874,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
         SUCCEEDED (pSwap1->GetDesc1          (&swap_desc)) &&
         SUCCEEDED (pSwap1->GetFullscreenDesc (&fullscreen_desc)))
     {
-      static SK_RenderBackend& rb =
+      const SK_RenderBackend& rb =
         SK_GetCurrentRenderBackend ();
 
       INT         swap_flag_count = 0;
@@ -1883,7 +1883,6 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
           static_cast <DXGI_SWAP_CHAIN_FLAG> (swap_desc.Flags),
                   &swap_flag_count     );
 
-      extern UINT uiOriginalBltSampleCount;
       extern DXGI_SWAP_CHAIN_DESC  _ORIGINAL_SWAP_CHAIN_DESC;
 
       ImGui::BeginTooltip      ();
@@ -1906,7 +1905,7 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
         ImGui::TextUnformatted ("刷新率:");
       ImGui::TextUnformatted   ("交换间隔:");
       ImGui::TextUnformatted   ("交换效应:");
-      if  (swap_desc.SampleDesc.Count > 1 || uiOriginalBltSampleCount > 1)
+      if  (swap_desc.SampleDesc.Count > 1 || rb.active_traits.uiOriginalBltSampleCount > 1)
         ImGui::TextUnformatted ("MSAA 样例:");
       if (swap_desc.Flags != 0)
       {
@@ -2003,8 +2002,8 @@ SK_ImGui_SummarizeDXGISwapchain (IDXGISwapChain* pSwapDXGI)
                                                                             swap_desc.SampleDesc.Count);
       if  (swap_desc.SampleDesc.Count   > 1)
         ImGui::Text          ("%u",                                         swap_desc.SampleDesc.Count);
-      else if (uiOriginalBltSampleCount > 1)
-        ImGui::Text          ("%u",                                         uiOriginalBltSampleCount);
+      else if (rb.active_traits.uiOriginalBltSampleCount > 1)
+        ImGui::Text          ("%u",                                         rb.active_traits.uiOriginalBltSampleCount);
       if (swap_desc.Flags != 0)
       {
         ImGui::Text          ("%hs",                                        swap_flags.c_str ());

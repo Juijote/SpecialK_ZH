@@ -1,4 +1,4 @@
-﻿//汉化相关
+//汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -304,6 +304,10 @@ public:
     auto item_inner_spacing =
       ImGui::GetStyle ().ItemInnerSpacing;
 
+    ImGui::PushItemFlag ( ImGuiItemFlags_NoNav             |
+                          ImGuiItemFlags_NoNavDefaultFocus |
+                          ImGuiItemFlags_AllowOverlap, true );
+
     if (gpu_load_prefs.enable)
     {
       snprintf
@@ -351,8 +355,8 @@ public:
       snprintf
         ( szAvg,
             511,
-              (const char *)u8"GPU%lu 温度 (�C):\n\n\n"
-                            u8"          最小: %3.0f�, 最大: %3.0f�, 平均: %4.1f�\n",
+              (const char *)u8"GPU%lu 温度 (°C):\n\n\n"
+                            u8"          最小: %3.0f°, 最大: %3.0f°, 平均: %4.1f°\n",
                 0,
                   gpu_temp_c.getMin   (), gpu_temp_c.getMax (),
                     gpu_temp_c.getAvg () );
@@ -378,7 +382,7 @@ public:
 
       float fy = ImGui::GetCursorPosY ();
 
-      snprintf (szCur, 31, (const char *)u8"%4.1f�", gpu_temp_c.getLastValue ());
+      snprintf (szCur, 31, (const char *)u8"%4.1f°", gpu_temp_c.getLastValue ());
 
       ImGui::SameLine        (  );
       ImGui::SetCursorPosX   (fx                      - item_inner_spacing.x +
@@ -589,6 +593,8 @@ public:
       ImGui::TextUnformatted (szCur);
       ImGui::SetCursorPosY   (fy);
     }
+
+    ImGui::PopItemFlag ();
   }
 
   void OnConfig (ConfigEvent event) override
@@ -623,7 +629,7 @@ private:
   sk_sensor_prefs_s gpu_load_prefs   { true, "GPU 负载 (%)",
                                               L"Load",
                                        &gpu_load,       0.0f, 100.0f };
-  sk_sensor_prefs_s gpu_temp_prefs   { true, (const char *)u8"GPU 温度 (�C)",
+  sk_sensor_prefs_s gpu_temp_prefs   { true, (const char *)u8"GPU 温度 (°C)",
                                               L"Temperature",
                                        &gpu_temp_c,    40.0f, 94.0f  };
   sk_sensor_prefs_s gpu_fan_prefs    { true, "GPU 风扇转速 (RPM)",

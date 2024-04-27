@@ -24,9 +24,13 @@ static constexpr bool SK_NGX_LogAllParams       = false;
 GetNGXResultAsString_pfn                  GetNGXResultAsString                     = nullptr;
 
 NVSDK_NGX_Parameter_SetF_pfn           NVSDK_NGX_Parameter_SetF_Original           = nullptr;
+NVSDK_NGX_Parameter_SetD_pfn           NVSDK_NGX_Parameter_SetD_Original           = nullptr;
 NVSDK_NGX_Parameter_SetI_pfn           NVSDK_NGX_Parameter_SetI_Original           = nullptr;
 NVSDK_NGX_Parameter_SetUI_pfn          NVSDK_NGX_Parameter_SetUI_Original          = nullptr;
+NVSDK_NGX_Parameter_SetULL_pfn         NVSDK_NGX_Parameter_SetULL_Original         = nullptr;
+NVSDK_NGX_Parameter_GetI_pfn           NVSDK_NGX_Parameter_GetI_Original           = nullptr;
 NVSDK_NGX_Parameter_GetUI_pfn          NVSDK_NGX_Parameter_GetUI_Original          = nullptr;
+NVSDK_NGX_Parameter_GetULL_pfn         NVSDK_NGX_Parameter_GetULL_Original         = nullptr;
 NVSDK_NGX_Parameter_GetVoidPointer_pfn NVSDK_NGX_Parameter_GetVoidPointer_Original = nullptr;
 
 void
@@ -62,14 +66,14 @@ NVSDK_NGX_Parameter_SetF_Detour (NVSDK_NGX_Parameter* InParameter, const char* I
 
   if (!_stricmp (InName, NVSDK_NGX_Parameter_FrameTimeDeltaInMsec))
   {
-    static auto &rb =
+    const SK_RenderBackend_V2 &rb =
       SK_GetCurrentRenderBackend ();
 
     const double dFrameTimeDeltaInMsec =
       1000.0 * ( static_cast <double> (rb.frame_delta.getDeltaTime ()) /
                  static_cast <double> (SK_QpcFreq) );
 
-    InParameter->Set (InName, dFrameTimeDeltaInMsec);
+    NVSDK_NGX_Parameter_SetD_Original (InParameter, InName, dFrameTimeDeltaInMsec);
 
 #if 0
     SK_LOGi0 (L"Frame Time Delta: Game=%f, SK=%f -- %f difference", InValue, dFrameTimeDeltaInMsec, fabs (InValue - dFrameTimeDeltaInMsec));
@@ -79,6 +83,58 @@ NVSDK_NGX_Parameter_SetF_Detour (NVSDK_NGX_Parameter* InParameter, const char* I
   }
 
   NVSDK_NGX_Parameter_SetF_Original (InParameter, InName, InValue);
+}
+
+void
+NVSDK_CONV
+NVSDK_NGX_Parameter_SetD_Detour (NVSDK_NGX_Parameter* InParameter, const char* InName, double InValue)
+{
+  SK_LOG_FIRST_CALL
+
+  SK_LOGn (((SK_NGX_LogAllParams == true) ? 0 : 1),
+              L"NGX_Parameter_SetD (%hs, %f) - %ws", InName, InValue, SK_GetCallerName ().c_str ());
+
+  if (! _stricmp (InName, NVSDK_NGX_Parameter_Sharpness))
+  {
+    if (config.nvidia.dlss.use_sharpening != -1)
+    {
+      float sharpness = config.nvidia.dlss.use_sharpening == 1 ?
+                        config.nvidia.dlss.forced_sharpness  : 0;
+
+      if (InValue != sharpness)
+      {
+        SK_RunOnce (
+        {
+          SK_LOGi0 (
+            L"Overriding DLSS Sharpness (Requested: %4.2f, Forced: %4.2f)",
+              InValue, sharpness
+          );
+        });
+
+        InValue = sharpness;
+      }
+    }
+  }
+
+  if (!_stricmp (InName, NVSDK_NGX_Parameter_FrameTimeDeltaInMsec))
+  {
+    const SK_RenderBackend_V2 &rb =
+      SK_GetCurrentRenderBackend ();
+
+    const double dFrameTimeDeltaInMsec =
+      1000.0 * ( static_cast <double> (rb.frame_delta.getDeltaTime ()) /
+                 static_cast <double> (SK_QpcFreq) );
+
+    NVSDK_NGX_Parameter_SetD_Original (InParameter, InName, dFrameTimeDeltaInMsec);
+
+#if 0
+    SK_LOGi0 (L"Frame Time Delta: Game=%f, SK=%f -- %f difference", InValue, dFrameTimeDeltaInMsec, fabs (InValue - dFrameTimeDeltaInMsec));
+#endif
+
+    return;
+  }
+
+  NVSDK_NGX_Parameter_SetD_Original (InParameter, InName, InValue);
 }
 
 void
@@ -115,6 +171,54 @@ NVSDK_NGX_Parameter_SetI_Detour (NVSDK_NGX_Parameter* InParameter, const char* I
         }
       }
     }
+
+    if (config.nvidia.dlss.forced_alpha_upscale != -1)
+    {
+      if ((InValue & NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling) ==
+                     NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling)
+      {
+        if (config.nvidia.dlss.forced_alpha_upscale == 0)
+        {
+          SK_LOGi0 (L"Forcing DLSS Alpha Upscaling OFF");
+
+          InValue &= ~NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling;
+        }
+      }
+
+      else
+      {
+        if (config.nvidia.dlss.forced_alpha_upscale == 1)
+        {
+          SK_LOGi0 (L"Forcing DLSS Alpha Upscaling ON");
+
+          InValue |= NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling;
+        }
+      }
+    }
+
+    if (config.nvidia.dlss.forced_auto_exposure != -1)
+    {
+      if ((InValue & NVSDK_NGX_DLSS_Feature_Flags_AutoExposure) ==
+                     NVSDK_NGX_DLSS_Feature_Flags_AutoExposure)
+      {
+        if (config.nvidia.dlss.forced_auto_exposure == 0)
+        {
+          SK_LOGi0 (L"Forcing DLSS Auto Exposure OFF");
+
+          InValue &= ~NVSDK_NGX_DLSS_Feature_Flags_AutoExposure;
+        }
+      }
+
+      else
+      {
+        if (config.nvidia.dlss.forced_auto_exposure == 1)
+        {
+          SK_LOGi0 (L"Forcing DLSS Auto Exposure ON");
+
+          InValue |= NVSDK_NGX_DLSS_Feature_Flags_AutoExposure;
+        }
+      }
+    }
   }
 
   if (! _stricmp (InName, NVSDK_NGX_Parameter_PerfQualityValue))
@@ -127,6 +231,23 @@ NVSDK_NGX_Parameter_SetI_Detour (NVSDK_NGX_Parameter* InParameter, const char* I
       {
         InValue = NVSDK_NGX_PerfQuality_Value_DLAA;
       }
+    }
+  }
+
+  if ((! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_DLAA))        ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_Quality))     ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_Balanced))    ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_Performance)) ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_UltraPerformance)))
+  {
+    if (config.nvidia.dlss.force_dlaa && (config.nvidia.dlss.forced_preset == -1))
+    {
+      InValue = NVSDK_NGX_DLSS_Hint_Render_Preset_F;
+    }
+
+    else if (config.nvidia.dlss.forced_preset != -1)
+    {
+      InValue = config.nvidia.dlss.forced_preset;
     }
   }
 
@@ -175,6 +296,48 @@ NVSDK_NGX_Parameter_SetUI_Detour (NVSDK_NGX_Parameter* InParameter, const char* 
   NVSDK_NGX_Parameter_SetUI_Original (InParameter, InName, InValue);
 }
 
+void
+NVSDK_CONV
+NVSDK_NGX_Parameter_SetULL_Detour (NVSDK_NGX_Parameter* InParameter, const char* InName, unsigned long long InValue)
+{
+  SK_LOG_FIRST_CALL
+
+  SK_LOGn (((SK_NGX_LogAllParams == true) ? 0 : 1),
+              L"NGX_Parameter_SetULL (%hs, %u) - %ws", InName, InValue, SK_GetCallerName ().c_str ());
+
+  if (! _stricmp (InName, NVSDK_NGX_Parameter_PerfQualityValue))
+  {
+    SK_NGX_GameSetPerfQuality = sk::narrow_cast <unsigned int> (InValue);
+
+    if (config.nvidia.dlss.force_dlaa)
+    {
+      if (SK_DLSS_Context::dlss_s::hasDLAAQualityLevel ())
+      {
+        InValue = NVSDK_NGX_PerfQuality_Value_DLAA;
+      }
+    }
+  }
+
+  if ((! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_DLAA))        ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_Quality))     ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_Balanced))    ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_Performance)) ||
+      (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_UltraPerformance)))
+  {
+    if (config.nvidia.dlss.force_dlaa && (config.nvidia.dlss.forced_preset == -1))
+    {
+      InValue = NVSDK_NGX_DLSS_Hint_Render_Preset_F;
+    }
+
+    else if (config.nvidia.dlss.forced_preset != -1)
+    {
+      InValue = config.nvidia.dlss.forced_preset;
+    }
+  }
+
+  NVSDK_NGX_Parameter_SetULL_Original (InParameter, InName, InValue);
+}
+
 void *SK_NGX_DLSSG_UI_Buffer      = nullptr;
 void *SK_NGX_DLSSG_HUDLess_Buffer = nullptr;
 void *SK_NGX_DLSSG_Back_Buffer    = nullptr;
@@ -220,12 +383,12 @@ NVSDK_NGX_Parameter_GetUI_Detour (const NVSDK_NGX_Parameter *InParameter, const 
 
     if (config.nvidia.dlss.force_dlaa)
     {
-      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutWidth))                           { NVSDK_NGX_Parameter_GetUI_Original (InParameter, NVSDK_NGX_Parameter_Width,     OutValue); *OutValue += config.nvidia.dlss.compat.extra_pixels; }
-      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutHeight))                          { NVSDK_NGX_Parameter_GetUI_Original (InParameter, NVSDK_NGX_Parameter_Height,    OutValue); *OutValue += config.nvidia.dlss.compat.extra_pixels; }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutWidth))                           { NVSDK_NGX_Parameter_GetUI_Original (InParameter, NVSDK_NGX_Parameter_Width,     OutValue); *OutValue = sk::narrow_cast <UINT> (std::max (1, (int)*OutValue + config.nvidia.dlss.compat.extra_pixels)); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutHeight))                          { NVSDK_NGX_Parameter_GetUI_Original (InParameter, NVSDK_NGX_Parameter_Height,    OutValue); *OutValue = sk::narrow_cast <UINT> (std::max (1, (int)*OutValue + config.nvidia.dlss.compat.extra_pixels)); }
       if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width))  { NVSDK_NGX_Parameter_GetUI_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue += 2; }
       if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height)) { NVSDK_NGX_Parameter_GetUI_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue += 2; }
-      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width))  { NVSDK_NGX_Parameter_GetUI_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue -= 2; }
-      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { NVSDK_NGX_Parameter_GetUI_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue -= 2; }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width))  { NVSDK_NGX_Parameter_GetUI_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue = static_cast <UINT> (std::max (1, (INT)*OutValue - 2)); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { NVSDK_NGX_Parameter_GetUI_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = static_cast <UINT> (std::max (1, (INT)*OutValue - 2)); }
     }
 
     else if ( StrStrIA (InName, "Width") ||
@@ -261,6 +424,159 @@ NVSDK_NGX_Parameter_GetUI_Detour (const NVSDK_NGX_Parameter *InParameter, const 
          NVSDK_NGX_Parameter_GetUI_Detour (InParameter, NVSDK_NGX_Parameter_OutWidth, OutValue); *OutValue = std::max (1u, std::max (sk::narrow_cast <UINT> (*OutValue * config.nvidia.dlss.scale.dynamic_min)  - 2, ui_min_width));  }
         if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { unsigned int ui_min_height = 0; NVSDK_NGX_Parameter_GetUI_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height, &ui_min_height); 
          NVSDK_NGX_Parameter_GetUI_Detour (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = std::max (1u, std::max (sk::narrow_cast <UINT> (*OutValue * config.nvidia.dlss.scale.dynamic_min) - 2, ui_min_height)); }
+      }
+    }
+
+    if (! _stricmp (InName, NVSDK_NGX_Parameter_PerfQualityValue))
+    {
+      *OutValue = SK_NGX_GameSetPerfQuality;
+    }
+
+    if (config.nvidia.dlss.forced_preset != -1 && StrStrIA (InName, "DLSS.Hint.Render.Preset."))
+    {
+      *OutValue = config.nvidia.dlss.forced_preset;
+    }
+  }
+
+  return ret;
+}
+
+NVSDK_NGX_Result
+NVSDK_CONV
+NVSDK_NGX_Parameter_GetI_Detour (const NVSDK_NGX_Parameter *InParameter, const char *InName, int *OutValue)
+{
+  SK_LOG_FIRST_CALL
+
+  auto ret =
+    NVSDK_NGX_Parameter_GetI_Original (InParameter, InName, OutValue);
+
+  if (ret == NVSDK_NGX_Result_Success)
+  {
+    SK_LOGn (((SK_NGX_LogAllParams == true) ? 0 : 1),
+                L"NGX_Parameter_GetI (%hs) - %ws", InName, SK_GetCallerName ().c_str ());
+
+    // This stuff doesn't work for signed integers
+#if 0
+    if (config.nvidia.dlss.force_dlaa)
+    {
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutWidth))                           { NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_Width,     OutValue); *OutValue += config.nvidia.dlss.compat.extra_pixels; *OutValue = std::max (1, *OutValue); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutHeight))                          { NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_Height,    OutValue); *OutValue += config.nvidia.dlss.compat.extra_pixels; *OutValue = std::max (1, *OutValue); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width))  { NVSDK_NGX_Parameter_GetI_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue += 2; *OutValue = std::max (1, *OutValue); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height)) { NVSDK_NGX_Parameter_GetI_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue += 2; *OutValue = std::max (1, *OutValue); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width))  { NVSDK_NGX_Parameter_GetI_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue = std::max (1, (INT)*OutValue - 2); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { NVSDK_NGX_Parameter_GetI_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = std::max (1, (INT)*OutValue - 2); }
+    }
+
+    else if ( StrStrIA (InName, "Width") ||
+              StrStrIA (InName, "Height") )
+    {
+      unsigned int dlss_perf_qual;
+
+      InParameter->Get (NVSDK_NGX_Parameter_PerfQualityValue, &dlss_perf_qual);
+
+      float scale         = 0.0f;
+      float default_scale = 1.0f;
+
+      switch (dlss_perf_qual)
+      {
+        case NVSDK_NGX_PerfQuality_Value_MaxPerf:          scale = config.nvidia.dlss.scale.performance;       default_scale = 0.5f;      break;
+        case NVSDK_NGX_PerfQuality_Value_Balanced:         scale = config.nvidia.dlss.scale.balanced;          default_scale = 0.58f;     break;
+        case NVSDK_NGX_PerfQuality_Value_MaxQuality:       scale = config.nvidia.dlss.scale.quality;           default_scale = 0.666667f; break;
+        case NVSDK_NGX_PerfQuality_Value_UltraPerformance: scale = config.nvidia.dlss.scale.ultra_performance; default_scale = 0.333333f; break;
+        default:
+          break;
+      }
+
+      if (scale != 0.0f)
+      {
+        if (! _stricmp (InName, NVSDK_NGX_Parameter_OutWidth))  { NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_Width,  OutValue); *OutValue = std::max (1, sk::narrow_cast <INT> (*OutValue * scale)); NVSDK_NGX_Parameter_SetI_Original ((NVSDK_NGX_Parameter *)InParameter, NVSDK_NGX_Parameter_OutWidth,  *OutValue); }
+        if (! _stricmp (InName, NVSDK_NGX_Parameter_OutHeight)) { NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_Height, OutValue); *OutValue = std::max (1, sk::narrow_cast <INT> (*OutValue * scale)); NVSDK_NGX_Parameter_SetI_Original ((NVSDK_NGX_Parameter *)InParameter, NVSDK_NGX_Parameter_OutHeight, *OutValue); }
+
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width))  { int i_max_width = 0; NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width, &i_max_width); 
+         NVSDK_NGX_Parameter_GetI_Detour (InParameter, NVSDK_NGX_Parameter_OutWidth, OutValue); *OutValue = std::max (1, std::min (sk::narrow_cast <INT> (*OutValue * config.nvidia.dlss.scale.dynamic_max)  + 2, i_max_width));  }
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height)) { int i_max_height = 0; NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height, &i_max_height); 
+         NVSDK_NGX_Parameter_GetI_Detour (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = std::max (1, std::min (sk::narrow_cast <INT> (*OutValue * config.nvidia.dlss.scale.dynamic_max) + 2, i_max_height)); }
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width))  { int i_min_width = 0; NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width, &i_min_width); 
+         NVSDK_NGX_Parameter_GetI_Detour (InParameter, NVSDK_NGX_Parameter_OutWidth, OutValue); *OutValue = std::max (1, std::max (sk::narrow_cast <INT> (*OutValue * config.nvidia.dlss.scale.dynamic_min)  - 2, i_min_width));  }
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { int i_min_height = 0; NVSDK_NGX_Parameter_GetI_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height, &i_min_height); 
+         NVSDK_NGX_Parameter_GetI_Detour (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = std::max (1, std::max (sk::narrow_cast <INT> (*OutValue * config.nvidia.dlss.scale.dynamic_min) - 2, i_min_height)); }
+      }
+    }
+#endif
+
+    if (! _stricmp (InName, NVSDK_NGX_Parameter_PerfQualityValue))
+    {
+      *OutValue = SK_NGX_GameSetPerfQuality;
+    }
+
+    if (config.nvidia.dlss.forced_preset != -1 && StrStrIA (InName, "DLSS.Hint.Render.Preset."))
+    {
+      *OutValue = config.nvidia.dlss.forced_preset;
+    }
+  }
+
+  return ret;
+}
+
+NVSDK_NGX_Result
+NVSDK_CONV
+NVSDK_NGX_Parameter_GetULL_Detour (const NVSDK_NGX_Parameter *InParameter, const char *InName, unsigned long long *OutValue)
+{
+  SK_LOG_FIRST_CALL
+
+  auto ret =
+    NVSDK_NGX_Parameter_GetULL_Original (InParameter, InName, OutValue);
+
+  return ret;
+
+  if (ret == NVSDK_NGX_Result_Success)
+  {
+    SK_LOGn (((SK_NGX_LogAllParams == true) ? 0 : 1),
+                L"NGX_Parameter_GetULL (%hs) - %ws", InName, SK_GetCallerName ().c_str ());
+
+    if (config.nvidia.dlss.force_dlaa)
+    {
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutWidth))                           { NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_Width,     OutValue); *OutValue = static_cast <ULONGLONG> (std::max (1LL, (LONGLONG)*OutValue + config.nvidia.dlss.compat.extra_pixels)); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_OutHeight))                          { NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_Height,    OutValue); *OutValue = static_cast <ULONGLONG> (std::max (1LL, (LONGLONG)*OutValue + config.nvidia.dlss.compat.extra_pixels)); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width))  { NVSDK_NGX_Parameter_GetULL_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue += 2; }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height)) { NVSDK_NGX_Parameter_GetULL_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue += 2; }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width))  { NVSDK_NGX_Parameter_GetULL_Detour   (InParameter, NVSDK_NGX_Parameter_OutWidth,  OutValue); *OutValue = static_cast <ULONGLONG> (std::max (1LL, (LONGLONG)*OutValue - 2LL)); }
+      if (! _stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { NVSDK_NGX_Parameter_GetULL_Detour   (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = static_cast <ULONGLONG> (std::max (1LL, (LONGLONG)*OutValue - 2LL)); }
+    }
+
+    else if ( StrStrIA (InName, "Width") ||
+              StrStrIA (InName, "Height") )
+    {
+      unsigned int dlss_perf_qual;
+
+      InParameter->Get (NVSDK_NGX_Parameter_PerfQualityValue, &dlss_perf_qual);
+
+      float scale         = 0.0f;
+      float default_scale = 1.0f;
+
+      switch (dlss_perf_qual)
+      {
+        case NVSDK_NGX_PerfQuality_Value_MaxPerf:          scale = config.nvidia.dlss.scale.performance;       default_scale = 0.5f;      break;
+        case NVSDK_NGX_PerfQuality_Value_Balanced:         scale = config.nvidia.dlss.scale.balanced;          default_scale = 0.58f;     break;
+        case NVSDK_NGX_PerfQuality_Value_MaxQuality:       scale = config.nvidia.dlss.scale.quality;           default_scale = 0.666667f; break;
+        case NVSDK_NGX_PerfQuality_Value_UltraPerformance: scale = config.nvidia.dlss.scale.ultra_performance; default_scale = 0.333333f; break;
+        default:
+          break;
+      }
+
+      if (scale != 0.0f)
+      {
+        if (! _stricmp (InName, NVSDK_NGX_Parameter_OutWidth))  { NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_Width,  OutValue); *OutValue = sk::narrow_cast <unsigned long long> (*OutValue * scale); NVSDK_NGX_Parameter_SetULL_Original ((NVSDK_NGX_Parameter *)InParameter, NVSDK_NGX_Parameter_OutWidth,  *OutValue); }
+        if (! _stricmp (InName, NVSDK_NGX_Parameter_OutHeight)) { NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_Height, OutValue); *OutValue = sk::narrow_cast <unsigned long long> (*OutValue * scale); NVSDK_NGX_Parameter_SetULL_Original ((NVSDK_NGX_Parameter *)InParameter, NVSDK_NGX_Parameter_OutHeight, *OutValue); }
+
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width))  { unsigned long long ui_max_width = 0; NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Width, &ui_max_width); 
+         NVSDK_NGX_Parameter_GetULL_Detour (InParameter, NVSDK_NGX_Parameter_OutWidth, OutValue); *OutValue = std::max (1ull, std::min (sk::narrow_cast <unsigned long long> (*OutValue * config.nvidia.dlss.scale.dynamic_max)  + 2, ui_max_width));  }
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height)) { unsigned long long ui_max_height = 0; NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Max_Render_Height, &ui_max_height); 
+         NVSDK_NGX_Parameter_GetULL_Detour (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = std::max (1ull, std::min (sk::narrow_cast <unsigned long long> (*OutValue * config.nvidia.dlss.scale.dynamic_max) + 2, ui_max_height)); }
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width))  { unsigned long long ui_min_width = 0; NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Width, &ui_min_width); 
+         NVSDK_NGX_Parameter_GetULL_Detour (InParameter, NVSDK_NGX_Parameter_OutWidth, OutValue); *OutValue = std::max (1ull, std::max (sk::narrow_cast <unsigned long long> (*OutValue * config.nvidia.dlss.scale.dynamic_min)  - 2, ui_min_width));  }
+        if (!_stricmp (InName, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height)) { unsigned long long ui_min_height = 0; NVSDK_NGX_Parameter_GetULL_Original (InParameter, NVSDK_NGX_Parameter_DLSS_Get_Dynamic_Min_Render_Height, &ui_min_height); 
+         NVSDK_NGX_Parameter_GetULL_Detour (InParameter, NVSDK_NGX_Parameter_OutHeight, OutValue); *OutValue = std::max (1ull, std::max (sk::narrow_cast <unsigned long long> (*OutValue * config.nvidia.dlss.scale.dynamic_min) - 2, ui_min_height)); }
       }
     }
 
@@ -438,20 +754,23 @@ SK_NGX_HookParameters (NVSDK_NGX_Parameter* Params)
 
   void** vftable = *(void***)*&Params;
 
-  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::GetUI",
-                             vftable [12],
-                             NVSDK_NGX_Parameter_GetUI_Detour,
-    static_cast_p2p <void> (&NVSDK_NGX_Parameter_GetUI_Original) );
-
-  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::GetVoidPointer",
-                             vftable [8],
-                             NVSDK_NGX_Parameter_GetVoidPointer_Detour,
-    static_cast_p2p <void> (&NVSDK_NGX_Parameter_GetVoidPointer_Original) );
-
-  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::SetF",
-                             vftable [6],
-                             NVSDK_NGX_Parameter_SetF_Detour,
-    static_cast_p2p <void> (&NVSDK_NGX_Parameter_SetF_Original) );
+  // [ 0] void* SetVoidPointer;
+  // [ 1] void* SetD3d12Resource;
+  // [ 2] void *SetD3d11Resource;
+	// [ 3] void* SetI;
+	// [ 4] void* SetUI;
+	// [ 5] void* SetD;
+	// [ 6] void* SetF;
+	// [ 7] void* SetULL;
+	// [ 8] void* GetVoidPointer;
+	// [ 9] void* GetD3d12Resource;
+	// [10] void* GetD3d11Resource;
+  // [11] void *GetI;
+  // [12] void *GetUI;
+	// [13] void* GetD;
+	// [14] void* GetF;
+	// [15] void* GetULL;
+	// [16] void* Reset;
 
   SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::SetI",
                              vftable [3],
@@ -463,11 +782,50 @@ SK_NGX_HookParameters (NVSDK_NGX_Parameter* Params)
                              NVSDK_NGX_Parameter_SetUI_Detour,
     static_cast_p2p <void> (&NVSDK_NGX_Parameter_SetUI_Original) );
 
-  MH_QueueEnableHook (vftable [12]);
-  MH_QueueEnableHook (vftable [8]);
-  MH_QueueEnableHook (vftable [6]);
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::SetD",
+                             vftable [5],
+                             NVSDK_NGX_Parameter_SetD_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_SetD_Original) );
+
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::SetF",
+                             vftable [6],
+                             NVSDK_NGX_Parameter_SetF_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_SetF_Original) );
+
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::SetULL",
+                             vftable [7],
+                             NVSDK_NGX_Parameter_SetULL_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_SetULL_Original) );
+
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::GetVoidPointer",
+                             vftable [8],
+                             NVSDK_NGX_Parameter_GetVoidPointer_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_GetVoidPointer_Original) );
+
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::GetI",
+                             vftable [11],
+                             NVSDK_NGX_Parameter_GetI_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_GetI_Original) );
+
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::GetUI",
+                             vftable [12],
+                             NVSDK_NGX_Parameter_GetUI_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_GetUI_Original) );
+
+  SK_CreateFuncHook (      L"NVSDK_NGX_Parameter::GetULL",
+                             vftable [15],
+                             NVSDK_NGX_Parameter_GetULL_Detour,
+    static_cast_p2p <void> (&NVSDK_NGX_Parameter_GetULL_Original) );
+
   MH_QueueEnableHook (vftable [3]);
   MH_QueueEnableHook (vftable [4]);
+  MH_QueueEnableHook (vftable [5]);
+  MH_QueueEnableHook (vftable [6]);
+  MH_QueueEnableHook (vftable [7]);
+  MH_QueueEnableHook (vftable [8]);
+  MH_QueueEnableHook (vftable [11]);
+  MH_QueueEnableHook (vftable [12]);
+  MH_QueueEnableHook (vftable [15]);
 
   SK_ApplyQueuedHooks ();
 
@@ -485,6 +843,15 @@ SK_NGX_DLSS_CreateFeatureOverrideParams (NVSDK_NGX_Parameter *InParameters)
 
   if (config.nvidia.dlss.use_sharpening == 1)
     InParameters->Set (NVSDK_NGX_Parameter_Sharpness, config.nvidia.dlss.forced_sharpness);
+
+  if (config.nvidia.dlss.forced_alpha_upscale == 1)
+  {
+    // Check if user is trying to force Alpha Upscaling on, with an incompatible DLL version...
+    if (! SK_DLSS_Context::dlss_s::hasAlphaUpscaling ())
+    {
+      SK_LOGi0 (L"Alpha Upscaling requested, but DLSS version does not support it.");
+    }
+  }
 
   if (config.nvidia.dlss.force_dlaa)
   {
@@ -784,11 +1151,26 @@ SK_NGX_DLSS_GetCurrentPresetStr (void)
 void
 SK_NGX_DLSS_GetInternalResolution (int& x, int& y)
 { 
+  if (NVSDK_NGX_Parameter_GetUI_Original == nullptr)
+  {
+    x = 0; y = 0;
+    return;
+  }
+
   auto params =
     SK_NGX_GetDLSSParameters ();
 
-  unsigned int     width,     height;
-  unsigned int out_width, out_height;
+  if (params == nullptr)
+  {
+    x = 0; y = 0;
+    return;
+  }
+
+  std::lock_guard
+    lock (SK_NGX_Threading->locks.Params);
+
+  unsigned int     width = 0,     height = 0;
+  unsigned int out_width = 0, out_height = 0;
   
   NVSDK_NGX_Parameter_GetUI_Original (params, NVSDK_NGX_Parameter_Width,     &width);
   NVSDK_NGX_Parameter_GetUI_Original (params, NVSDK_NGX_Parameter_Height,    &height);
@@ -812,10 +1194,11 @@ SK_NGX_DLSS_GetInternalResolution (int& x, int& y)
   
   if (width == 0 || height == 0)
   {
-    unsigned int res_width;
-    unsigned int res_height;
+    unsigned int res_width  = 0;
+    unsigned int res_height = 0;
   
-    SK_SEH_NGX_GetInternalResolutionFromDLSS (pD3D12Resource, pD3D11Resource, res_width, res_height);
+    if (                             nullptr != pD3D12Resource||pD3D11Resource != nullptr)
+      SK_SEH_NGX_GetInternalResolutionFromDLSS (pD3D12Resource, pD3D11Resource, res_width, res_height);
   
     if (width  == 0) width  = res_width;
     if (height == 0) height = res_height;
@@ -883,12 +1266,30 @@ SK_NGX_DLSS_ControlPanel (void)
         static auto dlssg_version =
           SK_NGX_GetDLSSGVersion ();
 
+        int                                               dlss_creation_flags = 0x0;
+        params->Get (
+          NVSDK_NGX_Parameter_DLSS_Feature_Create_Flags, &dlss_creation_flags);
+
         // Removed in 2.5.1
         static const bool bHasSharpening =
           SK_DLSS_Context::dlss_s::hasSharpening ();
 
         static const bool bHasDLAAQualityLevel =
           SK_DLSS_Context::dlss_s::hasDLAAQualityLevel ();
+
+        static const bool bHasPresetE =
+          SK_DLSS_Context::dlss_s::hasPresetE ();
+
+        static const bool bHasAlphaUpscaling =
+          SK_DLSS_Context::dlss_s::hasAlphaUpscaling () &&
+          ( config.nvidia.dlss.forced_alpha_upscale != -1 ||
+              (dlss_creation_flags & NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling) ==
+                                     NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling );
+
+        static const bool bHasAutoExposure =
+          config.nvidia.dlss.forced_auto_exposure != -1 ||
+            (dlss_creation_flags & NVSDK_NGX_DLSS_Feature_Flags_AutoExposure) ==
+                                   NVSDK_NGX_DLSS_Feature_Flags_AutoExposure;
 
         static bool restart_required = false;
   
@@ -936,9 +1337,22 @@ SK_NGX_DLSS_ControlPanel (void)
           TextUnformatted ("Internal Resolution: ");
         ImGui::
           TextUnformatted ("Upscaled Resolution: ");
+        if (bHasAutoExposure)
+        {
+          ImGui::Spacing  ();
+          ImGui::
+          TextUnformatted ("Auto Exposure:       ");
+        }
+        if (bHasAlphaUpscaling)
+        {
+          ImGui::Spacing  ();
+          ImGui::
+          TextUnformatted ("Alpha Upscaling:     ");
+        }
         ImGui::Spacing ();
         ImGui::
           TextUnformatted ("DLSS Preset:         ");
+        ImGui::Spacing ();
         ImGui::Spacing ();
         ImGui::
           TextUnformatted ("DLSS Perf/Quality:   ");
@@ -960,6 +1374,95 @@ SK_NGX_DLSS_ControlPanel (void)
         ImGui::Text       ("%dx%d",     width,     height);
         ImGui::Text       ("%dx%d", out_width, out_height);
 
+        static const char* szPerfQuality = "DLAA";
+        static const char* szPreset      = "DLSS Default";
+
+        const float fItemSpacingX =
+          std::max ({
+               ImGui::CalcTextSize (szPerfQuality).x,
+               ImGui::CalcTextSize (szPreset).x,
+               ImGui::CalcTextSize ("Off").x
+          }) + ImGui::GetStyle ().ItemSpacing.x;
+
+        const float fComboBoxWidth =
+          ImGui::CalcTextSize ("Game Default\t  ").x + ImGui::GetStyle ().FramePadding.x * 2;
+
+        if (bHasAutoExposure)
+        {
+          int force_auto_exposure =
+            config.nvidia.dlss.forced_auto_exposure + 1;
+  
+          ImVec2 vCursor = ImGui::GetCursorPos ();
+
+          ImGui::Spacing ();
+
+          if (dlss_creation_flags & NVSDK_NGX_DLSS_Feature_Flags_AutoExposure)
+            ImGui::TextUnformatted ("On");
+          else
+            ImGui::TextUnformatted ("Off");
+
+          ImGui::SetCursorPos (
+            ImVec2 (vCursor.x + fItemSpacingX, vCursor.y)
+          );
+
+          ImGui::SetNextItemWidth (
+            fComboBoxWidth
+          );
+  
+          if ( ImGui::Combo (
+                 "###Auto_Exposure",
+             &force_auto_exposure, "Game Default\0"
+                                   "Force Off\0"
+                                   "Force On\0\0") )
+          {
+            config.nvidia.dlss.forced_auto_exposure =
+              force_auto_exposure - 1;
+
+            restart_required = true;
+
+            config.utility.save_async ();
+          }
+        }
+
+        if (bHasAlphaUpscaling)
+        {
+          int force_alpha_upscaling =
+            config.nvidia.dlss.forced_alpha_upscale + 1;
+
+          ImVec2 vCursor = ImGui::GetCursorPos ();
+
+          if (dlss_creation_flags & NVSDK_NGX_DLSS_Feature_Flags_AlphaUpscaling)
+            ImGui::TextUnformatted ("On");
+          else
+            ImGui::TextUnformatted ("Off");
+
+          ImGui::SetCursorPos (
+            ImVec2 (vCursor.x + fItemSpacingX, vCursor.y)
+          );
+
+          ImGui::SetNextItemWidth (
+            fComboBoxWidth
+          );
+  
+          if ( ImGui::Combo (
+                 "###Alpha_Upscaling",
+             &force_alpha_upscaling, "Game Default\0"
+                                     "Force Off\0\0"/*
+                                     "Force On\0\0" */) )
+          { // Forcing on is meaningless, game needs special support
+            config.nvidia.dlss.forced_alpha_upscale =
+              force_alpha_upscaling - 1;
+            restart_required = true;
+
+            config.utility.save_async ();
+          }
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip ("Requires DLSS 3.7.0+ and enabling may degrade application performance.");
+          }
+        }
+
         unsigned int preset;
 
         const char *szPresetHint = NVSDK_NGX_Parameter_DLSS_Hint_Render_Preset_DLAA;
@@ -979,8 +1482,6 @@ SK_NGX_DLSS_ControlPanel (void)
 
         NVSDK_NGX_Parameter_GetUI_Original (params, szPresetHint, &preset);
 
-        const char *szPreset = "DLSS Default";
-
         switch (preset)
         {
           case NVSDK_NGX_DLSS_Hint_Render_Preset_Default: szPreset = "Default"; break;
@@ -996,16 +1497,19 @@ SK_NGX_DLSS_ControlPanel (void)
         }
 
         ImGui::BeginGroup      ();
+        ImVec2 vCursor = ImGui::GetCursorPos ();
         ImGui::Spacing         ();
         ImGui::TextUnformatted (szPreset);
         ImGui::EndGroup        ();
 
-        ImGui::SameLine ();
+        ImGui::SetCursorPos (
+          ImVec2 (vCursor.x + fItemSpacingX, vCursor.y)
+        );
 
         int preset_override = config.nvidia.dlss.forced_preset + 1;
 
         ImGui::SetNextItemWidth (
-          ImGui::CalcTextSize ("DLSS Default\t  ").x + ImGui::GetStyle ().FramePadding.x * 2
+          fComboBoxWidth
         );
 
         if ( ImGui::Combo ( "",
@@ -1015,7 +1519,7 @@ SK_NGX_DLSS_ControlPanel (void)
                                               "Override: B\0"
                                               "Override: C\0"
                                               "Override: D\0"
-                                              "Override: E (Invalid)\0"
+                                              "Override: E (DLSS 3.7+)\0"
                                               "Override: F\0"
                                               "Override: G (Invalid)\0", 9 )
            )
@@ -1068,17 +1572,30 @@ SK_NGX_DLSS_ControlPanel (void)
           ImGui::TextUnformatted ("Preset D");
           ImGui::PopStyleColor   ();
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
+          if (! bHasPresetE)
           ImGui::BulletText      ("Default preset for Performance/Balanced/Quality modes; generally favors image stability.");
+          else
+          if (bHasPresetE)
+            ImGui::BulletText    ("Default preset for Perf/Balanced/Quality modes (pre-3.7.0); generally favors image stability.");
           ImGui::PopStyleColor   ();
           ImGui::Spacing         ();
           ImGui::Spacing         ();
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
           ImGui::TextUnformatted ("Preset E");
           ImGui::PopStyleColor   ();
-          ImGui::SameLine        ();
-          ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.5f, .5f, .5f, 1.f));
-          ImGui::TextUnformatted ("\tNot currently used");
-          ImGui::PopStyleColor   ();
+          if (! bHasPresetE)
+          {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4 (.5f, .5f, .5f, 1.f));
+            ImGui::SameLine      ();
+            ImGui::TextUnformatted("\tNot supported by the current version of DLSS");
+            ImGui::PopStyleColor ();
+          }
+          else
+          {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
+            ImGui::BulletText    ("The default preset for Perf/Balanced/Quality mode (3.7.0+); generally favors image stability.");
+            ImGui::PopStyleColor ();
+          }
           ImGui::Spacing         ();
           ImGui::Spacing         ();
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (1.f, 1.f, 1.f, 1.f));
@@ -1098,13 +1615,15 @@ SK_NGX_DLSS_ControlPanel (void)
           ImGui::PopStyleColor   ();
           ImGui::Separator       ();
           ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.62f, .62f, .62f, 1.f));
-          ImGui::TextUnformatted ("Descriptions valid as of DLSS 3.5, defaults refer to 'DLSS Default' and are subject to change between DLL versions.");
+          ImGui::TextUnformatted ("Descriptions valid as of DLSS 3.7, defaults refer to 'DLSS Default' and are subject to change between DLL versions.");
           ImGui::PopStyleColor   ();
           ImGui::EndTooltip      ();
         }
   
         ImGui::BeginGroup ();
+        vCursor = ImGui::GetCursorPos ();
         ImGui::Spacing    ();
+
         if (config.nvidia.dlss.force_dlaa && (! SK_DLSS_Context::dlss_s::hasDLAAQualityLevel ()))
         {
           ImGui::TextColored (ImVec4 (.55f, .55f, 1.f, 1.f), ICON_FA_INFO);
@@ -1114,28 +1633,33 @@ SK_NGX_DLSS_ControlPanel (void)
         switch (perf_quality)
         {
           case NVSDK_NGX_PerfQuality_Value_MaxPerf:
-            ImGui::TextUnformatted ("Performance");
+            szPerfQuality = "Performance";
             break;
           case NVSDK_NGX_PerfQuality_Value_Balanced:
-            ImGui::TextUnformatted ("Balanced");
+            szPerfQuality = "Balanced";
             break;
           case NVSDK_NGX_PerfQuality_Value_MaxQuality:
-            ImGui::TextUnformatted ("Quality");
+            szPerfQuality = "Quality";
             break;
           case NVSDK_NGX_PerfQuality_Value_UltraPerformance:
-            ImGui::TextUnformatted ("Ultra Performance");
+            szPerfQuality = "Ultra Performance";
             break;
           case NVSDK_NGX_PerfQuality_Value_UltraQuality:
-            ImGui::TextUnformatted ("Ultra Quality");
+            szPerfQuality = "Ultra Quality";
             break;
           case NVSDK_NGX_PerfQuality_Value_DLAA:
-            ImGui::TextUnformatted ("DLAA");
+            szPerfQuality = "DLAA";
             break;
           default:
-            ImGui::TextUnformatted ("Unknown Performance/Quality Mode");
+            szPerfQuality = "Unknown Performance/Quality Mode";
             break;
         }
+        ImGui::TextUnformatted (szPerfQuality);
         ImGui::EndGroup ();
+
+        ImGui::SetCursorPos (
+          ImVec2 (vCursor.x + fItemSpacingX, vCursor.y)
+        );
 
         if (config.nvidia.dlss.force_dlaa && (! SK_DLSS_Context::dlss_s::hasDLAAQualityLevel ()))
         {
@@ -1162,7 +1686,7 @@ SK_NGX_DLSS_ControlPanel (void)
 
           if (ImGui::BeginPopup ("DLSS_PerfQuality_Popup"))
           {
-            static auto& rb =
+            const SK_RenderBackend& rb =
               SK_GetCurrentRenderBackend ();
 
             SK_ComQIPtr <IDXGISwapChain>
@@ -1199,8 +1723,8 @@ SK_NGX_DLSS_ControlPanel (void)
                              &cfg_var : &fDefaultScale;
 
               char      fmt [128] = { };
-              sprintf ( fmt, "%%6.4f\t(%ux%u)", static_cast <UINT> (swapDesc.BufferDesc.Width  * *scale),
-                                                static_cast <UINT> (swapDesc.BufferDesc.Height * *scale) );
+              sprintf ( fmt, "%%6.4f\t(%ix%i)", static_cast <INT> (swapDesc.BufferDesc.Width  * *scale),
+                                                static_cast <INT> (swapDesc.BufferDesc.Height * *scale) );
 
               if (ImGui::SliderFloat (szName, scale, 0.01f, 0.999f, fmt))
               {
@@ -1254,8 +1778,6 @@ SK_NGX_DLSS_ControlPanel (void)
           }
         }
 
-        ImGui::SameLine ();
-
         if (dlss_version.major > 1)
         {
           if (ImGui::Checkbox ("Force DLAA", &config.nvidia.dlss.force_dlaa))
@@ -1298,10 +1820,6 @@ SK_NGX_DLSS_ControlPanel (void)
 
             config.utility.save_async ();
           }
-  
-          int                                               dlss_creation_flags = 0x0;
-          params->Get (
-            NVSDK_NGX_Parameter_DLSS_Feature_Create_Flags, &dlss_creation_flags);
   
           if (use_sharpening == 0 && (dlss_creation_flags & NVSDK_NGX_DLSS_Feature_Flags_DoSharpening))
             ImGui::Text ("Sharpness: %4.2f", fSharpness);

@@ -3,16 +3,19 @@
 #include <SpecialK/stdafx.h>
 #include <SpecialK/resource.h>
 
+#include <SpecialK/render/backend.h>
 #include <SpecialK/render/d3d9/d3d9_backend.h>
 #include <SpecialK/render/d3d11/d3d11_core.h>
 #include <SpecialK/render/d3d12/d3d12_interfaces.h>
 #include <SpecialK/render/dstorage/dstorage.h>
 #include <SpecialK/render/dxgi/dxgi_util.h>
+#include <SpecialK/render/ngx/ngx.h>
 #include <reflex/pclstats.h>
 
 #include <SpecialK/storefront/epic.h>
 
 #include <SpecialK/nvapi.h>
+#include <nvapi/NvApiDriverSettings.h>
 #include <SpecialK/adl.h>
 #include <SpecialK/popups/popup.h>
 
@@ -47,13 +50,6 @@ volatile LONG     __SK_Init       = FALSE;
   extern float    __target_fps;
 
          BOOL     __SK_DisableQuickHook = FALSE;
-
-
-using  ChangeDisplaySettingsA_pfn = LONG (WINAPI *)(
-                                     _In_opt_ DEVMODEA *lpDevMode,
-                                     _In_     DWORD     dwFlags );
-extern ChangeDisplaySettingsA_pfn
-       ChangeDisplaySettingsA_Original;
 
 
 //#define _THREADED_BASIC_INIT
@@ -230,9 +226,6 @@ SK_StartPerfMonThreads (void)
   }
 }
 
-extern bool SK_ETW_EndTracing (void);
-
-
 void
 SK_LoadGPUVendorAPIs (void)
 {
@@ -262,8 +255,7 @@ SK_LoadGPUVendorAPIs (void)
 
     if (SK_GetModuleHandleW (L"_nvngx.dll") != nullptr)
     {
-      extern void SK_NGX_Init (void);
-                  SK_NGX_Init ();
+      SK_NGX_Init ();
     }
 
     const int num_sli_gpus =
@@ -545,8 +537,7 @@ extern void BasicInit (void);
       break;
 
     case SK_GAME_ID::Sekiro:
-      extern void SK_Sekiro_InitPlugin (void);
-                  SK_Sekiro_InitPlugin (    );
+      SK_Sekiro_InitPlugin ();
       break;
 
     case SK_GAME_ID::FarCry5:
@@ -683,6 +674,14 @@ extern void BasicInit (void);
   }
 
   SK_Input_Init ();
+
+  if (sk::NVAPI::nv_hardware)
+  {
+    if (config.render.framerate.target_fps_bg > 0.0f)
+    {
+      SK_NvAPI_DRS_SetDWORD (VSYNCMODE_ID, VSYNCMODE_PASSIVE);
+    }
+  }
 
   void
      __stdcall SK_InitFinishCallback (void);
@@ -944,9 +943,6 @@ CheckVersionThread (LPVOID)
 }
 
 
-extern void SK_CPU_InstallHooks               (void);
-extern void SK_Display_SetMonitorDPIAwareness (bool bOnlyIfWin10);
-
 void BasicInit (void)
 {
   // Cleanup any leftover temporary files from the last launch
@@ -1019,9 +1015,6 @@ void BasicInit (void)
     // Non-Steam games have non-zero (negative) AppIDs, but cannot use SteamAPI
     if (SK::SteamAPI::AppID () + config.steam.appid > 0)
     {
-      extern const wchar_t*
-        SK_Steam_GetDLLPath (void);
-
       ///// Lazy-load SteamAPI into a process that doesn't use it; this brings
       /////   a number of general-purpose benefits (such as battery charge monitoring).
       bool kick_start = config.steam.force_load_steamapi;
@@ -1869,9 +1862,8 @@ SK_StartupCore (const wchar_t* backend, void* callback)
       //   some games that do weird stuff with network (e.g. telemetry)
       if (config.network.disable_winsock)
       {
-        extern void SK_WinSock_GoOffline (void);
-                    SK_WinSock_GoOffline (    );
-                    SK_ApplyQueuedHooks  (    );
+        SK_WinSock_GoOffline ();
+        SK_ApplyQueuedHooks  ();
       }
     }
   }
@@ -2087,11 +2079,8 @@ SK_StartupCore (const wchar_t* backend, void* callback)
 
   if (! __SK_bypass)
   {
-    void SK_D3D11_InitMutexes (void);
-         SK_D3D11_InitMutexes (    );
-
-    extern void SK_ImGui_Init (void);
-                SK_ImGui_Init (    );
+    SK_D3D11_InitMutexes ();
+    SK_ImGui_Init        ();
 
 #ifndef _THREADED_BASIC_INIT
     BasicInit ();
@@ -2156,51 +2145,37 @@ SK_StartupCore (const wchar_t* backend, void* callback)
     {
 #ifdef _M_AMD64
       case SK_GAME_ID::StarOcean4:
-        extern bool                     SK_SO4_PlugInCfg (void);
         plugin_mgr->config_fns.emplace (SK_SO4_PlugInCfg);
         break;
 
       case SK_GAME_ID::AssassinsCreed_Odyssey:
-        extern void
-        SK_ACO_PlugInInit (void);
-        SK_ACO_PlugInInit (    );
+        SK_ACO_PlugInInit ();
         break;
-      case SK_GAME_ID::MonsterHunterWorld:
-        extern void
-        SK_MHW_PlugInInit (void);
-        SK_MHW_PlugInInit (    );
+      case SK_GAME_ID::MonsterHunterWorld:        
+        SK_MHW_PlugInInit ();
         break;
 
       case SK_GAME_ID::DragonQuestXI:
-        extern void
-        SK_DQXI_PlugInInit (void);
-        SK_DQXI_PlugInInit (    );
+        SK_DQXI_PlugInInit ();
         break;
 
       case SK_GAME_ID::Shenmue:
-        extern void
-        SK_SM_PlugInInit (void);
-        SK_SM_PlugInInit (    );
+        SK_SM_PlugInInit ();
         break;
 
       case SK_GAME_ID::FinalFantasyXV:
-        extern void
-        SK_FFXV_InitPlugin (void);
-        SK_FFXV_InitPlugin (    );
+        SK_FFXV_InitPlugin ();
         break;
 
       case SK_GAME_ID::PillarsOfEternity2:
-        extern bool                     SK_POE2_PlugInCfg (void);
         plugin_mgr->config_fns.emplace (SK_POE2_PlugInCfg);
         break;
 
       case SK_GAME_ID::LifeIsStrange_BeforeTheStorm:
-        extern bool                     SK_LSBTS_PlugInCfg (void);
         plugin_mgr->config_fns.emplace (SK_LSBTS_PlugInCfg);
         break;
 
       case SK_GAME_ID::Okami:
-        extern bool                     SK_Okami_PlugInCfg (void);
         plugin_mgr->config_fns.emplace (SK_Okami_PlugInCfg);
         break;
 
@@ -2219,17 +2194,13 @@ SK_StartupCore (const wchar_t* backend, void* callback)
 
 #ifdef _M_AMD64
       case SK_GAME_ID::NieR_Sqrt_1_5:
-        extern void
-        SK_NIER_RAD_InitPlugin (void);
-        SK_NIER_RAD_InitPlugin (    );
+        SK_NIER_RAD_InitPlugin ();
 
-        extern bool                     SK_NIER_RAD_PlugInCfg (void);
         plugin_mgr->config_fns.emplace (SK_NIER_RAD_PlugInCfg);
         break;
 
       case SK_GAME_ID::FinalFantasy7Remake:
-        extern void SK_FF7R_InitPlugin (void);
-                    SK_FF7R_InitPlugin ();
+        SK_FF7R_InitPlugin ();
         break;
 
       case SK_GAME_ID::EldenRing:
@@ -2510,9 +2481,6 @@ SK_Log_CleanupLogs (void)
   tex_log->close    ();
 }
 
-extern HWND SK_Inject_GetFocusWindow (void);
-extern void SK_Inject_SetFocusWindow (HWND hWndFocus);
-
 void
 SK_Inject_PostHeartbeatToSKIF (void)
 {
@@ -2681,8 +2649,6 @@ SK_ShutdownCore (const wchar_t* backend)
     SetEvent (__SK_DLL_TeardownEvent);
 
   // Fast path for DLLs that were never really attached.
-  extern __time64_t
-        __SK_DLL_AttachTime;
   if (! __SK_DLL_AttachTime)
   {
     if (dll_log.isAllocated ())
@@ -2768,8 +2734,8 @@ SK_ShutdownCore (const wchar_t* backend)
 
   dll_log->LogEx    (false, L"done! (%4u ms)\n",            SK_timeGetTime () - dwTime);
 
-  extern bool __SKX_WinHook_InstallInputHooks (HWND hWnd);
-              __SKX_WinHook_InstallInputHooks (nullptr);
+
+  __SKX_WinHook_InstallInputHooks (nullptr);
 
   SK_Win32_CleanupDummyWindow ();
 
@@ -2789,14 +2755,14 @@ SK_ShutdownCore (const wchar_t* backend)
     case SK_GAME_ID::Fallout4:
     case SK_GAME_ID::FinalFantasyX_X2:
     case SK_GAME_ID::DisgaeaPC:
-      ChangeDisplaySettingsA_Original (nullptr, CDS_RESET);
+      if (ChangeDisplaySettingsA_Original != nullptr)
+          ChangeDisplaySettingsA_Original (nullptr, CDS_RESET);
       break;
 
 #ifdef _M_AMD64
     case SK_GAME_ID::MonsterHunterWorld:
     {
-      extern void SK_MHW_PlugIn_Shutdown (void);
-                  SK_MHW_PlugIn_Shutdown ();
+      SK_MHW_PlugIn_Shutdown ();
     } break;
 #endif
   }
@@ -3020,8 +2986,6 @@ SK_FrameCallback ( SK_RenderBackend& rb,
       SK_LocalFree (wszDescription);
 
 
-      extern SK_Widget* SK_HDR_GetWidget (void);
-
       if ( (static_cast <int> (rb.api) & static_cast <int> (SK_RenderAPI::D3D11)) ||
            (static_cast <int> (rb.api) & static_cast <int> (SK_RenderAPI::D3D12)) )
       {
@@ -3223,9 +3187,6 @@ SK_FrameCallback ( SK_RenderBackend& rb,
               //   (workaround wonkiness from splash screens, etc.)
               SK_RunOnce (
               {
-                extern LRESULT WINAPI
-                SK_COMPAT_SafeCallProc (sk_window_s* pWin, HWND hWnd_, UINT Msg, WPARAM wParam, LPARAM lParam);
-
                 DWORD                                                                     dwProcId = 0x0;
                 if (GetCurrentThreadId () == GetWindowThreadProcessId (game_window.hWnd, &dwProcId))
                 {
@@ -3369,7 +3330,7 @@ SK_BeginBufferSwapEx (BOOL bWaitOnFail)
     SK_MMCS_BeginBufferSwap ();
   }
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static SK_RenderAPI LastKnownAPI =
@@ -3545,21 +3506,13 @@ SK_Input_PollKeyboard (void)
   }
 }
 
-
-extern bool
-  SK_Window_OnFocusChange ( HWND hWndNewTarget,
-                            HWND hWndOld );
-
-extern BOOL WINAPI
-SK_GetGUIThreadInfo (DWORD, PGUITHREADINFO);
-
 void
 SK_BackgroundRender_EndFrame (void)
 {
   // Side-effect:  Evaluates Steam AppId Override
   SK_ImGui_WantGamepadCapture ();
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   static bool background_last_frame = false;
@@ -3713,8 +3666,7 @@ SK_Battery_UpdateRemainingPowerForAllDevices (void)
   if (lastTimeChecked >= SK::ControlPanel::current_time - 5000)
     return;
 
-  extern int SK_ImGui_ProcessGamepadStatusBar (bool bDraw);
-             SK_ImGui_ProcessGamepadStatusBar (false);
+  SK_ImGui_ProcessGamepadStatusBar (false);
 
   static bool has_battery = true;
 
@@ -3766,8 +3718,6 @@ SK_Battery_UpdateRemainingPowerForAllDevices (void)
   lastTimeChecked = SK::ControlPanel::current_time;
 }
 
-extern void SK_NGX_UpdateDLSSGStatus (void);
-
 void SK_RandomCrapThatShouldBeInPlugIns (void)
 {
   // TODO: Add a per-frame callback for plug-ins, because this is stupid
@@ -3778,12 +3728,10 @@ void SK_RandomCrapThatShouldBeInPlugIns (void)
   switch (game_id)
   {
     case SK_GAME_ID::Shenmue:
-      extern volatile LONG  __SK_SHENMUE_FinishedButNotPresented;
-      WriteRelease        (&__SK_SHENMUE_FinishedButNotPresented, 0L);
+      WriteRelease (&__SK_SHENMUE_FinishedButNotPresented, 0L);
       break;
     case SK_GAME_ID::FinalFantasyXV:
-      void SK_FFXV_SetupThreadPriorities (void);
-           SK_FFXV_SetupThreadPriorities ();
+      SK_FFXV_SetupThreadPriorities ();
       break;
     case SK_GAME_ID::FinalFantasy7Remake:
     {
@@ -3877,15 +3825,13 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
   auto qpcTimeOfSwap =
     SK_QueryPerf ();
 
-  static auto& rb =
+  SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   rb.frame_delta.markFrame ();
 
   if (config.display.aspect_ratio_stretch)
   {
-    extern void SK_Win32_CreateBackgroundWindow (void);
-
     SK_RunOnce (
       SK_Win32_CreateBackgroundWindow ()
     );
@@ -3967,8 +3913,8 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
   //   a failure event may cause a lengthy delay, missing VBLANK.
   SK_XInput_DeferredStatusChecks ();
 
-  extern void SK_ScePad_PaceMaker (void);
-              SK_ScePad_PaceMaker ();
+
+  SK_ScePad_PaceMaker ();
 
 
   InterlockedIncrementAcquire (
@@ -4007,8 +3953,7 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
 #endif
 
 
-  extern LONGLONG __SK_LatentSyncPostDelay;
-  if (            __SK_LatentSyncPostDelay > 1LL)
+  if (__SK_LatentSyncPostDelay > 1LL)
   {
     // Only apply this if Latent Sync is enabled
     if ( config.render.framerate.present_interval == 0 &&
@@ -4018,8 +3963,6 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
         INVALID_HANDLE_VALUE
       );
 
-      extern void
-      SK_Framerate_WaitUntilQPC (LONGLONG llQPC, HANDLE& hTimer);
       SK_Framerate_WaitUntilQPC (
         qpcTimeOfSwap.QuadPart + __SK_LatentSyncPostDelay,
                     hTimer.m_h  );
@@ -4083,8 +4026,7 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
 #endif
 
 
-  extern void SK_Window_CreateTopMostFixupThread (void);
-              SK_Window_CreateTopMostFixupThread ();
+  SK_Window_CreateTopMostFixupThread ();
 
 
   if (SK_DXGI_IsTrackingBudget ())
@@ -4096,7 +4038,6 @@ SK_EndBufferSwap (HRESULT hr, IUnknown* device, SK_TLS* pTLS)
                                                _BudgetPollingIntervalMs )
     {
       // If not using the GPU monitoring services, initialize it manually
-      extern void SK_GPU_InitSensorData (void);
       SK_RunOnce (SK_GPU_InitSensorData ());
 
       dwLastBudgetPoll = SK::ControlPanel::current_time;

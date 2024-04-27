@@ -100,7 +100,7 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
     return;
   }
 
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   if (! rb.isReflexSupported ())
@@ -397,7 +397,7 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
                         _ProcessGraphFrameSpan (span0);
 
       for (int i = span0.head; i <= span0.tail; ++i)
-      {
+      {    if (i < 0) continue;
                    history.sample_age [i] =
         (fMaxAge - history.sample_age [i]);
       }
@@ -465,6 +465,10 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
 
   const float fPlotXPos =
     ImGui::GetCursorScreenPos ().x;
+
+  ImGui::PushItemFlag ( ImGuiItemFlags_NoNav             |
+                        ImGuiItemFlags_NoNavDefaultFocus |
+                        ImGuiItemFlags_AllowOverlap, true );
 
   if ( ImPlot::BeginPlot ( "##Stage Time", ImVec2 (-1, 0),
                   ImPlotFlags_NoTitle     | ImPlotFlags_NoInputs |
@@ -546,8 +550,8 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
          span0.head ) _PlotLineData (span1.head, span1.tail, true);
                       _PlotLineData (span0.head, span0.tail); // Contiguous
 
-    ImPlot::DragLineY (0, &dGPU, ImVec4 (1,0,0,1), 3.333, dragline_flags);
-    ImPlot::DragLineY (0, &dCPU, ImVec4 (0,0,1,1), 3.333, dragline_flags);
+    ImPlot::DragLineY (0, &dGPU, ImVec4 (1,0,0,1), 3.333f, dragline_flags);
+    ImPlot::DragLineY (0, &dCPU, ImVec4 (0,0,1,1), 3.333f, dragline_flags);
 
     static std::string utf8_gpu_name;
     static std::string utf8_cpu_name;
@@ -606,9 +610,12 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
     }
   }
 
+  ImGui::PopItemFlag ();
+
   if (detailed)
   {
-    if (ImGui::Checkbox ("", &config.nvidia.reflex.show_detailed_widget))
+    if (ImGui::Checkbox ("###ReflexShowDetailedWidget",
+           &config.nvidia.reflex.show_detailed_widget))
     {
       config.utility.save_async ();
     }
@@ -736,8 +743,6 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
 
   if (detailed)
   {
-    extern void
-    SK_NV_AdaptiveSyncControl ();
     SK_NV_AdaptiveSyncControl ();
 
     float fMaxWidth  = ImGui::GetContentRegionAvail ().x;
@@ -865,7 +870,7 @@ SK_ImGui_DrawGraph_Latency (bool predraw)
 void
 SK_ImGui_DrawConfig_Latency ()
 {
-  static auto& rb =
+  const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
   bool bFullReflexSupport =
@@ -1055,8 +1060,6 @@ SK_ImGui_DrawConfig_Latency ()
   //
   //if (ImGui::Checkbox ("Use Unlimited Reflex FPS", &unlimited))
   //{
-  //  extern float __target_fps;
-  //
   //  if (unlimited) config.nvidia.reflex.frame_interval_us = 0;
   //  else           config.nvidia.reflex.frame_interval_us =
   //           static_cast <UINT> ((1000.0 / __target_fps) * 1000.0);
@@ -1166,7 +1169,7 @@ public:
     SK_Widget::config_base ();
 
     ImGui::Separator (  );
-    ImGui::TreePush  ("");
+    ImGui::TreePush  ("###LatencyWidgetConfig");
 
     SK_ImGui_DrawConfig_Latency ();
 
