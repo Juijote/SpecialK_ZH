@@ -5299,55 +5299,6 @@ SK_ImGui_ControlPanel (void)
           ImGui::SameLine    ();
         }
 
-        static bool bRefreshRateChanged = false;
-        static bool bDisplayChanged     = false;
-
-        const double dRefreshRate =
-          static_cast <double> (rb.displays [rb.active_display].signal.timing.vsync_freq.Numerator) /
-          static_cast <double> (rb.displays [rb.active_display].signal.timing.vsync_freq.Denominator);
-
-        if ( config.render.framerate.last_refresh_rate != 0.0f &&
-             ( config.render.framerate.last_refresh_rate > dRefreshRate + 0.1 ||
-               config.render.framerate.last_refresh_rate < dRefreshRate - 0.1 ) )
-        {
-          bRefreshRateChanged = true;
-        }
-
-        else
-        if (            (! config.render.framerate.last_monitor_path.empty ()) &&
-            0 != _wcsicmp (config.render.framerate.last_monitor_path.c_str (), rb.displays [rb.active_display].path_name))
-        {
-          bDisplayChanged = true;
-        }
-
-        if (bRefreshRateChanged)
-        {
-          ImGui::TextColored (ImVec4 (1.f, .9f, .1f, 1.f), ICON_FA_QUESTION_CIRCLE);
-
-          if (ImGui::IsItemHovered ())
-          {
-            ImGui::SetTooltip (
-              "显示器的刷新率与上次设置此 FPS 限制时不同，请通过设置新值来确认该限制是否正确。"
-            );
-          }
-
-          ImGui::SameLine    ();
-        }
-
-        else if (bDisplayChanged)
-        {
-          ImGui::TextColored (ImVec4 (1.f, .9f, .1f, 1.f), ICON_FA_QUESTION_CIRCLE);
-
-          if (ImGui::IsItemHovered ())
-          {
-            ImGui::SetTooltip (
-              "活动显示设备与上次设置此 FPS 限制时不同，请通过设置新值来确认该限制是否正确。"
-            );
-          }
-
-          ImGui::SameLine    ();
-        }
-
         if (ImGui::Checkbox ("FPS 限制", &limit))
         {
           if (bRefreshRateChanged || bDisplayChanged)
