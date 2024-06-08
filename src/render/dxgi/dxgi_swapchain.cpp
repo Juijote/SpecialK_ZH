@@ -403,6 +403,9 @@ STDMETHODCALLTYPE IWrapDXGISwapChain::GetPrivateData (REFGUID Name, UINT *pDataS
     }
   }
 
+  if (pDataSize == nullptr || pData == nullptr)
+    return E_INVALIDARG;
+
   return
     pReal->GetPrivateData (Name, pDataSize, pData);
 }
@@ -1419,6 +1422,20 @@ SK_DXGI_SwapChain_SetFullscreenState_Impl (
   _Return =
     [&](HRESULT hr)
     {
+      if (SUCCEEDED (hr) && Fullscreen == TRUE)
+      {
+        if (config.render.dxgi.fake_fullscreen_mode)
+        {
+          HWND hWnd = game_window.hWnd;
+
+          SK_ComQIPtr <IDXGISwapChain1>
+                           pSwapChain1 (pSwapChain);
+                                        pSwapChain1->GetHwnd (&hWnd);
+          SK_RealizeForegroundWindow (                         hWnd);
+                          ShowWindow (hWnd,                 SW_SHOW);
+        }
+      }
+
       return hr;
     };
 

@@ -271,10 +271,11 @@ struct sk_config_t
 
 
   struct dlss_osd_s {
-    bool   show           = false;
-    bool   show_quality   = true;
-    bool   show_fg        = true;
-    bool   show_preset    = false;
+    bool   show            = false;
+    bool   show_output_res = false;
+    bool   show_quality    = true;
+    bool   show_fg         = true;
+    bool   show_preset     = false;
 
     struct keybinds_s {
       BYTE toggle [4]     = { VK_MENU, VK_SHIFT, 'D', 0 };
@@ -842,7 +843,7 @@ struct sk_config_t
                                             //  Overhead of managing a large hashmap is
                                             //    much lower.
       int     min_size             = 384L;
-      int     max_size             = 2048L;
+      int     max_size             = 4096L;
       bool    ignore_nonmipped     = false;
       bool    allow_staging        = false;
       bool    allow_unsafe_refs    = false; // Allow texture caching even in engines that
@@ -989,7 +990,7 @@ struct sk_config_t
         bool  blackout_api        = false;
         bool  emulate             = false;
         bool  debug               = false;
-        bool  standard_deadzone   = false;
+        float deadzone            =  5.0f; // 5% Left/Right Analog Stick Deadzone
       } xinput;
 
       struct dinput_s {
@@ -1206,8 +1207,9 @@ struct sk_config_t
       bool   enable_perfdata  = true;
     } D3DKMT;
 
-    SK_RenderAPI last_known    = SK_RenderAPI::Reserved;
-    SK_RenderAPI translated    = SK_RenderAPI::None;
+    SK_RenderAPI last_last_known = SK_RenderAPI::Reserved;
+    SK_RenderAPI last_known      = SK_RenderAPI::Reserved;
+    SK_RenderAPI translated      = SK_RenderAPI::None;
   } apis;
 
   struct system_s {
@@ -1580,6 +1582,8 @@ enum class SK_GAME_ID
   GranblueFantasyRelink,        // granblue_fantasy_relink.exe
   WrathAeonOfRuin,              // wrath-sdl.exe
   HaroldHalibut,                // Harold Halibut.exe
+  KingdomComeDeliverance,       // KingdomCome.exe
+  GodOfWar,                     // GoW.exe
 
   UNKNOWN_GAME               = 0xffff
 };

@@ -3096,7 +3096,7 @@ SK_DXGI_FullscreenControlPanel (void)
 {
   if (ImGui::BeginPopup ("DXGI 全Ping控制面板"))
   {
-    ImGui::TextUnformatted ("D3D11 / D3D12 全Ping设置\t(Experimental)");
+    ImGui::TextUnformatted ("D3D11 / D3D12 全Ping设置");
 
     ImGui::TreePush ("###DXGI_FullscreenCpl");
 
@@ -3755,8 +3755,8 @@ SK_ImGui_ControlPanel (void)
             if (ImGui::IsItemHovered ())
             {
               ImGui::BeginTooltip ();
-              ImGui::BulletText   ("Windows 本身支持 4:2:0 的 10 位和 12 位 AVIF 图像，或 4:4:4 的 8 位");
-              ImGui::BulletText   ("更高质量的色度子采样 AVIF 图像只能在 Chrome 中正确绘制。");
+              ImGui::BulletText   ("Windows 10 本身支持 4:2:0 的 10 位和 12 位 AVIF 图像，或 4:4:4 的 8 位");
+              ImGui::BulletText   ("更高色度二次采样 AVIF 图像只能在 Windows 11 和 Chrome / Edge 中正确渲染");
               ImGui::EndTooltip   ();
             }
 
@@ -3779,7 +3779,7 @@ SK_ImGui_ControlPanel (void)
           }
 
           const char* szCompressionQualityFormat =
-            ( config.screenshots.compression_quality == 100 ? "100 (Lossless)"
+            ( config.screenshots.compression_quality == 100 ? "100 (无损)"
                                                             : "%d" );
 
           bool changed = false;
@@ -3812,6 +3812,17 @@ SK_ImGui_ControlPanel (void)
           }
 
           ImGui::TreePop ();
+        }
+
+        if (config.screenshots.png_compress)
+        {
+          hdr_changed |=
+            ImGui::Checkbox ("HDR Screenshot Compatibility Mode", &config.screenshots.compatibility_mode);
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip ("Disables advanced compression features and formats not supported by all software.");
+          }
         }
 
         if ( rb.screenshot_mgr->getRepoStats ().files > 0 )
@@ -5006,6 +5017,7 @@ SK_ImGui_ControlPanel (void)
       {
         strcat (szGSyncStatus, "    Supported + ");
 
+#if 0   // Hack for broken D3D12 drivers, not worth maintaining
         auto& nvapi_display =
           rb.displays [rb.active_display].nvapi;
 
@@ -5024,9 +5036,17 @@ SK_ImGui_ControlPanel (void)
             rb.gsync_state.active = true;
           }
         }
+#endif
 
         if (rb.gsync_state.active)
         {
+          auto& nvapi_display =
+            rb.displays [rb.active_display].nvapi;
+
+          float fVBlankHz =
+            nvapi_display.vblank_counter.getVBlankHz (
+                      SK::ControlPanel::current_time );
+
           // Is it really "active" if we can't calculate the rate?
           if (fVBlankHz == 0.0f)
             strcat (szGSyncStatus, "Active " ICON_FA_QUESTION_CIRCLE);
@@ -8154,7 +8174,7 @@ SK_ImGui_DrawFrame ( _Unreferenced_parameter_ DWORD  dwFlags,
     SK_GetCurrentRenderBackend ();
 
   // Popup Windows, actually
-  SK_Steam_DrawOSD ();
+  SK_Platform_DrawOSD ();
 
   if (rb.api == SK_RenderAPI::OpenGL)
   {

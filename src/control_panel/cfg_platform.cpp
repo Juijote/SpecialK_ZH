@@ -1,4 +1,4 @@
-﻿// 汉化相关
+// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -184,10 +184,8 @@ SK::ControlPanel::Platform::Draw (void)
           ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.72f, 0.07f, 0.80f));
           ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
 
-          // TODO: Implement popup for non-Steam
           const bool uncollapsed =
-            bSteam ? ImGui::CollapsingHeader ("增强弹出窗口", ImGuiTreeNodeFlags_AllowOverlap)
-                   : false;
+            ImGui::CollapsingHeader ("增强弹出窗口", ImGuiTreeNodeFlags_AllowOverlap);
 
           if (bSteam) {
             ImGui::SameLine (); ImGui::Checkbox        ("   获取好友解锁统计数据", &config.platform.achievements.pull_friend_stats);

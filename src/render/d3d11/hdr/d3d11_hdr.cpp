@@ -973,14 +973,18 @@ SK_HDR_SnapshotSwapchain (void)
     cbuffer_cspace.hdrLuminance_Min      = rb.display_gamut.minY * 1.0_Nits;
     cbuffer_cspace.currentTime           = (float)SK_timeGetTime ();
 
+    extern float                       __SK_HDR_ColorBoost;
     extern float                       __SK_HDR_PQBoost0;
     extern float                       __SK_HDR_PQBoost1;
     extern float                       __SK_HDR_PQBoost2;
     extern float                       __SK_HDR_PQBoost3;
+    extern bool                        __SK_HDR_TonemapOverbright;
     cbuffer_cspace.pqBoostParams [0] = __SK_HDR_PQBoost0;
     cbuffer_cspace.pqBoostParams [1] = __SK_HDR_PQBoost1;
     cbuffer_cspace.pqBoostParams [2] = __SK_HDR_PQBoost2;
     cbuffer_cspace.pqBoostParams [3] = __SK_HDR_PQBoost3;
+    cbuffer_cspace.colorBoost        = __SK_HDR_ColorBoost;
+    cbuffer_cspace.tonemapOverbright = __SK_HDR_TonemapOverbright;
 
     if ( SUCCEEDED (
            pDevCtx->Map ( hdr_base->colorSpaceCBuffer,

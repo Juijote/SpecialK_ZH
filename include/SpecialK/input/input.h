@@ -672,6 +672,12 @@ using HidD_GetAttributes_pfn = BOOLEAN (__stdcall *)(
   _Out_ PHIDD_ATTRIBUTES Attributes
 );
 
+using HidD_GetProductString_pfn = BOOLEAN (__stdcall *)(
+   _In_                             HANDLE HidDeviceObject,
+   _Out_writes_bytes_(BufferLength) PVOID  Buffer,
+   _In_                             ULONG  BufferLength
+);
+
 using HidD_GetSerialNumberString_pfn = BOOLEAN (__stdcall *)(
    _In_                             HANDLE HidDeviceObject,
    _Out_writes_bytes_(BufferLength) PVOID  Buffer,
@@ -941,7 +947,7 @@ struct SK_HID_PlayStationDevice
   bool                 bDualShock3              =   false;
   bool                 bSimpleMode              =    true;
   bool                 bTerminating             =   false;
-  volatile LONG        bNeedOutput              =   false;
+  volatile LONG        bNeedOutput              =    true;
 
   struct battery_s {
     float      percentage = 100.0f;
@@ -976,7 +982,8 @@ struct SK_HID_PlayStationDevice
     struct {
       XINPUT_STATE prev_report = { };
       XINPUT_STATE report      = { };
-    } deadzoned;
+    } internal; // For detection of last active gamepad,
+                //   includes an unusually strong deadzone
     UINT64         last_active =  0 ;
     struct {
       WORD         wLastLeft   =  0 ;
@@ -1038,7 +1045,7 @@ struct SK_HID_PlayStationDevice
     //   some kind of attempt to set a new value... otherwise, it
     //     will tend to vibrate infinitely.
     static constexpr auto MAX_TTL_IN_MSECS = 1000UL;
-  } _vibration = { 0, 0, 0 };
+  } _vibration = { 0, 0, 0, 0, 0, 0 };
 
   void setRGB (BYTE red, BYTE green, BYTE blue) {
     _color.r = red;
@@ -1168,6 +1175,8 @@ SK_SetCursor (_In_opt_ HCURSOR hCursor);
 struct ImGuiContext;
 extern ImGuiContext* SK_GImDefaultContext (void);
 
+struct sk_window_s;
+
 LRESULT
 WINAPI
 ImGui_WndProcHandler (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -1211,7 +1220,9 @@ SK_ImGui_MouseProc    (int code, WPARAM wParam, LPARAM lParam);
 
 void SK_AdjustClipRect (void);
 
-int WINAPI SK_ShowCursor (BOOL bShow);
+int     WINAPI SK_ShowCursor        (   BOOL bShow  );
+BOOL    WINAPI SK_SendMsgShowCursor (   BOOL bShow  );
+HCURSOR WINAPI SK_SendMsgSetCursor  (HCURSOR hCursor);
 
 bool SK_ImGui_ExemptOverlaysFromKeyboardCapture (void);
 bool SK_ImGui_IsMouseRelevant                   (void);
@@ -1267,6 +1278,12 @@ void SK_ScePad_PaceMaker              (void);
 
 void SK_HID_ProcessGamepadButtonBindings (void);
 
-extern HidD_GetAttributes_pfn SK_HidD_GetAttributes;
+std::wstring* SK_HID_GetGamepadButtonBinding    (UINT idx);
+void          SK_HID_AssignGamepadButtonBinding (UINT idx, const wchar_t* wszKeyName, UINT vKey);
+
+extern HidD_GetAttributes_pfn    SK_HidD_GetAttributes;
+extern HidD_GetProductString_pfn SK_HidD_GetProductString;
+
+extern void SK_Bluetooth_InitPowerMgmt (void);
 
 #endif /* __SK__INPUT_H__ */

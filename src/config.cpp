@@ -232,6 +232,8 @@ SK_GetCurrentGameID (void)
           { L"wrath-sdl.exe",                          SK_GAME_ID::WrathAeonOfRuin              },
           { L"dd2.exe",                                SK_GAME_ID::DragonsDogma                 },
           { L"Harold Halibut.exe",                     SK_GAME_ID::HaroldHalibut                },
+          { L"KingdomCome.exe",                        SK_GAME_ID::KingdomComeDeliverance       },
+          { L"GoW.exe",                                SK_GAME_ID::GodOfWar                     }
         };
 
     first_check  = false;
@@ -260,6 +262,11 @@ SK_GetCurrentGameID (void)
       else if ( StrStrIW ( SK_GetHostApp (), L"ff7remake" ) )
       {
         current_game = SK_GAME_ID::FinalFantasy7Remake;
+      }
+
+      else if ( StrStrW ( SK_GetHostApp (), L"GoW" ) )
+      {
+        current_game = SK_GAME_ID::GodOfWar;
       }
 
       else if ( StrStrIW ( SK_GetHostApp (), L"ACValhalla" ) )
@@ -489,6 +496,7 @@ struct {
 
   struct {
     sk::ParameterBool*    show                    = nullptr;
+    sk::ParameterBool*    show_output_res         = nullptr;
     sk::ParameterBool*    show_quality            = nullptr;
     sk::ParameterBool*    show_preset             = nullptr;
     sk::ParameterBool*    show_fg                 = nullptr;
@@ -985,7 +993,7 @@ struct {
       sk::ParameterBool*  auto_slot_assign        = nullptr;
       sk::ParameterBool*  blackout_api            = nullptr;
       sk::ParameterBool*  emulate                 = nullptr;
-      sk::ParameterBool*  standard_deadzone       = nullptr;
+      sk::ParameterFloat* deadzone                = nullptr;
     } xinput;
 
     struct {
@@ -1479,6 +1487,7 @@ auto DeclKeybind =
     ConfigEntry (monitoring.pagefile.interval,           L"Pagefile Monitoring Interval (seconds)",                    osd_ini,         L"Monitor.Pagefile",      L"Interval"),
 
     ConfigEntry (monitoring.dlss.show,                   L"Show DLSS Resolution Information",                          osd_ini,         L"Monitor.DLSS",          L"Show"),
+    ConfigEntry (monitoring.dlss.show_output_res,        L"Print DLSS Output Resolution",                              osd_ini,         L"Monitor.DLSS",          L"ShowOutputResolution"),
     ConfigEntry (monitoring.dlss.show_quality,           L"Print DLSS Quality Level",                                  osd_ini,         L"Monitor.DLSS",          L"ShowQuality"),
     ConfigEntry (monitoring.dlss.show_preset,            L"Print DLSS Preset",                                         osd_ini,         L"Monitor.DLSS",          L"ShowPreset"),
     ConfigEntry (monitoring.dlss.show_fg,                L"Print DLSS Frame Generation Status",                        osd_ini,         L"Monitor.DLSS",          L"ShowFrameGeneration"),
@@ -1593,7 +1602,7 @@ auto DeclKeybind =
     ConfigEntry (input.gamepad.xinput.blackout_api,      L"Prevent game from seeing XInput at all, useful if a game "
                                                          L"supports native SONY input and XInput.",                    dll_ini,         L"Input.XInput",          L"HideAllDevices"),
     ConfigEntry (input.gamepad.xinput.emulate,           L"For non-Xbox controllers, translate HID to XInput",         dll_ini,         L"Input.XInput",          L"EnableEmulation"),
-    ConfigEntry (input.gamepad.xinput.standard_deadzone, L"In HID->XInput, filter analog values using API standards",  dll_ini,         L"Input.XInput",          L"StandardDeadzone"),
+    ConfigEntry (input.gamepad.xinput.deadzone,          L"In HID->XInput, filter analog values below this threshold", dll_ini,         L"Input.XInput",          L"DeadzonePercent"),
     ConfigEntry (input.gamepad.dinput.blackout_gamepads, L"Prevent game from seeing DirectInput gamepads",             dll_ini,         L"Input.DInput",          L"HideGamepads"),
     ConfigEntry (input.gamepad.dinput.blackout_mice,     L"Prevent game from seeing DirectInput mice",                 dll_ini,         L"Input.DInput",          L"HideMice"),
     ConfigEntry (input.gamepad.dinput.blackout_keyboards,L"Prevent game from seeing DirectInput keyboards",            dll_ini,         L"Input.DInput",          L"HideKeyboards"),
@@ -1611,11 +1620,11 @@ auto DeclKeybind =
     ConfigEntry (input.gamepad.scepad.led_color_g,       L"Force Green LED Color [0,255] or -1 for No Override",       input_ini,       L"Input.libScePad",       L"LEDColor_G"),
     ConfigEntry (input.gamepad.scepad.led_color_b,       L"Force Blue LED Color [0,255] or -1 for No Override",        input_ini,       L"Input.libScePad",       L"LEDColor_B"),
     ConfigEntry (input.gamepad.scepad.led_brightness,    L"Force LED brightness [0,1,2,3] or -1 for No Override",      input_ini,       L"Input.libScePad",       L"LEDBrightness"),
+    ConfigEntry (input.gamepad.scepad.
+                                   enable_full_bluetooth,L"Allow SK to use all available features over Bluetooth",     input_ini,       L"Input.libScePad",       L"EnableFullBluetoothSupport"),
     ConfigEntry (input.gamepad.scepad.show_ds4_as_ds4_v2,L"Cause games to see DualShock 4 v1 as DualShock 4 v2",       dll_ini,         L"Input.libScePad",       L"IdentifyDualShock4AsDualShock4v2"),
     ConfigEntry (input.gamepad.scepad.hide_ds4_v2_pid,   L"Cause games to see DualShock 4 v2 as DualShock 4",          dll_ini,         L"Input.libScePad",       L"IdentifyDualShock4v2AsDualShock4"),
     ConfigEntry (input.gamepad.scepad.hide_ds_edge_pid,  L"Cause games to see DualSense Edge as DualSense",            dll_ini,         L"Input.libScePad",       L"IdentifyDualSenseEdgeAsDualSense"),
-    ConfigEntry (input.gamepad.scepad.
-                                   enable_full_bluetooth,L"Allow SK to use all available features over Bluetooth",     dll_ini,         L"Input.libScePad",       L"EnableFullBluetoothSupport"),
     ConfigEntry (input.gamepad.scepad.left_fn_bind,      L"Keyboard Input to Generate when Left Function is Pressed",  dll_ini,         L"Input.libScePad",       L"LeftFunction"),
     ConfigEntry (input.gamepad.scepad.right_fn_bind,     L"Keyboard Input to Generate when Right Function is Pressed", dll_ini,         L"Input.libScePad",       L"RightFunction"),
     ConfigEntry (input.gamepad.scepad.left_paddle_bind,  L"Keyboard Input to Generate when Left Paddle is Pressed",    dll_ini,         L"Input.libScePad",       L"LeftPaddle"),
@@ -2099,94 +2108,104 @@ auto DeclKeybind =
   }
 
 
+  SK_RunOnce (
+    while (sec != sections.cend ())
+    {
+      auto& import_ =
+        imports->imports
+           [import_idx];
+
+      if (sec->first.find (L"Import.") != std::wstring::npos)
+      {
+        const wchar_t* wszNext =
+          wcschr (sec->first.c_str (), L'.');
+
+        import_.name =
+          wszNext != nullptr       ?
+            SK_CharNextW (wszNext) : L"";
+
+        import_.filename =
+           dynamic_cast <sk::ParameterStringW *>
+               (g_ParameterFactory->create_parameter <std::wstring> (
+                  L"Import Filename")
+               );
+        import_.filename->register_to_ini (
+          dll_ini,
+            sec->first,
+              L"Filename" );
+
+        import_.when =
+           dynamic_cast <sk::ParameterStringW *>
+               (g_ParameterFactory->create_parameter <std::wstring> (
+                  L"Import Timeframe")
+               );
+        import_.when->register_to_ini (
+          dll_ini,
+            sec->first,
+              L"When" );
+
+        import_.role =
+           dynamic_cast <sk::ParameterStringW *>
+               (g_ParameterFactory->create_parameter <std::wstring> (
+                  L"Import Role")
+               );
+        import_.role->register_to_ini (
+          dll_ini,
+            sec->first,
+              L"Role" );
+
+        import_.architecture =
+           dynamic_cast <sk::ParameterStringW *>
+               (g_ParameterFactory->create_parameter <std::wstring> (
+                  L"Import Architecture")
+               );
+        import_.architecture->register_to_ini (
+          dll_ini,
+            sec->first,
+              L"Architecture" );
+
+        import_.blacklist =
+           dynamic_cast <sk::ParameterStringW *>
+               (g_ParameterFactory->create_parameter <std::wstring> (
+                  L"Blacklisted Executables")
+               );
+        import_.blacklist->register_to_ini (
+          dll_ini,
+            sec->first,
+              L"Blacklist" );
+
+        import_.mode =
+           dynamic_cast <sk::ParameterStringW *>
+               (g_ParameterFactory->create_parameter <std::wstring> (
+                  L"Plug-In Mode (application defined)")
+               );
+        import_.mode->register_to_ini (
+          dll_ini,
+            sec->first,
+              L"Mode" );
+
+        static_cast <sk::iParameter *> (import_.filename    )->load ();
+        static_cast <sk::iParameter *> (import_.when        )->load ();
+        static_cast <sk::iParameter *> (import_.blacklist   )->load ();
+        static_cast <sk::iParameter *> (import_.mode        )->load ();
+
+        if (! static_cast <sk::iParameter *> (import_.role        )->load ())
+                                              import_.role->set_value         (L"Any");
+        if (! static_cast <sk::iParameter *> (import_.architecture)->load ())
+                                              import_.architecture->set_value (L"Any");
+
+        import_.hLibrary = nullptr;
+
+        if (++import_idx > SK_MAX_IMPORTS)
+          break;
+      }
+
+      ++sec;
+    }
+  );
+
   while (sec != sections.cend ())
   {
-    auto& import_ =
-      imports->imports
-         [import_idx];
-
-    if (sec->first.find (L"Import.") != std::wstring::npos)
-    {
-      const wchar_t* wszNext =
-        wcschr (sec->first.c_str (), L'.');
-
-      import_.name =
-        wszNext != nullptr       ?
-          SK_CharNextW (wszNext) : L"";
-
-      import_.filename =
-         dynamic_cast <sk::ParameterStringW *>
-             (g_ParameterFactory->create_parameter <std::wstring> (
-                L"Import Filename")
-             );
-      import_.filename->register_to_ini (
-        dll_ini,
-          sec->first,
-            L"Filename" );
-
-      import_.when =
-         dynamic_cast <sk::ParameterStringW *>
-             (g_ParameterFactory->create_parameter <std::wstring> (
-                L"Import Timeframe")
-             );
-      import_.when->register_to_ini (
-        dll_ini,
-          sec->first,
-            L"When" );
-
-      import_.role =
-         dynamic_cast <sk::ParameterStringW *>
-             (g_ParameterFactory->create_parameter <std::wstring> (
-                L"Import Role")
-             );
-      import_.role->register_to_ini (
-        dll_ini,
-          sec->first,
-            L"Role" );
-
-      import_.architecture =
-         dynamic_cast <sk::ParameterStringW *>
-             (g_ParameterFactory->create_parameter <std::wstring> (
-                L"Import Architecture")
-             );
-      import_.architecture->register_to_ini (
-        dll_ini,
-          sec->first,
-            L"Architecture" );
-
-      import_.blacklist =
-         dynamic_cast <sk::ParameterStringW *>
-             (g_ParameterFactory->create_parameter <std::wstring> (
-                L"Blacklisted Executables")
-             );
-      import_.blacklist->register_to_ini (
-        dll_ini,
-          sec->first,
-            L"Blacklist" );
-
-      import_.mode =
-         dynamic_cast <sk::ParameterStringW *>
-             (g_ParameterFactory->create_parameter <std::wstring> (
-                L"Plug-In Mode (application defined)")
-             );
-      import_.mode->register_to_ini (
-        dll_ini,
-          sec->first,
-            L"Mode" );
-
-      static_cast <sk::iParameter *> (import_.filename    )->load ();
-      static_cast <sk::iParameter *> (import_.when        )->load ();
-      static_cast <sk::iParameter *> (import_.role        )->load ();
-      static_cast <sk::iParameter *> (import_.architecture)->load ();
-      static_cast <sk::iParameter *> (import_.blacklist   )->load ();
-      static_cast <sk::iParameter *> (import_.mode        )->load ();
-
-      import_.hLibrary = nullptr;
-
-      if (++import_idx > SK_MAX_IMPORTS)
-        break;
-    }
-
     if (sec->first.find (L"Macro.") != std::wstring::npos)
     {
       for ( auto &[key_name, command] : sec->second.keys )
@@ -2384,6 +2403,9 @@ auto DeclKeybind =
         config.textures.cache.ignore_nonmipped = true; // Invalid use of immutable textures
         break;
 
+      case SK_GAME_ID::KingdomComeDeliverance:
+        config.textures.cache.ignore_nonmipped = true;
+        break;
 
       case SK_GAME_ID::DragonsDogma2:
         config.nvidia.dlss.compat.extra_pixels = -2;
@@ -2444,7 +2466,9 @@ auto DeclKeybind =
         // Maximize compatibility with 3rd party injectors that corrupt hooks
         //config.render.dxgi.slow_state_cache    = false;
         //SK_DXGI_SlowStateCache                 = config.render.dxgi.slow_state_cache;
-        config.render.dxgi.scaling_mode        = DXGI_MODE_SCALING_UNSPECIFIED;
+        config.render.dxgi.scaling_mode         = DXGI_MODE_SCALING_UNSPECIFIED;
+        config.render.dxgi.fake_fullscreen_mode = true;
+        config.window.background_render         = true;
 
         // Prevent VRR disable when game plays cutscenes
         config.render.framerate.sync_interval_clamp  =     1;
@@ -2703,7 +2727,9 @@ auto DeclKeybind =
         break;
 
       case SK_GAME_ID::Sekiro:
+        config.window.activate_at_start           = true;
         config.render.dxgi.fake_fullscreen_mode   = true;
+        config.window.background_render           = true;
         config.input.gamepad.xinput.placehold [0] = true;
         config.input.gamepad.xinput.placehold [1] = true;
         config.input.gamepad.xinput.placehold [2] = true;
@@ -3045,6 +3071,7 @@ auto DeclKeybind =
       case SK_GAME_ID::YakuzaLikeADragonGaiden:
       {
         config.render.dxgi.fake_fullscreen_mode   = true;
+        config.window.background_render           = true;
         config.render.dxgi.hooks.
                             create_swapchain4hwnd = false;
       }
@@ -3289,10 +3316,13 @@ auto DeclKeybind =
         config.render.framerate.drop_late_flips      =  true;
         config.render.framerate.flip_discard         =  true;
         config.input.gamepad.disable_hid             =  true;
+        config.input.gamepad.xinput.emulate          =  true;
+        config.input.gamepad.xinput.placehold [0]    =  true;
         config.input.gamepad.xinput.auto_slot_assign =  true;
         config.threads.enable_file_io_trace          =  true;
         config.steam.preload_overlay                 = false; // Set to false because of loss of rumble
-        config.window.background_render              = false;
+        config.window.background_render              =  true;
+        config.render.dxgi.fake_fullscreen_mode      =  true;
 
         SK_D3D11_DeclHUDShader_Vtx (0x3e464f00);
 
@@ -3614,6 +3644,12 @@ auto DeclKeybind =
         });
 
       } break;
+
+      case SK_GAME_ID::GodOfWar:
+      {
+        // Prevent crashes in the Steam and GOG versions of the game
+        config.compatibility.allow_dxdiagn = false;
+      } break;
     }
   }
 
@@ -3622,6 +3658,11 @@ auto DeclKeybind =
   else // Implicitly count 1 context if the last launch used OpenGL
     if (config.apis.last_known == SK_RenderAPI::OpenGL)
       SK_GL_ContextCount++;
+
+  SK_RunOnce (
+    config.apis.last_last_known =
+         config.apis.last_known
+  );
 
 
 #ifdef _M_IX86
@@ -3746,10 +3787,11 @@ auto DeclKeybind =
   config.pagefile.interval = std::clamp (config.pagefile.interval, 0.125f, 2.5f);
   config.io.interval       = std::clamp (config.io.interval,       0.125f, 2.5f);
 
-  monitoring.dlss.show->load         (config.dlss.show);
-  monitoring.dlss.show_quality->load (config.dlss.show_quality);
-  monitoring.dlss.show_preset->load  (config.dlss.show_preset);
-  monitoring.dlss.show_fg->load      (config.dlss.show_fg);
+  monitoring.dlss.show->load            (config.dlss.show);
+  monitoring.dlss.show_output_res->load (config.dlss.show_output_res);
+  monitoring.dlss.show_quality->load    (config.dlss.show_quality);
+  monitoring.dlss.show_preset->load     (config.dlss.show_preset);
+  monitoring.dlss.show_fg->load         (config.dlss.show_fg);
 
   monitoring.title.show->load (config.title.show);
   monitoring.time.show->load  (config.time.show);
@@ -4320,7 +4362,7 @@ auto DeclKeybind =
   input.gamepad.xinput.auto_slot_assign->load  (config.input.gamepad.xinput.auto_slot_assign);
   input.gamepad.xinput.blackout_api->load      (config.input.gamepad.xinput.blackout_api);
   input.gamepad.xinput.emulate->load           (config.input.gamepad.xinput.emulate);
-  input.gamepad.xinput.standard_deadzone->load (config.input.gamepad.xinput.standard_deadzone);
+  input.gamepad.xinput.deadzone->load          (config.input.gamepad.xinput.deadzone);
   input.gamepad.dinput.blackout_gamepads->load (config.input.gamepad.dinput.blackout_gamepads);
   input.gamepad.dinput.blackout_mice->load     (config.input.gamepad.dinput.blackout_mice);
   input.gamepad.dinput.blackout_keyboards->load(config.input.gamepad.dinput.blackout_keyboards);
@@ -5619,6 +5661,7 @@ SK_SaveConfig ( std::wstring name,
   monitoring.pagefile.interval->store         (config.pagefile.interval);
 
   monitoring.dlss.show->store                 (config.dlss.show);
+  monitoring.dlss.show_output_res->store      (config.dlss.show_output_res);
   monitoring.dlss.show_quality->store         (config.dlss.show_quality);
   monitoring.dlss.show_preset->store          (config.dlss.show_preset);
   monitoring.dlss.show_fg->store              (config.dlss.show_fg);
@@ -5778,7 +5821,7 @@ SK_SaveConfig ( std::wstring name,
   input.gamepad.xinput.auto_slot_assign->store     (config.input.gamepad.xinput.auto_slot_assign);
   input.gamepad.xinput.blackout_api->store         (config.input.gamepad.xinput.blackout_api);
   input.gamepad.xinput.emulate->store              (config.input.gamepad.xinput.emulate);
-  input.gamepad.xinput.standard_deadzone->store    (config.input.gamepad.xinput.standard_deadzone);
+  input.gamepad.xinput.deadzone->store             (config.input.gamepad.xinput.deadzone);
   input.gamepad.dinput.blackout_gamepads->store    (config.input.gamepad.dinput.blackout_gamepads);
   input.gamepad.dinput.blackout_mice->store        (config.input.gamepad.dinput.blackout_mice);
   input.gamepad.dinput.blackout_keyboards->store   (config.input.gamepad.dinput.blackout_keyboards);

@@ -135,6 +135,11 @@ using SetWindowPlacement_pfn = BOOL (WINAPI *)(
   _In_ const WINDOWPLACEMENT *lpwndpl
 );
 
+using ShowWindow_pfn = BOOL (WINAPI *)(
+  _In_ HWND hWnd,
+  _In_ int  nCmdShow
+);
+
 using SetWindowPos_pfn       = BOOL (WINAPI *)(
   _In_     HWND hWnd,
   _In_opt_ HWND hWndInsertAfter,
@@ -492,6 +497,22 @@ struct sk_window_s {
   ) ;
 
   bool hooked = false;
+
+  struct message_def_s {
+    char szName [64] = "\0";
+    UINT uiMessage   =  UINT_MAX ;
+    UINT idx         =  0 ;
+
+    static const UINT ShowCursor   = 0;
+    static const UINT HideCursor   = 1;
+    static const UINT SetCursorImg = 2;
+  //static const UINT ToggleCursor = 2;
+
+  } messages [8] = { { "ShowCursor",   0, message_def_s::ShowCursor   },
+                     { "HideCursor",   0, message_def_s::HideCursor   },
+                     { "SetCursorImg", 0, message_def_s::SetCursorImg } };
+                   //{ "ToggleCursor", 0, message_def_s::ToggleCursor } };
+                   // Toggle is not that useful, and we already are registering 3 messages per-launch...
 };
 
 extern sk_window_s game_window;
@@ -842,6 +863,7 @@ bool WINAPI SK_IsRectInfinite (_In_ const tagRECT *lpRect);
 void        SK_Win32_BringBackgroundWindowToTop (void);
 void        SK_Win32_CreateBackgroundWindow     (void);
 void        SK_Window_CreateTopMostFixupThread  (void);
+BOOL        SK_Window_IsTopMostOnMonitor        ( HWND hWndToTest );
 bool        SK_Window_OnFocusChange             ( HWND hWndNewTarget,
                                                   HWND hWndOld );
 bool        SK_Window_DeactivateCursor          (bool ignore_imgui = false);

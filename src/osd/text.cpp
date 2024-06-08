@@ -699,7 +699,8 @@ SK_DrawOSD (void)
   int         left_padding =  0;
   const char *pad_str      = "";
 
-  if (config.title.show || config.time.show)
+  // Render stats require 2-space padding
+  if (config.title.show || config.time.show || config.render.show)
       left_padding = 2;
 
   static io_perf_t
@@ -707,6 +708,9 @@ SK_DrawOSD (void)
 
   buffer_t buffer = dxgi_mem_info [     0].buffer;
   int      nodes  = dxgi_mem_info [buffer].nodes;
+
+  if (SK_IsConsoleVisible ())
+    OSD_PRINTF "\n\n" OSD_END;
 
   if (config.title.show)
   {
@@ -845,7 +849,7 @@ SK_DrawOSD (void)
 
     if (dwTime - last_fps_time > 666)
     {
-      fps           = sk::narrow_cast <double>(1000.0 / mean);
+      fps           = sk::narrow_cast <double> (1000.0 / mean);
       last_fps_time = dwTime;
     }
 
@@ -1006,6 +1010,43 @@ SK_DrawOSD (void)
   }
 
   _DrawFrameCountIf (! (config.fps.show || config.fps.compact));
+
+  if (config.dlss.show && (SK_NGX_IsUsingDLSS () || SK_NGX_IsUsingDLSS_G ()))
+  {
+    int x     = 0,
+        y     = 0,
+        out_x = 0,
+        out_y = 0;
+
+    SK_NGX_DLSS_GetResolution (x, y, out_x, out_y);
+
+    if (x + y != 0)
+    {
+      OSD_DLSS_PRINTF "%*hsDLSS   :  %dx%d", left_padding, pad_str, x, y OSD_END
+
+      if (config.dlss.show_output_res && out_x + out_y != 0)
+      {
+        OSD_DLSS_PRINTF " -> %dx%d", out_x, out_y OSD_END
+      }
+
+      if (config.dlss.show_quality)
+      {
+        OSD_DLSS_PRINTF " %hs", SK_NGX_DLSS_GetCurrentPerfQualityStr () OSD_END
+      }
+
+      if (config.dlss.show_preset)
+      {
+        OSD_DLSS_PRINTF " [%hs]", SK_NGX_DLSS_GetCurrentPresetStr () OSD_END
+      }
+
+      if (config.dlss.show_fg && SK_NGX_IsUsingDLSS_G ())
+      {
+        OSD_DLSS_PRINTF " [FG]" OSD_END
+      }
+
+      OSD_DLSS_PRINTF "\n" OSD_END
+    }
+  }
 
   // Poll GPU stats...
   if (config.gpu.show)
@@ -1576,47 +1617,6 @@ SK_DrawOSD (void)
     OSD_END
 
     OSD_M_PRINTF "\n" OSD_END
-  }
-
-  if (config.dlss.show && (SK_NGX_IsUsingDLSS () || SK_NGX_IsUsingDLSS_G ()))
-  {
-    int x = 0,
-        y = 0;
-
-    SK_NGX_DLSS_GetInternalResolution (x,y);
-
-    if (x + y != 0)
-    {
-      OSD_DLSS_PRINTF "DLSS Resolution: %dx%d", x,y OSD_END
-
-      if (config.dlss.show_fg && SK_NGX_IsUsingDLSS_G ())
-      {
-        OSD_DLSS_PRINTF " [FG]" OSD_END
-      }
-
-      OSD_DLSS_PRINTF "\n" OSD_END
-
-      if (config.dlss.show_preset || config.dlss.show_quality)
-      {
-        if (config.dlss.show_preset && config.dlss.show_quality)
-        {
-          OSD_DLSS_PRINTF "DLSS Quality:    %hs [%hs]\n", SK_NGX_DLSS_GetCurrentPerfQualityStr (),
-                                                          SK_NGX_DLSS_GetCurrentPresetStr      () OSD_END
-        }
-
-        else if (config.dlss.show_preset)
-        {
-          OSD_DLSS_PRINTF "DLSS Preset:     %hs\n", SK_NGX_DLSS_GetCurrentPresetStr () OSD_END
-        }
-
-        else if (config.dlss.show_quality)
-        {
-          OSD_DLSS_PRINTF "DLSS Quality:    %hs\n", SK_NGX_DLSS_GetCurrentPerfQualityStr () OSD_END
-        }
-      }
-
-      OSD_DLSS_PRINTF "\n" OSD_END
-    }
   }
 
   static auto& disk_stats = SK_WMI_DiskStats.get ();

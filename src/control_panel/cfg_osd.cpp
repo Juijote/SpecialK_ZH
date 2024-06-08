@@ -152,6 +152,31 @@ SK::ControlPanel::OSD::Draw (void)
 
       // New line
 
+      if (sk::NVAPI::nv_hardware)
+      {
+        ImGui::Checkbox ("DLSS", &config.dlss.show);
+        if (config.dlss.show)
+        {
+          ImGui::SameLine   ();
+          ImGui::BeginGroup ();
+          ImGui::TreePush ("");
+
+          ImGui::Checkbox   ("输出分辨率 ", &config.dlss.show_output_res);
+          ImGui::SameLine   ();
+          ImGui::Checkbox   ("质量等级 ",     &config.dlss.show_quality);
+          ImGui::SameLine   ();
+          ImGui::Checkbox   ("预设 ",            &config.dlss.show_preset);
+          ImGui::SameLine   ();
+          ImGui::Checkbox   ("Frame 生成",   &config.dlss.show_fg);
+
+
+          ImGui::TreePop  (  );
+          ImGui::EndGroup   ();
+        }
+      }
+
+      // New line
+
       ImGui::Checkbox   ("GPU 统计数据",    &config.gpu.show);
       ImGui::SameLine   ();
       ImGui::BeginGroup ();
@@ -174,25 +199,6 @@ SK::ControlPanel::OSD::Draw (void)
       }
       ImGui::EndGroup   ();
 
-      if (! config.gpu.show)
-        ImGui::SameLine ();
-
-      ImGui::BeginGroup ();
-      if (sk::NVAPI::nv_hardware)
-      {
-        ImGui::Checkbox ("DLSS", &config.dlss.show);
-        if (config.dlss.show)
-        {
-          ImGui::TreePush ("");
-          ImGui::Checkbox (" Current Quality Level",   &config.dlss.show_quality);
-          ImGui::SameLine ();
-          ImGui::Checkbox (" Current Preset",          &config.dlss.show_preset);
-          ImGui::SameLine ();
-          ImGui::Checkbox (" Frame Generation",        &config.dlss.show_fg);
-          ImGui::TreePop  (  );
-        }
-      }
-      ImGui::EndGroup   ();
       ImGui::TreePop    ();
     }
 

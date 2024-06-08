@@ -81,6 +81,7 @@ GetMessagePos_pfn        GetMessagePos_Original        = nullptr;
 SendInput_pfn            SendInput_Original            = nullptr;
 mouse_event_pfn          mouse_event_Original          = nullptr;
 
+ShowWindow_pfn           ShowWindow_Original           = nullptr;
 SetWindowPos_pfn         SetWindowPos_Original         = nullptr;
 SetWindowPlacement_pfn   SetWindowPlacement_Original   = nullptr;
 MoveWindow_pfn           MoveWindow_Original           = nullptr;
@@ -94,6 +95,9 @@ GetWindowLongPtr_pfn     GetWindowLongPtrW_Original    = nullptr;
 GetWindowLongPtr_pfn     GetWindowLongPtrA_Original    = nullptr;
 AdjustWindowRect_pfn     AdjustWindowRect_Original     = nullptr;
 AdjustWindowRectEx_pfn   AdjustWindowRectEx_Original   = nullptr;
+
+DefWindowProc_pfn        DefWindowProcA_Original       = nullptr;
+DefWindowProc_pfn        DefWindowProcW_Original       = nullptr;
 
 GetSystemMetrics_pfn     GetSystemMetrics_Original     = nullptr;
 
@@ -1946,6 +1950,33 @@ SetWindowPlacement_Detour(
 
   return
     SK_SetWindowPlacement ( hWnd, lpwndpl );
+}
+
+BOOL
+WINAPI
+ShowWindow_Detour(
+  _In_ HWND hWnd,
+  _In_ int  nCmdShow)
+{
+  SK_LOG_FIRST_CALL
+
+  if (hWnd != 0 && hWnd == game_window.hWnd)
+  {
+    if (nCmdShow == SW_SHOWMINIMIZED)
+        nCmdShow  = SW_SHOW;
+
+    else
+    {
+      if (nCmdShow == SW_MINIMIZE ||
+          nCmdShow == SW_FORCEMINIMIZE)
+      {
+        return TRUE;
+      }
+    }
+  }
+
+  return
+    ShowWindow_Original (hWnd, nCmdShow);
 }
 
 BOOL
@@ -4164,12 +4195,6 @@ TranslateMessage_Detour (_In_ const MSG *lpMsg)
 
   return TranslateMessage_Original (lpMsg);
 }
-
-LRESULT
-WINAPI
-ImGui_WndProcHandler ( HWND hWnd, UINT   msg,
-                       WPARAM wParam,
-                       LPARAM lParam );
 
 bool
 SK_EarlyDispatchMessage (MSG *lpMsg, bool remove, bool peek)
@@ -6570,6 +6595,27 @@ SK_Win32_IsDummyWindowClass (HWND hWndInstance)
 void
 SK_InstallWindowHook (HWND hWnd)
 {
+  for ( auto& window_msg : game_window.messages)
+  {
+    if (*window_msg.szName == '\0' || window_msg.uiMessage != 0)
+      continue;
+
+    if (StrStrIA (window_msg.szName, "pid") == window_msg.szName)
+      continue;
+
+    strncpy_s (
+      window_msg.szName, SK_FormatString ("pid%x_%hs", GetCurrentProcessId (),
+      window_msg.szName).c_str (), 63
+    );
+
+    UINT uiMsg =
+      RegisterWindowMessageA (window_msg.szName);
+
+    if ( uiMsg >= 0xC000 &&
+         uiMsg <= 0xFFFF )    window_msg.uiMessage = uiMsg;
+    else                      window_msg.uiMessage = UINT_MAX;
+  }
+
   static constexpr int                 _MaxClassLen  = 128;
   wchar_t                    wszClass [_MaxClassLen] = { };
   RealGetWindowClassW (hWnd, wszClass, _MaxClassLen - 1);
@@ -6836,14 +6882,8 @@ SK_InstallWindowHook (HWND hWnd)
           {
             cursor_visible = *(bool *)val;
 
-            static constexpr auto          _MaxTries = 25;
-            for ( UINT tries = 0 ; tries < _MaxTries ; ++tries )
-            {
-              if (   cursor_visible  && SK_ShowCursor (TRUE) >= 0)
-                break;
-              if ((! cursor_visible) && SK_ShowCursor (FALSE) < 0)
-                break;
-            }
+            if (cursor_visible) SK_SendMsgShowCursor (TRUE);
+            else                SK_SendMsgShowCursor (FALSE);
           }
         }
 
@@ -7122,7 +7162,7 @@ SK_MakeWindowHook (WNDPROC class_proc, WNDPROC wnd_proc, HWND hWnd)
   else if (! _wcsicmp (wszClassName, L"UnrealWindow"))
     SK_GetCurrentRenderBackend ().windows.unreal = true;
 
-  else if (! _wcsicmp (wszClassName, L"SDL_App"))
+  else if (StrStrIW (wszClassName, L"SDL_App"))
   {
     SK_GetCurrentRenderBackend ().windows.sdl = true;
   }
@@ -7139,6 +7179,227 @@ SK_MakeWindowHook (WNDPROC class_proc, WNDPROC wnd_proc, HWND hWnd)
                             pRecord,
                    sizeof (*pRecord) );
   }
+}
+
+BOOL
+SK_Win32_IgnoreSysCommand (HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+  std::ignore = hWnd;
+
+  switch (LOWORD (wParam & 0xFFF0))
+  {
+    case SC_SCREENSAVE:
+    case SC_MONITORPOWER:
+    {
+      //SK_LOG0 ( ( L"ImGui ImGui Examined SysCmd (SC_SCREENSAVE) or (SC_MONITORPOWER)" ),
+      //            L"Window Mgr" );
+      if (config.window.disable_screensaver)
+      {
+        if (lParam != -1) // -1 == Monitor Power On, we do not want to block that!
+          return TRUE;
+      }
+
+      static bool bTopMostOnMonitor =
+        SK_Window_IsTopMostOnMonitor (game_window.hWnd);
+      static bool bForegroundChanged = false;
+
+      static HWND        hWndLastForeground = 0;
+      if (std::exchange (hWndLastForeground, SK_GetForegroundWindow ()) != SK_GetForegroundWindow ())
+                                bForegroundChanged = true;
+
+      if (! SK_IsGameWindowActive ())
+      {
+        if (std::exchange (bForegroundChanged, false))
+        {
+          bTopMostOnMonitor = 
+            SK_Window_IsTopMostOnMonitor (game_window.hWnd);
+        }
+      }
+
+      if (SK_IsGameWindowActive () || bTopMostOnMonitor)
+      {
+        if (LOWORD (wParam & 0xFFF0) == SC_MONITORPOWER)
+        {
+          if (lParam != -1) // No power saving when active window, that's silly
+            return TRUE;
+        }
+
+        if (config.window.fullscreen_no_saver)
+        {
+          if (LOWORD (wParam & 0xFFF0) == SC_SCREENSAVE)
+          {
+            const SK_RenderBackend& rb =
+              SK_GetCurrentRenderBackend ();
+
+            auto& display =
+              rb.displays [rb.active_display];
+
+            if (game_window.actual.window.left   == display.rect.left   &&
+                game_window.actual.window.right  == display.rect.right  &&
+                game_window.actual.window.bottom == display.rect.bottom &&
+                game_window.actual.window.top    == display.rect.top)
+            {
+              if (lParam != -1)
+              {
+                SK_ImGui_CreateNotification (
+                  "Screensaver.Ignored", SK_ImGui_Toast::Info,
+                  "Screensaver activation has been blocked because the game is "
+                  "running in (Borderless) Fullscreen.", nullptr,
+                    15000UL,
+                      SK_ImGui_Toast::UseDuration |
+                      SK_ImGui_Toast::ShowCaption |
+                      SK_ImGui_Toast::ShowOnce
+                );
+
+                return TRUE;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+LRESULT
+WINAPI
+DefWindowProcW_Detour ( _In_ HWND   hWnd,
+                        _In_ UINT   Msg,
+                        _In_ WPARAM wParam,
+                        _In_ LPARAM lParam )
+{
+  SK_LOG_FIRST_CALL
+
+  // Screensaver activation occurs when DefWindowProc is called, not
+  //   based on the actual return value of the game's window proc...
+  if (Msg == WM_SYSCOMMAND && SK_Win32_IgnoreSysCommand (hWnd, wParam, lParam))
+    return 0;
+
+  if (Msg >= 0xC000 && Msg <= 0xFFFF)
+  {
+    if (Msg == game_window.messages [sk_window_s::message_def_s::ShowCursor].uiMessage)
+    {
+      static constexpr auto          _MaxTries = 25;
+      for ( UINT tries = 0 ; tries < _MaxTries ; ++tries )
+      {
+        if (SK_ShowCursor (TRUE) >= 0)
+          break;
+      }
+    }
+
+    else if (Msg == game_window.messages [sk_window_s::message_def_s::HideCursor].uiMessage)
+    {
+      static constexpr auto          _MaxTries = 25;
+      for ( UINT tries = 0 ; tries < _MaxTries ; ++tries )
+      {
+        if (SK_ShowCursor (FALSE) < 0)
+          break;
+      }
+    }
+
+#if 0
+    else if (Msg == game_window.messages [sk_window_s::message_def_s::ToggleCursor].uiMessage)
+    {
+      bool bVisible =
+        SK_InputUtil_IsHWCursorVisible ();
+
+      if (bVisible)
+      {
+        return 
+          DefWindowProcW_Detour ( hWnd,
+                                  game_window.messages [sk_window_s::message_def_s::HideCursor].uiMessage,
+                                  wParam,
+                                  lParam );
+      }
+
+      else
+      {
+        return 
+          DefWindowProcW_Detour ( hWnd,
+                                  game_window.messages [sk_window_s::message_def_s::ShowCursor].uiMessage,
+                                  wParam,
+                                  lParam );
+      }
+    }
+#endif
+
+    else if (Msg == game_window.messages [sk_window_s::message_def_s::SetCursorImg].uiMessage)
+    {
+      SK_SetCursor ((HCURSOR)wParam);
+    }
+  }
+
+  return
+    DefWindowProcW_Original (hWnd, Msg, wParam, lParam);
+}
+
+LRESULT
+WINAPI
+DefWindowProcA_Detour ( _In_ HWND   hWnd,
+                        _In_ UINT   Msg,
+                        _In_ WPARAM wParam,
+                        _In_ LPARAM lParam )
+{
+  SK_LOG_FIRST_CALL
+
+  // Screensaver activation occurs when DefWindowProc is called, not
+  //   based on the actual return value of the game's window proc...
+  if (Msg == WM_SYSCOMMAND && SK_Win32_IgnoreSysCommand (hWnd, wParam, lParam))
+    return 0;
+
+  if (Msg >= 0xC000 && Msg <= 0xFFFF)
+  {
+    if (Msg == game_window.messages [sk_window_s::message_def_s::ShowCursor].uiMessage)
+    {
+      static constexpr auto          _MaxTries = 25;
+      for ( UINT tries = 0 ; tries < _MaxTries ; ++tries )
+      {
+        if (SK_ShowCursor (TRUE) >= 0)
+          break;
+      }
+    }
+
+    else if (Msg == game_window.messages [sk_window_s::message_def_s::HideCursor].uiMessage)
+    {
+      static constexpr auto          _MaxTries = 25;
+      for ( UINT tries = 0 ; tries < _MaxTries ; ++tries )
+      {
+        if (SK_ShowCursor (FALSE) < 0)
+          break;
+      }
+    }
+
+#if 0
+    else if (Msg == game_window.messages [sk_window_s::message_def_s::ToggleCursor].uiMessage)
+    {
+      bool bVisible =
+        SK_InputUtil_IsHWCursorVisible ();
+
+      if (bVisible)
+      {
+        return 
+          DefWindowProcA_Detour ( hWnd,
+                                  game_window.messages [sk_window_s::message_def_s::HideCursor].uiMessage,
+                                  wParam,
+                                  lParam );
+      }
+
+      else
+      {
+        return 
+          DefWindowProcA_Detour ( hWnd,
+                                  game_window.messages [sk_window_s::message_def_s::ShowCursor].uiMessage,
+                                  wParam,
+                                  lParam );
+      }
+    }
+#endif
+  }
+
+  return
+    DefWindowProcA_Original (hWnd, Msg, wParam, lParam);
 }
 
 void
@@ -7169,11 +7430,26 @@ SK_HookWinAPI (void)
              L"Window Sys" );
 #endif
 
+    SK_CreateDLLHook2 (      L"user32",
+                              "DefWindowProcA",
+                               DefWindowProcA_Detour,
+      static_cast_p2p <void> (&DefWindowProcA_Original) );
+
+    SK_CreateDLLHook2 (      L"user32",
+                              "DefWindowProcW",
+                               DefWindowProcW_Detour,
+      static_cast_p2p <void> (&DefWindowProcW_Original) );
+
 #if 1
     SK_CreateDLLHook2 (      L"user32",
                               "SetWindowPos",
                                SetWindowPos_Detour,
       static_cast_p2p <void> (&SetWindowPos_Original) );
+
+    SK_CreateDLLHook2 (      L"user32",
+                              "ShowWindow",
+                               ShowWindow_Detour,
+      static_cast_p2p <void> (&ShowWindow_Original) );
 
     SK_CreateDLLHook2 (      L"user32",
                               "SetWindowPlacement",
@@ -7847,6 +8123,12 @@ SK_Win32_CreateBackgroundWindow (void)
       return 0;
     }
 
+    // Discord could become confused without this and report that
+    //   users are playing the Aspect Ratio window...
+    wchar_t                                     wszTitle [128] = { };
+    if (GetWindowText (game_window.hWnd,        wszTitle, 127))
+        SetWindowText (SK_Win32_BackgroundHWND, wszTitle);
+
     ShowWindow   (SK_Win32_BackgroundHWND, SW_SHOW);
     UpdateWindow (SK_Win32_BackgroundHWND);
 
@@ -8184,6 +8466,64 @@ SK_Window_CreateTopMostFixupThread (void)
     SK_Window_SetTopMost (true, true, game_window.hWnd);
     //SK_ImGui_Warning (L"Fix Me!");
   }
+}
+
+BOOL
+SK_Window_IsTopMostOnMonitor (HWND hWndToTest)
+{
+  BOOL     bWindowIsTopMostOnMonitor
+                          = TRUE;
+  HMONITOR hMonitorWindow = MonitorFromWindow (hWndToTest, MONITOR_DEFAULTTONEAREST);
+  HWND         hWndAbove  =
+    GetWindow (hWndToTest, GW_HWNDPREV);
+
+  std::set <HWND> hWndTopLevel,
+                  hWndTopLevelOnWindowMonitor;
+
+  EnumWindows ([](HWND hWnd, LPARAM lParam) -> BOOL
+  {
+    std::set <HWND>* pTopLevelSet =
+      (std::set <HWND> *)lParam;
+
+    if (pTopLevelSet != nullptr)
+        pTopLevelSet->emplace (hWnd);
+
+    return TRUE;
+  },      (LPARAM)&hWndTopLevel);
+  for (auto hWnd : hWndTopLevel)
+  {
+    RECT                  rcWindow = { };
+    GetWindowRect (hWnd, &rcWindow);
+
+    POINT pt = {
+      rcWindow.left + (rcWindow.right  - rcWindow.left) / 2,
+      rcWindow.top  + (rcWindow.bottom - rcWindow.top)  / 2
+    };
+
+    if (MonitorFromPoint (pt, MONITOR_DEFAULTTONEAREST) == hMonitorWindow)
+    {
+      if (WindowFromPoint (pt) == hWnd)
+      {
+        hWndTopLevelOnWindowMonitor.emplace (hWnd);
+      }
+    }
+  }
+
+  while (hWndAbove != nullptr && IsWindow (hWndAbove))
+  {
+    if (hWndTopLevelOnWindowMonitor.contains (hWndAbove) && IsWindowVisible (hWndAbove))
+    {  
+      bWindowIsTopMostOnMonitor = FALSE;
+
+      break;
+    }
+
+    hWndAbove =
+      GetWindow (hWndAbove, GW_HWNDPREV);
+  }
+
+  return
+    bWindowIsTopMostOnMonitor;
 }
 
 

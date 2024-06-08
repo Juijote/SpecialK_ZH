@@ -95,6 +95,9 @@ SK_SetBackend (const wchar_t* wszBackend)
 {
   SK_ReleaseAssert (wszBackend != nullptr);
 
+  if (wszBackend == nullptr)
+    return L"InvalidPointer";
+
   wcsncpy_s ( SKX_GetBackend (), 127,
                 wszBackend,      _TRUNCATE );
 
@@ -2281,10 +2284,6 @@ struct SK_DummyWindows {
 };
 
 SK_LazyGlobal <SK_DummyWindows> dummy_windows;
-
-LRESULT
-WINAPI
-ImGui_WndProcHandler (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT
 WINAPI

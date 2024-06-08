@@ -76,7 +76,7 @@ SK_ImGui_DrawTexCache_Chart (void)
   {
     ImGui::PushStyleColor (ImGuiCol_Border, ImVec4 (0.961f,0.961f,0.961f,1.f));
     ImGui::Separator (   );
-    ImGui::PushStyleColor (ImGuiCol_Text, ImVec4 (1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor (ImGuiCol_Text,   ImVec4 (  1.0f,  1.0f,  1.0f,1.f));
     ImGui::Columns   ( 3 );
       ImGui::Text    ( "          大小" );                                                                 ImGui::NextColumn ();
       ImGui::Text    ( "      使用" );                                                                 ImGui::NextColumn ();
@@ -123,10 +123,8 @@ SK_ImGui_DrawTexCache_Chart (void)
       ImGui::Text    ( "驱动 I/O: %7llu MiB  ",      SK_D3D11_Textures->RedundantData_2D >> 20ui64 );
 
     ImGui::Columns   ( 1 );
-
     ImGui::Separator (   );
-
-    ImGui::PopStyleColor ( );
+    ImGui::PopStyleColor();
 
     float size =
       sk::narrow_cast <float> (config.textures.cache.max_size);
@@ -134,7 +132,7 @@ SK_ImGui_DrawTexCache_Chart (void)
     ImGui::TreePush  ( "" );
 
     if (ImGui::SliderFloat ( "最大缓存大小", &size,
-                               256.f, 8192.f, "%.0f MiB" ))
+                               512.f, 16384.f, "%.0f MiB" ))
     {
       config.textures.cache.max_size =
         sk::narrow_cast <int> (size);
@@ -146,20 +144,36 @@ SK_ImGui_DrawTexCache_Chart (void)
                         config.textures.cache.max_size );
     }
 
+    const float ui_scale =
+      config.imgui.scale;
+
+    ImGui::SameLine      ();
+    ImGui::ItemSize      (ImVec2 (50.0f * ui_scale, 0.0f));
+    ImGui::SameLine      ();
+
+    ImGui::SeparatorEx   (ImGuiSeparatorFlags_Vertical);
+
+    ImGui::SameLine      ();
+    ImGui::ItemSize      (ImVec2 (50.0f * ui_scale, 0.0f));
+    ImGui::SameLine      ();
+    ImGui::Checkbox      ("缓存未命中时振动", &config.textures.cache.vibrate_on_miss);
+
     ImGui::TreePop       ();
     ImGui::PopStyleColor ();
 
   //if (SK_DXGI_IsTrackingBudget ())
     {
-      ImGui::Separator ();
-
-      ImGui::Checkbox ("测量占用", &config.textures.cache.residency_managemnt);
-
-      ImGui::SameLine ();
-      ImGui::Checkbox ("缓存缺失时振动", &config.textures.cache.vibrate_on_miss);
+      //
+      // Residency queries have been broken for a long time, and would only
+      //   cause crashes... so hide this option.  (4/29/24)
+      //
+      //ImGui::Checkbox ("Measure residency", &config.textures.cache.residency_managemnt);
+      //ImGui::SameLine ();
 
       if (config.textures.cache.residency_managemnt)
       {
+        ImGui::Separator ();
+
         static SK_D3D11_TexCacheResidency_s* tex_res =
           SK_D3D11_TexCacheResidency.getPtr ();
 

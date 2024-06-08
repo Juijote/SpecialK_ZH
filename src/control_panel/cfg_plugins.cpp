@@ -245,101 +245,107 @@ SK::ControlPanel::PlugIns::Draw (void)
     {
       ImGui::TreePush    ("");
 
-      changed |=
-          SK_ImGui_PlugInSelector (
-            dll_ini, "ReShade（非|官方）", imp_path_reshade, imp_name_reshade, reshade_official, order,
-              SK_IsInjected () ? SK_Import_LoadOrder::Lazy :
-                                 SK_Import_LoadOrder::PlugIn );
-
-      bool compatibility = false;
-
-      if (reshade_official)
+      //if (! config.reshade.is_addon)
       {
-        auto& mode =
-          dll_ini->get_section (imp_name_reshade).get_cvalue (L"Mode");
+        changed |=
+            SK_ImGui_PlugInSelector (
+              dll_ini, "ReShade", imp_path_reshade, imp_name_reshade, reshade_official, order,
+                SK_IsInjected () ? SK_Import_LoadOrder::Lazy :
+                                   SK_Import_LoadOrder::PlugIn );
 
-        if (! mode._Equal (L"Normal"))
+        bool compatibility = false;
+
+        if (reshade_official)
         {
-          compatibility = true;
-        }
-      }
+          auto& mode =
+            dll_ini->get_section (imp_name_reshade).get_cvalue (L"Mode");
 
-      if (! GetModuleHandleW (imp_path_reshade))
-      {
-        ImGui::SameLine ();
-
-        if (ImGui::Button ("立即加载"))
-        {
-          HMODULE hModReShade =
-            SK_ReShade_LoadDLL (imp_path_reshade, L"Compatibility");
-
-          if (hModReShade != 0)
+          if (! mode._Equal (L"Normal"))
           {
-            if (SK_ReShadeAddOn_Init (hModReShade))
+            compatibility = true;
+          }
+        }
+
+        if ((! config.reshade.is_addon) && (! GetModuleHandleW (imp_path_reshade)))
+        {
+          ImGui::SameLine ();
+
+          if (ImGui::Button ("立即加载"))
+          {
+            HMODULE hModReShade =
+              SK_ReShade_LoadDLL (imp_path_reshade, L"Compatibility");
+
+            if (hModReShade != 0)
             {
-              //
+              if (SK_ReShadeAddOn_Init (hModReShade))
+              {
+                //
+              }
             }
           }
+
+          if (ImGui::IsItemHovered ())
+          {
+            ImGui::SetTooltip (
+              "如果使用 ReShade 6.0 或更高版本，你可以热加载 ReShade，而无需重启游戏。"
+            );
+          }
+        }
+
+        ImGui::TreePush ("");
+
+        if (ImGui::Checkbox ("兼容模式", &compatibility))
+        {
+          dll_ini->get_section (imp_name_reshade).get_value (L"Mode").assign (
+            compatibility ? L"Compatibility" :
+                            L"Normal"
+          );
+
+          config.utility.save_async ();
         }
 
         if (ImGui::IsItemHovered ())
         {
-          ImGui::SetTooltip (
-            "如果使用 ReShade 6.0 或更高版本，你可以热加载 ReShade，而无需重启游戏。"
-          );
+          ImGui::BeginTooltip    ();
+          ImGui::TextUnformatted ("除非需要特定的附加组件，否则应首选兼容模式。");
+          ImGui::Separator       ();
+          ImGui::BulletText      ("加载顺序在兼容模式下无关紧要。");
+          ImGui::BulletText      ("Frame 生成游戏在兼容模式下更加稳定。");
+          ImGui::BulletText      ("可能会禁用对某些 ReShade 附加组件的支持。");
+          ImGui::BulletText      ("对非兼容模式提供的支持非常少。");
+          ImGui::EndTooltip      ();
         }
+
+        ImGui::SameLine    ();
+        ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
+        ImGui::SameLine    ();
       }
 
-      ImGui::TreePush ("");
-
-      if (ImGui::Checkbox ("兼容模式", &compatibility))
+      if (! config.reshade.is_addon)
       {
-        dll_ini->get_section (imp_name_reshade).get_value (L"Mode").assign (
-          compatibility ? L"Compatibility" :
-                          L"Normal"
-        );
+        static std::set <SK_ConfigSerializedKeybind *>
+          keybinds = {
+            &config.reshade.inject_reshade_keybind,
+            //&config.reshade.toggle_overlay_keybind,
+          };
 
-        config.utility.save_async ();
+        ImGui::BeginGroup ();
+        ImGui::BeginGroup ();
+        for ( auto& keybind : keybinds )
+        {
+          ImGui::Text
+          ( "%s:  ",keybind->bind_name );
+        }
+        ImGui::EndGroup   ();
+        ImGui::SameLine   ();
+        ImGui::BeginGroup ();
+        for ( auto& keybind : keybinds )
+        {Keybinding(keybind,  keybind->param);}
+        ImGui::EndGroup   ();
+        ImGui::EndGroup   ();
       }
 
-      if (ImGui::IsItemHovered ())
-      {
-        ImGui::BeginTooltip    ();
-        ImGui::TextUnformatted ("除非需要特定的附加组件，否则应首选兼容模式。");
-        ImGui::Separator       ();
-        ImGui::BulletText      ("加载顺序在兼容模式下无关紧要。");
-        ImGui::BulletText      ("Frame 生成游戏在兼容模式下更加稳定。");
-        ImGui::BulletText      ("可能会禁用对某些 ReShade 附加组件的支持。");
-        ImGui::BulletText      ("对非兼容模式提供的支持非常少。");
-        ImGui::EndTooltip      ();
-      }
-
-      ImGui::SameLine    ();
-      ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);
-      ImGui::SameLine    ();
-
-      static std::set <SK_ConfigSerializedKeybind *>
-        keybinds = {
-          &config.reshade.inject_reshade_keybind,
-          //&config.reshade.toggle_overlay_keybind,
-        };
-
-      ImGui::BeginGroup ();
-      ImGui::BeginGroup ();
-      for ( auto& keybind : keybinds )
-      {
-        ImGui::Text
-        ( "%s:  ",keybind->bind_name );
-      }
-      ImGui::EndGroup   ();
-      ImGui::SameLine   ();
-      ImGui::BeginGroup ();
-      for ( auto& keybind : keybinds )
-      {Keybinding(keybind,  keybind->param);}
-      ImGui::EndGroup   ();
-      ImGui::EndGroup   ();
-
-      if (ImGui::Button ("查看 ReShade 设置/日志"))
+      else if (ImGui::Button ("查看 ReShade 设置/日志"))
       {
         std::wstring reshade_profile_path =
           std::wstring (SK_GetConfigPath ()) + LR"(\ReShade)";
