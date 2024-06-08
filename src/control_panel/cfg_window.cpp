@@ -359,7 +359,7 @@ SK::ControlPanel::Window::Draw (void)
         ImGui::BeginTooltip ();
         ImGui::Text         ("智能地升高和降低游戏窗口以实现最佳的多任务处理");
         ImGui::Separator    ();
-        ImGui::BulletText   ("当 KB&M 输入提供给其他应用程序时改善帧节奏");
+        ImGui::BulletText   ("当 KB&M 输入提供给其它应用程序时改善帧节奏");
         ImGui::BulletText   ("在重叠的多显示器场景中启用 G-Sync /FreeSync /VRR");
         ImGui::Separator    ();
         if (! config.window.background_render)

@@ -23,7 +23,7 @@ PresentModeToString (PresentMode mode)
     case PresentMode::Composed_Copy_CPU_GDI:                return "合成:  使用 CPU GDI 复制";
     case PresentMode::Composed_Composition_Atlas:           return "合成:  合成图集";
     case PresentMode::Hardware_Composed_Independent_Flip:   return "硬件合成:  独立翻转";
-    default:                                                return "其他";
+    default:                                                return "其它";
   }
 }
 
