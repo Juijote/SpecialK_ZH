@@ -3897,11 +3897,11 @@ SK_ImGui_ControlPanel (void)
         if (config.screenshots.png_compress)
         {
           hdr_changed |=
-            ImGui::Checkbox ("HDR Screenshot Compatibility Mode", &config.screenshots.compatibility_mode);
+            ImGui::Checkbox ("HDR 截图兼容模式", &config.screenshots.compatibility_mode);
 
           if (ImGui::IsItemHovered ())
           {
-            ImGui::SetTooltip ("Disables advanced compression features and formats not supported by all software.");
+            ImGui::SetTooltip ("禁用并非所有软件都支持的高级压缩功能和格式。");
           }
         }
 #else
@@ -3922,7 +3922,7 @@ SK_ImGui_ControlPanel (void)
 
           ImGui::SameLine ();
 
-          if (ImGui::Button ("Browse"))
+          if (ImGui::Button ("浏览"))
           {
             SK_ShellExecuteW ( nullptr,
               L"explore",
@@ -4186,8 +4186,8 @@ SK_ImGui_ControlPanel (void)
 
             ImGui::TreePush       ("");
             ImGui::PushStyleColor (ImGuiCol_Text, (ImVec4&&)ImColor::HSV (0.125f, 0.9f, 0.75f));
-            ImGui::Text           ("Most of my projects have branches that pre-date this menu...");
-            ImGui::BulletText     ("Changing branches here may be a one-way trip :)");
+            ImGui::Text           ("项目都有早于这个菜单的分支...");
+            ImGui::BulletText     ("在这里更换分支可能是单向进行:)");
             ImGui::PopStyleColor  ();
             ImGui::TreePop        ();
 
