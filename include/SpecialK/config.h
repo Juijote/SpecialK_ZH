@@ -472,10 +472,12 @@ struct sk_config_t
 
   struct screenshots_s {
     bool         use_avif              = false;
+    bool         use_hdr_png           = false;
     bool         png_compress          =  true;
     bool         show_osd_by_default   =  true;
     bool         play_sound            =  true;
     bool         copy_to_clipboard     =  true;
+    bool         allow_hdr_clipboard   =  true;
     bool         embed_nickname        = false;
     std::wstring override_path         =   L"";
     std::wstring filename_format       = L"%G %F %T";
@@ -489,7 +491,7 @@ struct sk_config_t
     } avif;
 
     int          compression_quality   =    90;
-    bool         compatibility_mode    = false;
+    bool         compatibility_mode    =  true;
 
     SK_ConfigSerializedKeybind
          game_hud_free_keybind = {
@@ -529,6 +531,14 @@ struct sk_config_t
         "仅将普通截图复制到剪贴板", L"",
          false, false, false, VK_PRINT
       }, L"ClipboardOnly"
+    };
+
+    SK_ConfigSerializedKeybind
+         snipping_keybind = {
+      SK_Keybind {
+        "将屏幕截图保存到剪贴板", L"",
+         true, false, false, VK_PRINT
+      }, L"Snipping"
     };
   } screenshots;
 

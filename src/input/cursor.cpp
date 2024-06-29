@@ -253,7 +253,12 @@ HCURSOR GetGameCursor (void);
 bool
 SK_ImGui_IsAnythingHovered (void)
 {
+  auto& screenshot_mgr = SK_GetCurrentRenderBackend ().screenshot_mgr;
+  bool snipping        = (screenshot_mgr->getSnipState () != SK_ScreenshotManager::SnippingInactive &&
+                          screenshot_mgr->getSnipState () != SK_ScreenshotManager::SnippingComplete);
+
   return
+                      snipping ||
     ImGui::IsAnyItemHovered () ||
     ImGui::IsWindowHovered  (
                ImGuiHoveredFlags_AnyWindow                    |
@@ -494,6 +499,13 @@ SK_ImGui_WantMouseCaptureEx (DWORD dwReasonMask)
 {
   if (! SK_GImDefaultContext ())
     return false;
+
+  // Block mouse input while snipping
+  auto& screenshot_mgr = SK_GetCurrentRenderBackend ().screenshot_mgr;
+  bool snipping        = (screenshot_mgr->getSnipState () != SK_ScreenshotManager::SnippingInactive &&
+                          screenshot_mgr->getSnipState () != SK_ScreenshotManager::SnippingComplete);
+  if ( snipping )
+    return true;
 
   // Allow mouse input while ReShade overlay is active
   if (SK_ReShadeAddOn_IsOverlayActive ())
