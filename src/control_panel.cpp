@@ -787,7 +787,7 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K [v ";
     title += SK_GetVersionStrA ();
-    title += "] [Juij 汉化] [2024-06-21]";
+    title += "] [Juij 汉化] [2024-06-30]";
   }
 
   title += "  控制面板";
@@ -3656,10 +3656,10 @@ SK_ImGui_ControlPanel (void)
           config.screenshots.copy_to_clipboard   ?
           config.screenshots.allow_hdr_clipboard ? 1 : 2 : 0;
 
-        if (ImGui::Combo ( "Clipboard Format", &clipboard_selection,
-                           "None (Do Not Copy)\0"
-                           "Lossless HDR\0"
-                           "Tone-mapped SDR\0\0" ))
+        if (ImGui::Combo ( "剪贴板格式", &clipboard_selection,
+                           "无（请勿复制）\0"
+                           "无损 HDR\0"
+                           "色调映射 SDR\0\0" ))
         {
           hdr_changed = true;
 
@@ -3675,10 +3675,10 @@ SK_ImGui_ControlPanel (void)
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
-          ImGui::TextUnformatted ("Lossless HDR copies are compatible with SKIV and Discord");
+          ImGui::TextUnformatted ("无损 HDR 副本与 SKIV 和 Discord 兼容");
           ImGui::Separator       ();
-          ImGui::BulletText      ("Instead of tone mapping HDR->SDR, clipboard will contain a real HDR image.");
-          ImGui::BulletText      ("HDR copies have limited compatibility, and cannot be pasted to MSPaint, etc.");
+          ImGui::BulletText      ("剪贴板将包含真实的 HDR 图像，而不是色调映射 HDR->SDR。");
+          ImGui::BulletText      ("HDR 副本的兼容性有限，无法粘贴到 MSPaint 等。");
           ImGui::EndTooltip      ();
         }
 
@@ -3763,27 +3763,7 @@ SK_ImGui_ControlPanel (void)
                                                0 );
 
           if (
-            ImGui::Combo ( "HDR File Format", &selection,
-                           "JPEG-XR (.jxr)\0"
-                           "PNG\t\t(.png)\0\0" )
-             )
-          {
-            config.screenshots.use_hdr_png =
-              (selection == 1);
-
-            config.screenshots.use_avif            = false;
-            config.screenshots.compression_quality = 90;
-          }
-        }
-
-        else if (config.screenshots.png_compress && SK_GetBitness () == SK_Bitness::ThirtyTwoBit)
-        {
-          int selection =
-            ( config.screenshots.use_hdr_png ? 1 :
-                                               0 );
-
-          if (
-            ImGui::Combo ( "HDR File Format", &selection,
+            ImGui::Combo ( "HDR 文件格式", &selection,
                            "JPEG-XR (.jxr)\0"
                            "PNG\t\t(.png)\0\0" )
              )
@@ -3868,6 +3848,7 @@ SK_ImGui_ControlPanel (void)
 
           if (ImGui::IsItemHovered ())
             ImGui::SetTooltip ("可以使用 ctrl+click 手动输入 < 80 的值，但效果会很差。");
+          }
 
           if (config.screenshots.use_avif)
           {

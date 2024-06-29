@@ -1257,7 +1257,7 @@ SK::ControlPanel::D3D11::Draw (void)
         ImGui::TextUnformatted ("先绘制");
         ImGui::PopStyleColor   ();
         ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-        ImGui::BulletText      ("适用于 SDR、原生 HDR 和 SK 逆色彩映射 HDR。");
+        ImGui::BulletText      ("适用于 SDR、原生 HDR 和 SK 逆色调映射 HDR。");
         ImGui::BulletText      ("此模式具有最高性能，应默认使用。");
         ImGui::PopStyleColor   ();
         ImGui::Spacing         ();
@@ -1266,7 +1266,7 @@ SK::ControlPanel::D3D11::Draw (void)
         ImGui::TextUnformatted ("之后绘制");
         ImGui::PopStyleColor   ();
         ImGui::PushStyleColor  (ImGuiCol_Text, ImVec4 (.7f, .7f, .7f, 1.f));
-        ImGui::BulletText      ("如果使用 ReShade 分析 SK 的 HDR 色彩映射，则需要。");
+        ImGui::BulletText      ("如果使用 ReShade 分析 SK 的 HDR 色调映射，则需要。");
         ImGui::BulletText      ("此模式在 D3D12 中会有轻微的性能损失。");
         ImGui::PopStyleColor   ();
         ImGui::EndTooltip      ();
