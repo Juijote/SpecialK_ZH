@@ -1,4 +1,4 @@
-﻿// 汉化相关
+// 汉化相关
 
 #include <SpecialK/render/present_mon/PresentMon.hpp>
 
@@ -383,11 +383,15 @@ CloseOutputCsv (ProcessInfo *processInfo)
                        args.mMultiCsv; }
 
   if ( closeFile )
+  {
     if (       csv->mFile    != nullptr)
       fclose ( csv->mFile              );
+
     if (       csv->mWmrFile != nullptr)
       fclose ( csv->mWmrFile           );
-               csv->mFile     = nullptr;
-               csv->mWmrFile  = nullptr;
+
+    csv->mFile     = nullptr;
+    csv->mWmrFile  = nullptr;
+  }
 }
 

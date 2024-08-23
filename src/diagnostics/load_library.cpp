@@ -214,7 +214,8 @@ SK_LoadLibrary_IsPinnable (const _T* pStr)
 
     SK_TEXT ("nvapi"), SK_TEXT ("NvCameraAllowlisting"),
 
-    SK_TEXT ("nvofapi"), // DLSS-G spam reloads this when changing resolution
+    SK_TEXT ("nvofapi"),   // DLSS-G spam reloads this when changing resolution
+    SK_TEXT ("sl.dlss_g"), // DLSS-G may crash at application exit if not pinned
 
     SK_TEXT ("kbd"), // Keyboard Layouts take > ~20 ms to load, leave 'em loaded
 
@@ -832,7 +833,8 @@ LoadLibrary_Marshal ( LPVOID   lpRet,
         //
         if (StrStrIW (compliant_path, L"steam_api64.dll") == compliant_path)
         {
-          compliant_path = L"./steam_api64.dll";
+          static wchar_t   steam_dll [] = L"./steam_api64.dll";
+          compliant_path = steam_dll;
         }
       }
 
@@ -1197,7 +1199,10 @@ LoadLibraryEx_Marshal ( LPVOID   lpRet, LPCWSTR lpFileName,
   // Give Microsoft Store games a copy of XInput1_4 instead of XInputUap,
   //   since it's impossible to install hooks on XInputUap...
   if (StrStrIW (compliant_path, L"XInputUap.dll"))
-                compliant_path= L"XInput1_4.dll";
+  {
+    static wchar_t   xinput1_4_dll [] = L"XInput1_4.dll";
+    compliant_path = xinput1_4_dll;
+  }
   
   bool bVulkanLayerDisabled = false;
 

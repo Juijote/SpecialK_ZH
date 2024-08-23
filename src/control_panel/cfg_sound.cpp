@@ -853,7 +853,7 @@ SK_ImGui_VolumeManager (void)
         }
 
         else
-          ImGui::Text ( "延迟:\t%.1f ms @ %d kHz",
+          ImGui::Text ( "延迟:\t%.1f ms @ %lu kHz",
                           cur_lat.milliseconds,
                           cur_lat.samples_per_sec / 1000UL );
       }

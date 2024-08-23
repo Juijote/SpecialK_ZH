@@ -512,23 +512,24 @@ SK::ControlPanel::Compatibility::Draw (void)
         ImGui::Text      ( "%hs", SK_WideCharToUTF8 (rb.windows.focus.title).c_str      () );
         ImGui::Text      ( "%8lu",         rb.windows.focus.owner.pid      );
         ImGui::Text      ( "%8lu",         rb.windows.focus.owner.tid      );
-        ImGui::Text      ( "%8lu",         rb.windows.focus.last_changed   );
+        ImGui::Text      ( "%8llu",        rb.windows.focus.last_changed   );
         ImGui::Text      ( "%8s",          rb.windows.focus.unicode ?
                                                               "Yes" : "No" );
         ImGui::Text      ( "%8p",
                              GetTopWindow (rb.windows.focus.hwnd)          );
         ImGui::Text      ( "%8p",
                                            rb.windows.focus.parent         );
-        ImGui::Text      ( "%8x", SK_GetWindowLongPtrW (rb.windows.focus.hwnd, GWL_STYLE)   );
+        ImGui::Text      ( "%8x", sk::narrow_cast <unsigned int> (
+                  SK_GetWindowLongPtrW (rb.windows.focus.hwnd, GWL_STYLE)) );
 
         if (ImGui::IsItemHovered ())
-          ImGui::SetTooltip ( _SummarizeWindowStyle (
+          ImGui::SetTooltip ( "%hs", _SummarizeWindowStyle (
                                   static_cast <DWORD> (
                                     SK_GetWindowLongPtrW (rb.windows.focus.hwnd, GWL_STYLE)
                                   )
                               ).c_str ());
 
-        ImGui::Text      ( "%8x", static_cast <DWORD> (
+        ImGui::Text      ( "%8x", sk::narrow_cast <unsigned int> (
                                     SK_GetWindowLongPtrW (rb.windows.focus.hwnd, GWL_EXSTYLE)
                          )                            );
         ImGui::EndGroup ();
@@ -542,23 +543,24 @@ SK::ControlPanel::Compatibility::Draw (void)
           ImGui::Text      ( "%hs", SK_WideCharToUTF8 (rb.windows.device.title).c_str      () );
           ImGui::Text      ( "%8lu",         rb.windows.device.owner.pid     );
           ImGui::Text      ( "%8lu",         rb.windows.device.owner.tid     );
-          ImGui::Text      ( "%8lu",         rb.windows.device.last_changed  );
+          ImGui::Text      ( "%8llu",        rb.windows.device.last_changed  );
           ImGui::Text      ( "%8s",          rb.windows.device.unicode ?
                                                                  "Yes" : "No" );
           ImGui::Text      ( "%8p",
                                GetTopWindow (rb.windows.device.hwnd)         );
           ImGui::Text      ( "%8p",
                                              rb.windows.device.parent        );
-          ImGui::Text      ( "%8x", SK_GetWindowLongPtrW (rb.windows.device.hwnd, GWL_STYLE)   );
+          ImGui::Text      ( "%8x", sk::narrow_cast <unsigned int> (
+                 SK_GetWindowLongPtrW (rb.windows.device.hwnd, GWL_STYLE))   );
 
           if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ( _SummarizeWindowStyle (
-                                    static_cast <DWORD> (
+            ImGui::SetTooltip ( "%hs", _SummarizeWindowStyle (
+                                    sk::narrow_cast <DWORD> (
                                       SK_GetWindowLongPtrW (rb.windows.device.hwnd, GWL_STYLE)
                                     )
                                 ).c_str ());
 
-          ImGui::Text      ( "%8x", SK_GetWindowLongPtrW (rb.windows.device.hwnd, GWL_EXSTYLE) );
+          ImGui::Text      ( "%8x", sk::narrow_cast <unsigned int> (SK_GetWindowLongPtrW (rb.windows.device.hwnd, GWL_EXSTYLE) ));
           ImGui::EndGroup  ();
         }
         ImGui::EndGroup ();
@@ -578,7 +580,7 @@ SK::ControlPanel::Compatibility::Draw (void)
                             SK_ImGui_Cursor.idle ? "闲置" :
                                                    "无闲置",
                               SK_ImGui_Cursor.last_move);
-      ImGui::Text        ("鼠标是否在窗口中 = %s, 追踪 = %s%s 最后 WM_MOUSEMOVE = %d",
+      ImGui::Text        ("鼠标是否在窗口中 = %s, 追踪 = %s%s 最后 WM_MOUSEMOVE = %lu",
                                game_window.mouse.inside ? "是"       : "否",
                              game_window.mouse.tracking ? "是"       : "否",
                             game_window.mouse.can_track ? "," : " (不支持),",

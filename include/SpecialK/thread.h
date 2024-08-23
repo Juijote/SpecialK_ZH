@@ -66,6 +66,14 @@ template <typename T, typename Q>
                                 );
     };
 
+  template <typename T, typename Q>
+  constexpr
+  T
+    static_cast_pfn (Q* p2p) noexcept
+    {
+      return static_cast <T> (p2p);
+    };
+
 constexpr static DWORD SK_WINNT_THREAD_NAME_EXCEPTION = 0x406D1388;
 
 #pragma pack(push,8)
@@ -212,6 +220,11 @@ SK_Thread_SpinUntilFlagged ( _In_ _Interlocked_operand_ LONG volatile const *pFl
     SK_SleepEx (0UL, FALSE);
   }
 }
+
+void
+SK_Thread_SpinUntilFlaggedEx ( _In_ _Interlocked_operand_ LONG volatile const *pFlag,
+                                                          LONG                 _TimeoutMs = 250UL,
+                                                          LONG                 _SpinMax   = 75L ) noexcept;
 
 static void
 SK_Thread_SpinUntilAtomicMin ( _In_ _Interlocked_operand_ LONG volatile const *pVar,

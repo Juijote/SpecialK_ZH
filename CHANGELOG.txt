@@ -1,4 +1,207 @@
-﻿24.6.20.1
+﻿24.8.22.1
+=========
+ + Add workaround for FFXVI beeping after Alt-Tab because it thinks the Alt
+     key is stuck down.
+
+24.8.22
+=======
+ + Added FFXVI plug-in to improve JPEG-XL screenshot quality after looking at
+     the artifacts caused by Square-Enix's default compression settings.
+
+    >> Screenshots are now 16-bpc instead of 8-bpc and quality set to 98.5%
+
+    * Lossless screenshots are possible, but will be significantly larger.
+
+24.8.21
+=======
+ + Fixed potential DLSS3 Frame Generation crash when exiting Final Fantasy XVI
+
+24.8.20
+=======
+ + Increased opacity of SK's UI in HDR10 mode.
+ + Fixed a typo in ApplySRGBCurve (...) in shaders/common_defs.hlsl that
+     would cause black clipping when converting between sRGB and Linear
+       when direct copies between two resources are impossible due
+         to format mismatch.
+
+24.8.19
+=======
+ + Correctly distinguish FFXVI from FFXV since the executable naming
+     pattern's underscore and store name are consistent.
+
+24.8.18
+=======
+ + Add LastUsedColorSpace INI setting to help tonemap third-party
+     overlays in D3D12 games with native HDR support
+ + Reduce luminance histogram buckets for frequency analysis during
+     tonemapping to 16384
+
+24.8.17.1
+=========
+ + Byte-swap > 1-byte fields in PNG chunks when building on x86/x64
+ + Use 99.5th percentile luminance for PNG / AVIF MaxCLL as discussed:
+     https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9508136
+
+24.8.17
+=======
+ + Fixed artifacts when using Gamut Expansion on input colors wider than AP1
+ + Improved alpha transparency when drawing SK's UI in HDR10
+
+24.8.16.2
+=========
+ + Fixed PQ being 1/125th as bright as it should be in AVIF and PNG screenshots
+
+24.8.16.1
+=========
+ + Write 99th percentile luminance to AVIF MaxCLL metadata
+ + Improve PQ <--> Linear calculations for pixels in > Rec 709 gamuts
+    * Improves HDR->SDR tone mapping in some games
+
+24.8.16
+=======
+ + Write 99th percentile luminance to HDR PNG clli chunk
+ + Reverse the search direction (high->low) when searching percentile cutoffs
+     using luminance histogram buckets for larger values and quicker calculation
+
+24.8.11.1
+=========
+ + Fixed display of achievement titles and descriptions containing % characters
+     in ImGui popups since ImGui expects a printf-formatted string...
+
+24.8.11
+=======
+ + Improved handling of wide gamut scRGB colors when doing HDR->SDR tonemapping
+
+24.8.9
+======
+ + Apply IDXGISwapChain3::SetColorSpace1 (...) whenever a D3D11/D3D12 SwapChain
+     overlay instance is (re)created, for compatibility with RenoDX / ReShade.
+
+24.8.6.1
+========
+ + Add support for HDR10 UAV upgrades in Trine 4.
+
+     >> Unordered Access View format mismatches were not being handled for
+          the case where the original format had the same number of bits as
+            the new format (i.e. R10G10B10A2 = 32-bpp, R8G8B8A8 = 32-bpp)
+
+24.8.6
+======
+ + Ignore texture hashing on D3D11 array textures because injection is not
+     supported and it reads from unallocated memory in Trine 4.
+ + Increase maximum HDR pipeline remaster RenderTarget size (after upgrade)
+     from 128 MiB to 256 MiB. Resources that require more VRAM will continue
+       to be ignored, which may affect users supersampling to > 8K.
+
+24.8.4
+======
+ + Add additional HDR metadata logging in games that use HDR metadata
+ + Auto-fix games that use invalid HDR metadata values when SK is not
+     configured to disable HDR metadata outright (HDRMetadataType=-2)
+
+24.7.30
+=======
+ + Improved (brightened) HDR->SDR screenshot tonemapping
+
+24.7.29
+=======
+ + Remove debug log on calls to ID3D11DeviceContext1::UpdateSubresource1 (...)
+
+24.7.28
+=======
+ + Use a RenderTargetView's Resource name if the RTV does not have a debug
+     name in D3D11 Live RenderTarget View (mod tools).
+ + Enable right-click emulation by holding gamepad activation button for
+     > 0.4 seconds.
+
+24.7.23.1
+=========
+ + Change size of sBIT chunk when adding HDR chunks to PNG data to account for
+     missing alpha channel
+
+24.7.23
+=======
+ + Use Windows SDR white level as SDR reference white level in HDR->SDR tonemap
+
+24.7.22.1
+=========
+ + Slightly increase the overall brightness of HDR->SDR tonemapped screenshots
+ + Added option to Global\osd.ini to assign a keybind to toggle command console
+
+    [OSD.System]
+    ConsoleToggle=...  Default=Ctrl+Shift+Tab
+
+     * Set ConsoleToggle=<Not Bound> to disable the console
+
+24.7.22
+=======
+ + When saving HDR->SDR screenshots, use the display's maximum luminance as the
+     maximum tonemapped light level if the content's maximum level exceeds it.
+
+   >> Often overlays, UIs, or other unintended things on screen contribute to a
+        higher calculated maximum luminance and would dim the tonemapped image.
+
+    * Your display is the mastering display, so the tonemap should adhere to its
+        limitations to prevent dimming from details that were not even visible
+          to you due to your display's capabilities.
+
+24.7.21.1
+=========
+ + Add maximum 250 ms initialization sync delay when games call
+     D3D11CreateDevice rather than D3D11CreateDeviceAndSwapChain
+       to ensure Flip Model SwapChain overrides work.
+
+24.7.21
+=======
+ + Fixed incorrect ICtCp chroma scaling during HDR->SDR screenshot tonemapping
+
+24.7.20
+=======
+ + Added default config AsyncInit=false for Crash Bandicoot N'Sane Trilogy
+     in order to ensure SK can upgrade it from Blit Model to Flip Model
+
+24.7.17.1
+=========
+ + Disable D3D9[Ex] and OpenGL hooks in Talos Principle 2 to speed up init
+ + Fixed potential loss of window tracking when games create new SwapChains
+
+24.7.17
+=======
+ + Added fix-up for Talos Principle 2's addition of FSR3 Frame Generation;
+     FSR3 always destroys the existing SwapChain and creates a new one when
+       toggling frame generation on/off.
+
+24.7.15
+=======
+ + Disable texture caching in Kingdom Come Deliverance by default
+
+24.7.14.3
+=========
+ + Fixed OpenGL instability in Tomb Raider 2
+
+24.7.14.2
+=========
+ + Fixed potential crash in Elden Ring when turning the game's framerate
+     limiter back on starting with the latest patch.
+ + Added cached memory addresses for Elden Ring 2.2.3.0 to speed-up game start.
+
+24.7.14.1
+=========
+ + Revert project settings to use the latest Windows SDK version installed
+ + Various code has been refactored to eliminate compiler crashing when trying
+     to compile SK using clang (lol).
+
+24.7.14
+=======
+ + Create HDR screenshots directory when saving HDR screenshots as .png, if
+     the directory does not already exist.
+
+24.7.13
+=======
+ + Fixed potentially blown-out SDR tonemapped screenshots caused by ICtCp max
+     luminance being stored as a static variable.
+
+24.6.20.1
 =========
  + Added 2 second timeout to any memory pattern scan to prevent freezing after
      patches in some games with excessively large executables.

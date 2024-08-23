@@ -1065,38 +1065,6 @@ SK_D3D11_UnRegisterHUDShader ( uint32_t         bytecode_crc32c,
     );
 }
 
-static const DirectX::XMMATRIX c_fromXYZtoLMS = // Transposed
-{
-  {  0.3592f, -0.1922f, 0.0070f, 0.0f },
-  {  0.6976f,  1.1004f, 0.0749f, 0.0f },
-  { -0.0358f,  0.0755f, 0.8434f, 0.0f },
-  {  0.0f,     0.0f,    0.0f,    1.0f }
-};
-
-static const DirectX::XMMATRIX c_fromLMStoXYZ = // Transposed
-{
-  {  2.070180056695613509600f,  0.364988250032657479740f, -0.049595542238932107896f, 0.0f },
-  { -1.326456876103021025500f,  0.680467362852235141020f, -0.049421161186757487412f, 0.0f },
-  {  0.206616006847855170810f, -0.045421753075853231409f,  1.187995941732803439400f, 0.0f },
-  {  0.0f,                      0.0f,                      0.0f,                     1.0f }
-};
-
-static const DirectX::XMMATRIX c_from709toXYZ = // Transposed
-{
-  { 0.4123907983303070068359375f,  0.2126390039920806884765625f,   0.0193308182060718536376953125f, 0.0f },
-  { 0.3575843274593353271484375f,  0.715168654918670654296875f,    0.119194783270359039306640625f,  0.0f },
-  { 0.18048079311847686767578125f, 0.072192318737506866455078125f, 0.950532138347625732421875f,     0.0f },
-  { 0.0f,                          0.0f,                           0.0f,                            1.0f }
-};
-
-static const DirectX::XMMATRIX c_fromXYZto709 = // Transposed
-{
-  {  3.2409698963165283203125f,    -0.96924364566802978515625f,       0.055630080401897430419921875f, 0.0f },
-  { -1.53738319873809814453125f,    1.875967502593994140625f,        -0.2039769589900970458984375f,   0.0f },
-  { -0.4986107647418975830078125f,  0.0415550582110881805419921875f,  1.05697154998779296875f,        0.0f },
-  {  0.0f,                          0.0f,                             0.0f,                           1.0f }
-};
-
 struct ParamsPQ
 {
   DirectX::XMVECTOR N, M;
@@ -1112,6 +1080,38 @@ static const ParamsPQ PQ =
   DirectX::XMVectorReplicate (2392.0 / 4096.0 * 32.0),  // C3
 };
 
+static const DirectX::XMMATRIX c_fromXYZtoLMS = // Transposed
+{
+    0.3592f, -0.1922f, 0.0070f, 0.0f,
+    0.6976f,  1.1004f, 0.0749f, 0.0f,
+   -0.0358f,  0.0755f, 0.8434f, 0.0f,
+    0.0f,     0.0f,    0.0f,    1.0f
+};
+
+static const DirectX::XMMATRIX c_fromLMStoXYZ = // Transposed
+{
+   2.070180056695613509600f,  0.364988250032657479740f, -0.049595542238932107896f, 0.0f,
+  -1.326456876103021025500f,  0.680467362852235141020f, -0.049421161186757487412f, 0.0f,
+   0.206616006847855170810f, -0.045421753075853231409f,  1.187995941732803439400f, 0.0f,
+   0.0f,                      0.0f,                      0.0f,                     1.0f
+};
+
+static const DirectX::XMMATRIX c_from709toXYZ = // Transposed
+{
+  0.4123907983303070068359375f,  0.2126390039920806884765625f,   0.0193308182060718536376953125f, 0.0f,
+  0.3575843274593353271484375f,  0.715168654918670654296875f,    0.119194783270359039306640625f,  0.0f,
+  0.18048079311847686767578125f, 0.072192318737506866455078125f, 0.950532138347625732421875f,     0.0f,
+  0.0f,                          0.0f,                           0.0f,                            1.0f
+};
+
+static const DirectX::XMMATRIX c_fromXYZto709 = // Transposed
+{
+   3.2409698963165283203125f,    -0.96924364566802978515625f,       0.055630080401897430419921875f, 0.0f,
+  -1.53738319873809814453125f,    1.875967502593994140625f,        -0.2039769589900970458984375f,   0.0f,
+  -0.4986107647418975830078125f,  0.0415550582110881805419921875f,  1.05697154998779296875f,        0.0f,
+   0.0f,                          0.0f,                             0.0f,                           1.0f
+};
+
 static const DirectX::XMVECTOR g_MaxPQValue =
   DirectX::XMVectorReplicate (125.0f);
 
@@ -1120,6 +1120,11 @@ auto PQToLinear = [](DirectX::XMVECTOR N, DirectX::XMVECTOR maxPQValue = g_MaxPQ
 using namespace DirectX;
 
   XMVECTOR ret;
+
+  XMVECTOR sign =
+    XMVectorSet (XMVectorGetX (N) < 0.0f ? -1.0f : 1.0f,
+                 XMVectorGetY (N) < 0.0f ? -1.0f : 1.0f,
+                 XMVectorGetZ (N) < 0.0f ? -1.0f : 1.0f, 1.0f);
 
   ret =
     XMVectorPow (XMVectorAbs (N), XMVectorDivide (g_XMOne, PQ.M));
@@ -1133,9 +1138,7 @@ using namespace DirectX;
             XMVectorMultiply (PQ.C3, ret)));
 
   ret =
-    XMVectorMultiply (
-      XMVectorPow (XMVectorAbs (nd), XMVectorDivide (g_XMOne, PQ.N)), maxPQValue
-    );
+    XMVectorMultiply (XMVectorMultiply (XMVectorPow (nd, XMVectorDivide (g_XMOne, PQ.N)), maxPQValue), sign);
 
   return ret;
 };
@@ -1145,9 +1148,13 @@ auto LinearToPQ = [](DirectX::XMVECTOR N, DirectX::XMVECTOR maxPQValue = g_MaxPQ
   using namespace DirectX;
 
   XMVECTOR ret;
+  XMVECTOR sign =
+    XMVectorSet (XMVectorGetX (N) < 0.0f ? -1.0f : 1.0f,
+                 XMVectorGetY (N) < 0.0f ? -1.0f : 1.0f,
+                 XMVectorGetZ (N) < 0.0f ? -1.0f : 1.0f, 1.0f);
 
   ret =
-    XMVectorPow (XMVectorAbs (XMVectorDivide (N, maxPQValue)), PQ.N);
+    XMVectorPow (XMVectorDivide (XMVectorAbs (N), maxPQValue), PQ.N);
 
   XMVECTOR nd =
     XMVectorDivide (
@@ -1156,12 +1163,12 @@ auto LinearToPQ = [](DirectX::XMVECTOR N, DirectX::XMVECTOR maxPQValue = g_MaxPQ
     );
 
   return
-    XMVectorPow (XMVectorAbs (nd), PQ.M);
+    XMVectorMultiply (XMVectorPow (nd, PQ.M), sign);
 };
 
 float LinearToPQY (float N)
 {
-  static const float fScaledN =
+  const float fScaledN =
     fabs (N * 0.008f); // 0.008 = 1/125.0
 
   float ret =
@@ -1179,48 +1186,41 @@ DirectX::XMVECTOR Rec709toICtCp (DirectX::XMVECTOR N)
 {
   using namespace DirectX;
 
-  XMVECTOR ret = N;
-
-  ret = XMVector3Transform (ret, c_from709toXYZ);
-  ret = XMVector3Transform (ret, c_fromXYZtoLMS);
-
-  ret =
-    LinearToPQ (ret, XMVectorReplicate (125.0f));
-
   static const DirectX::XMMATRIX ConvMat = // Transposed
   {
-    { 0.5000f,  1.6137f,  4.3780f, 0.0f },
-    { 0.5000f, -3.3234f, -4.2455f, 0.0f },
-    { 0.0000f,  1.7097f, -0.1325f, 0.0f },
-    { 0.0f,     0.0f,     0.0f,    1.0f }
+    0.5000f,  1.6137f,  4.3780f, 0.0f,
+    0.5000f, -3.3234f, -4.2455f, 0.0f,
+    0.0000f,  1.7097f, -0.1325f, 0.0f,
+    0.0f,     0.0f,     0.0f,    1.0f
   };
 
   return
-    XMVector3Transform (ret, ConvMat);
+    XMVector3Transform (
+      LinearToPQ (
+        XMVector3Transform (
+        XMVector3Transform (N, c_from709toXYZ), c_fromXYZtoLMS)
+                 ), ConvMat
+    );
 };
 
 DirectX::XMVECTOR ICtCptoRec709 (DirectX::XMVECTOR N)
 {
   using namespace DirectX;
 
-  XMVECTOR ret = N;
-
   static const DirectX::XMMATRIX ConvMat = // Transposed
   {
-    { 1.0f,                  1.0f,                  1.0f,                 0.0f },
-    { 0.00860514569398152f, -0.00860514569398152f,  0.56004885956263900f, 0.0f },
-    { 0.11103560447547328f, -0.11103560447547328f, -0.32063747023212210f, 0.0f },
-    { 0.0f,                  0.0f,                  0.0f,                 1.0f }
+    1.0f,                  1.0f,                  1.0f,                 0.0f,
+    0.00860514569398152f, -0.00860514569398152f,  0.56004885956263900f, 0.0f,
+    0.11103560447547328f, -0.11103560447547328f, -0.32063747023212210f, 0.0f,
+    0.0f,                  0.0f,                  0.0f,                 1.0f
   };
 
-  ret =
-    XMVector3Transform (ret, ConvMat);
-
-  ret = PQToLinear (ret, XMVectorReplicate (125.0f));
-  ret = XMVector3Transform (ret, c_fromLMStoXYZ);
-
   return
-    XMVector3Transform (ret, c_fromXYZto709);
+    XMVector3Transform (
+    XMVector3Transform (
+      PQToLinear (XMVector3Transform (N, ConvMat)),
+        c_fromLMStoXYZ ),
+        c_fromXYZto709 );
 };
 
 bool
@@ -1286,13 +1286,6 @@ SK_D3D11_CaptureScreenshot  ( SK_ScreenshotStage when =
 
   return false;
 }
-
-
-UINT filterFlags =
-  0x200000FF;
-
-float _cSdrPower  = .685f;
-float _cLerpScale = .685f;
 
 void
 SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
@@ -1563,18 +1556,18 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
 
                 static const XMMATRIX c_from2020to709 = // Transposed
                 {
-                  {  1.66096379471340f,   -0.124477196529907f,   -0.0181571579858552f, 0.0f },
-                  { -0.588112737547978f,   1.13281946828499f,    -0.100666415661988f,  0.0f },
-                  { -0.0728510571654192f, -0.00834227175508652f,  1.11882357364784f,   0.0f },
-                  {  0.0f,                 0.0f,                  0.0f,                1.0f }
+                   1.66096379471340f,   -0.124477196529907f,   -0.0181571579858552f, 0.0f,
+                  -0.588112737547978f,   1.13281946828499f,    -0.100666415661988f,  0.0f,
+                  -0.0728510571654192f, -0.00834227175508652f,  1.11882357364784f,   0.0f,
+                   0.0f,                 0.0f,                  0.0f,                1.0f
                 };
 
                 static const XMMATRIX c_from709to2020 = // Transposed
                 {
-                  { 0.627225305694944f,  0.0690418812810714f, 0.0163911702607078f, 0.0f },
-                  { 0.329476882715808f,  0.919605681354755f,  0.0880887513437058f, 0.0f },
-                  { 0.0432978115892484f, 0.0113524373641739f, 0.895520078395586f,  0.0f },
-                  { 0.0f,                0.0f,                0.0f,                1.0f }
+                  0.627225305694944f,  0.0690418812810714f, 0.0163911702607078f, 0.0f,
+                  0.329476882715808f,  0.919605681354755f,  0.0880887513437058f, 0.0f,
+                  0.0432978115892484f, 0.0113524373641739f, 0.895520078395586f,  0.0f,
+                  0.0f,                0.0f,                0.0f,                1.0f
                 };
 
                 HRESULT hr = S_OK;
@@ -1604,10 +1597,10 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                 if ( un_srgb.GetImageCount () == 1 &&
                      hdr )
                 {
-                  XMVECTOR maxLum = XMVectorZero          (),
-                           minLum = XMVectorSplatInfinity (),
-                           maxCLL = XMVectorZero          (),
-                           maxRGB = XMVectorZero          ();
+                  float    maxLum = 0.0f,
+                           minLum = 5240320.0f;
+                  XMVECTOR maxCLL = XMVectorZero (),
+                           maxRGB = XMVectorZero ();
 
                   static const XMVECTORF32 s_luminance =
                     { 0.2126729f, 0.7151522f, 0.0721750f, 0.f };
@@ -1634,18 +1627,22 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                         v =
                           XMVector3Transform (v, c_from709toXYZ);
 
+                        const float fLum =
+                          XMVectorGetY (v);
+
                         maxLum =
-                          XMVectorReplicate (XMVectorGetY (XMVectorMax (v, maxLum)));
+                          std::max (fLum, maxLum);
 
                         minLum =
-                          XMVectorReplicate (XMVectorGetY (XMVectorMin (v, minLum)));
+                          std::min (fLum, minLum);
 
                         logLumTotal +=
                           log2 ( std::max (0.000001, static_cast <double> (std::max (0.0f, XMVectorGetY (v)))) );
                            lumTotal +=               static_cast <double> (std::max (0.0f, XMVectorGetY (v)));
                         ++N;
 
-                        v = XMVectorMax (g_XMZero, v);
+                        v =
+                          XMVectorMax (g_XMZero, v);
 
                         maxRGB =
                           XMVectorMax (v, maxRGB);
@@ -1660,25 +1657,81 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                       std::max ({ XMVectorGetX (maxCLL), XMVectorGetY (maxCLL), XMVectorGetZ (maxCLL) })
                     );
 
-                  SK_LOGi0 ( L"Min Luminance: %f, Max Luminance: %f", std::max (0.0f, XMVectorGetY (minLum)) * 80.0f,
-                                                                                      XMVectorGetY (maxLum)  * 80.0f );
+                  SK_LOGi0 ( L"Min Luminance: %f, Max Luminance: %f", std::max (0.0f, minLum) * 80.0f,
+                                                                                      maxLum  * 80.0f );
 
                   SK_LOGi0 ( L"Mean Luminance (arithmetic, geometric): %f, %f", 80.0 *      ( lumTotal    / N ),
                                                                                 80.0 * exp2 ( logLumTotal / N ) );
 
-                  pFrameData->hdr.max_cll_nits =                      80.0f * XMVectorGetX (maxCLL);
-                  pFrameData->hdr.avg_cll_nits = static_cast <float> (80.0 * ( lumTotal / N ));
+                  auto        luminance_freq = std::make_unique <uint32_t []> (65536);
+                  ZeroMemory (luminance_freq.get (),     sizeof (uint32_t)  *  65536);
+
+                  // 0 nits - 10k nits (appropriate for screencap, but not HDR photography)
+                  minLum = std::clamp (minLum, 0.0f,   125.0f);
+                  maxLum = std::clamp (maxLum, minLum, 125.0f);
+
+                  const float fLumRange =
+                           (maxLum - minLum);
+
+                  EvaluateImage ( un_srgb.GetImages     (),
+                                  un_srgb.GetImageCount (),
+                                  un_srgb.GetMetadata   (),
+                  [&](const XMVECTOR* pixels, size_t width, size_t y)
+                  {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                      XMVECTOR v = *pixels++;
+
+                      v =
+                        XMVector3Transform (v, c_from709toXYZ);
+
+                      luminance_freq [
+                        std::clamp ( (int)
+                          std::roundf (
+                            (XMVectorGetY (v) - minLum)     /
+                                                 (fLumRange / 65536.0f) ),
+                                                           0, 65535 ) ]++;
+                    }
+                  });
+
+                        double percent  = 100.0;
+                  const double img_size = (double)un_srgb.GetMetadata ().width *
+                                          (double)un_srgb.GetMetadata ().height;
+
+                  for (auto i = 65535; i >= 0; --i)
+                  {
+                    percent -=
+                      100.0 * ((double)luminance_freq [i] / img_size);
+
+                    if (percent <= 99.9)
+                    {
+                      maxLum =
+                        minLum + (fLumRange * ((float)i / 65536.0f));
+
+                      break;
+                    }
+                  }
+
+                  pFrameData->hdr.max_cll_nits =                      80.0f * maxLum;
+                  pFrameData->hdr.avg_cll_nits = static_cast <float> (80.0  * ( lumTotal / N ));
 
                   // After tonemapping, re-normalize the image to preserve peak white,
                   //   this is important in cases where the maximum luminance was < 1000 nits
                   XMVECTOR maxTonemappedRGB = g_XMZero;
 
-                  static constexpr float _maxNitsToTonemap = 10000.0f/80.0f;
+                  // User's display is the canonical mastering display, anything that would have clipped
+                  //   on their display should be clipped in the tonemapped SDR image.
+                  float _maxNitsToTonemap = rb.displays [rb.active_display].gamut.maxLocalY / 80.0f;
 
-                  const float maxYInPQ =
-                    LinearToPQY (std::min (_maxNitsToTonemap, XMVectorGetY (maxLum))),
-                             SDR_YInPQ =
-                    LinearToPQY (                                              1.25f);
+                  const float SDR_YInPQ =
+                    LinearToPQY (1.5f);
+
+                  const float  maxYInPQ =
+                    std::max (SDR_YInPQ,
+                      LinearToPQY (std::min (_maxNitsToTonemap, maxLum))
+                    );
 
                   hr =               un_srgb.GetImageCount () == 1 ?
                     TransformImage ( un_srgb.GetImages     (),
@@ -1697,15 +1750,9 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                           L * (1 + a * L) / (1 + b * L);
                       };
 
-                      static const XMVECTOR vLumaRescale =
-                        XMVectorReplicate (1.0f/1.6f);
-
                       for (size_t j = 0; j < width; ++j)
                       {
                         XMVECTOR value = inPixels [j];
-
-                        value =
-                          XMVectorMultiply (value, vLumaRescale);
 
                         XMVECTOR ICtCp =
                           Rec709toICtCp (value);
@@ -1718,8 +1765,25 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
 
                         if (Y_out + Y_in > 0.0f)
                         {
+                          ICtCp.m128_f32 [0] = std::pow (XMVectorGetX (ICtCp), 1.18f);
+
+                          float I0      = XMVectorGetX (ICtCp);
+                          float I1      = 0.0f;
+                          float I_scale = 0.0f;
+
                           ICtCp.m128_f32 [0] *=
                             std::max ((Y_out / Y_in), 0.0f);
+
+                          I1 = XMVectorGetX (ICtCp);
+
+                          if (I0 != 0.0f && I1 != 0.0f)
+                          {
+                            I_scale =
+                              std::min (I0 / I1, I1 / I0);
+                          }
+
+                          ICtCp.m128_f32 [1] *= I_scale;
+                          ICtCp.m128_f32 [2] *= I_scale;
                         }
 
                         value =
@@ -1743,47 +1807,49 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                         fMaxG >= 1.0f ||
                         fMaxB >= 1.0f ))
                   {
-                    SK_LOGi0 (
-                      L"After tone mapping, maximum RGB was %4.2fR %4.2fG %4.2fB -- "
-                      L"SDR image will be normalized to min (R|G|B) and clipped.",
-                        fMaxR, fMaxG, fMaxB
-                    );
-
                     float fSmallestComp =
                       std::min ({fMaxR, fMaxG, fMaxB});
 
-                    float fRescale =
-                      (1.0f / fSmallestComp);
+                    if (fSmallestComp > .875f)
+                    {
+                      SK_LOGi0 (
+                        L"After tone mapping, maximum RGB was %4.2fR %4.2fG %4.2fB -- "
+                        L"SDR image will be normalized to min (R|G|B) and clipped.",
+                          fMaxR, fMaxG, fMaxB
+                      );
 
-                    XMVECTOR vNormalizationScale =
-                      XMVectorReplicate (fRescale);
+                      float fRescale =
+                        (1.0f / fSmallestComp);
 
-                    TransformImage (*final_sdr.GetImages (),
-                      [&]( _Out_writes_ (width)       XMVECTOR* outPixels,
-                            _In_reads_  (width) const XMVECTOR* inPixels,
-                                                      size_t    width,
-                                                      size_t )
-                      {
-                        for (size_t j = 0; j < width; ++j)
+                      XMVECTOR vNormalizationScale =
+                        XMVectorReplicate (fRescale);
+
+                      TransformImage (*final_sdr.GetImages (),
+                        [&]( _Out_writes_ (width)       XMVECTOR* outPixels,
+                              _In_reads_  (width) const XMVECTOR* inPixels,
+                                                        size_t    width,
+                                                        size_t )
                         {
-                          XMVECTOR value =
-                           inPixels [j];
-                          outPixels [j] =
-                            XMVectorSaturate (
-                              XMVectorMultiply (value, vNormalizationScale)
-                            );
-                        }
-                      }, tonemapped_copy
-                    );
+                          for (size_t j = 0; j < width; ++j)
+                          {
+                            XMVECTOR value =
+                             inPixels [j];
+                            outPixels [j] =
+                              XMVectorSaturate (
+                                XMVectorMultiply (value, vNormalizationScale)
+                              );
+                          }
+                        }, tonemapped_copy
+                      );
 
-                    std::swap (final_sdr, tonemapped_copy);
+                      std::swap (final_sdr, tonemapped_copy);
+                    }
                   }
 
                   if (         final_sdr.GetImageCount () == 1) {
                     Convert ( *final_sdr.GetImages     (),
-                                DXGI_FORMAT_B8G8R8X8_UNORM,
-                                  filterFlags,
-                                    TEX_THRESHOLD_DEFAULT,
+                                DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,
+                                  (TEX_FILTER_FLAGS)0x200000FF, 1.0f,
                                       un_srgb );
 
                     std::swap (un_scrgb, un_srgb);
@@ -1817,6 +1883,8 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                     PathAppendW ( wszAbsolutePathToLossless,
                       SK_FormatStringW ( L"HDR\\%ws.png",
                                   pFrameData->file_name.c_str () ).c_str () );
+
+                    SK_CreateDirectories (wszAbsolutePathToLossless);
 
                     if (SK_HDR_SavePNGToDisk (wszAbsolutePathToLossless, hdr10_img.GetImages (), &raw_img, pFrameData->title.c_str ()))
                     {
@@ -2081,17 +2149,16 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
 
                         case DXGI_FORMAT_R16G16B16A16_FLOAT:
                         {
+                          using namespace DirectX::PackedVector;
+
+                          static const HALF g_XMOneFP16 (XMConvertFloatToHalf (1.0f));
+
                           for ( UINT j  = 0                          ;
                                      j < pFrameData->PackedDstPitch  ;
                                      j += 8 )
                           {
-                            glm::vec4 color =
-                              glm::unpackHalf4x16 (*((uint64*)&(pDst [j])));
-
-                            color.a = 1.0f;
-
-                            *((uint64*)& (pDst[j])) =
-                              glm::packHalf4x16 (color);
+                            ((XMHALF4 *)&(pDst [j]))->w =
+                              g_XMOneFP16;
                           }
                         } break;
                       }

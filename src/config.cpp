@@ -233,7 +233,9 @@ SK_GetCurrentGameID (void)
           { L"dd2.exe",                                SK_GAME_ID::DragonsDogma                 },
           { L"Harold Halibut.exe",                     SK_GAME_ID::HaroldHalibut                },
           { L"KingdomCome.exe",                        SK_GAME_ID::KingdomComeDeliverance       },
-          { L"GoW.exe",                                SK_GAME_ID::GodOfWar                     }
+          { L"GoW.exe",                                SK_GAME_ID::GodOfWar                     },
+          { L"Talos2-Win64-Shipping.exe",              SK_GAME_ID::TalosPrinciple2              },
+          { L"CrashBandicootNSaneTrilogy.exe",         SK_GAME_ID::CrashBandicootNSaneTrilogy   },
         };
 
     first_check  = false;
@@ -254,9 +256,19 @@ SK_GetCurrentGameID (void)
 
       if ( StrStrIW ( SK_GetHostApp (), L"ffxv" ) )
       {
-        current_game = SK_GAME_ID::FinalFantasyXV;
+        if ( StrStrIW ( SK_GetHostApp (), L"ffxv_" ) )
+        {
+          current_game = SK_GAME_ID::FinalFantasyXV;
 
-        SK_FFXV_InitPlugin ();
+          SK_FFXV_InitPlugin ();
+        }
+
+        else if ( StrStrIW ( SK_GetHostApp (), L"ffxvi_" ) )
+        {
+          current_game = SK_GAME_ID::FinalFantasyXVI;
+
+          SK_FFXVI_InitPlugin ();
+        }
       }
 
       else if ( StrStrIW ( SK_GetHostApp (), L"ff7remake" ) )
@@ -898,6 +910,7 @@ struct {
     sk::ParameterBool*    enable_32bpc            = nullptr;
     sk::ParameterBool*    remaster_8bpc_as_unorm  = nullptr;
     sk::ParameterBool*    remaster_subnative_unorm= nullptr;
+    sk::ParameterInt*     last_used_colorspace    = nullptr;
   } hdr;
 } render;
 
@@ -1531,6 +1544,7 @@ auto DeclKeybind =
     ConfigEntry (screenshots.png.store_hdr,              L"Use HDR PNG file format for HDR screenshots",               osd_ini,         L"Screenshot.HDR",        L"StorePNG"),
     ConfigEntry (screenshots.allow_hdr_clipboard,        L"Use HDR for Windows Clipboard screenshots",                 osd_ini,         L"Screenshot.HDR",        L"AllowClipboardHDR"),
     Keybind ( &config.render.keys.hud_toggle,            L"Toggle Game's HUD",                                         osd_ini,         L"Game.HUD"),
+    Keybind ( &config.osd.keys.console_toggle,           L"Toggle SK's Command Console",                               osd_ini,         L"OSD.System"),
     Keybind ( &config.screenshots.game_hud_free_keybind, L"Take a screenshot without the HUD",                         osd_ini,         L"Screenshot.System"),
     Keybind ( &config.screenshots.sk_osd_free_keybind,   L"Take a screenshot without SK's OSD",                        osd_ini,         L"Screenshot.System"),
     Keybind ( &config.screenshots.
@@ -1823,6 +1837,7 @@ auto DeclKeybind =
     ConfigEntry (render.hdr.enable_32bpc,                L"Experimental - Use 32bpc for HDR",                          dll_ini,         L"SpecialK.HDR",          L"Enable128BitPipeline"),
     ConfigEntry (render.hdr.remaster_8bpc_as_unorm,      L"Do not use Floating-Point RTs when re-mastering 8-bpc+ RTs",dll_ini,         L"SpecialK.HDR",          L"Keep8BpcRemastersUNORM"),
     ConfigEntry (render.hdr.remaster_subnative_unorm,    L"Do not use FP RTs when re-mastering reduced resolution RTS",dll_ini,         L"SpecialK.HDR",          L"KeepSubnativeRemastersUNORM"),
+    ConfigEntry (render.hdr.last_used_colorspace,        L"Last Used DXGI Colorspace; auto-enables HDR features...",   dll_ini,         L"SpecialK.HDR",          L"LastUsedColorSpace"),
 
     ConfigEntry (render.osd.draw_in_vidcap,              L"Changes hook order in order to allow recording the OSD.",   dll_ini,         L"Render.OSD",            L"ShowInVideoCapture"),
 
@@ -2413,6 +2428,7 @@ auto DeclKeybind =
 
       case SK_GAME_ID::KingdomComeDeliverance:
         config.textures.cache.ignore_nonmipped = true;
+        config.textures.d3d11.cache            = false; // Fix grass artifacts
         break;
 
       case SK_GAME_ID::DragonsDogma2:
@@ -3658,6 +3674,21 @@ auto DeclKeybind =
         // Prevent crashes in the Steam and GOG versions of the game
         config.compatibility.allow_dxdiagn = false;
       } break;
+
+      case SK_GAME_ID::TalosPrinciple2:
+      {
+        // Speed-up initialization by skipping these APIs
+        //   (why the game loads their DLLs is anyone's guess)
+        config.apis.d3d9.hook   = false;
+        config.apis.d3d9ex.hook = false;
+        config.apis.OpenGL.hook = false;
+      } break;
+
+      case SK_GAME_ID::CrashBandicootNSaneTrilogy:
+      {
+        // Requires synchronous init or the game will get GDI Copy
+        config.compatibility.init_on_separate_thread = false;
+      } break;
     }
   }
 
@@ -3997,6 +4028,7 @@ auto DeclKeybind =
   render.hdr.enable_32bpc->load              (config.render.hdr.enable_32bpc);
   render.hdr.remaster_8bpc_as_unorm->load    (config.render.hdr.remaster_8bpc_as_unorm);
   render.hdr.remaster_subnative_unorm->load  (config.render.hdr.remaster_subnative_as_unorm);
+  render.hdr.last_used_colorspace->load      (config.render.hdr.last_used_colorspace);
 
   render.framerate.wait_for_vblank->load     (config.render.framerate.wait_for_vblank);
   render.framerate.buffer_count->load        (config.render.framerate.buffer_count);
@@ -5083,6 +5115,7 @@ auto DeclKeybind =
     config.screenshots.use_avif = false;
 
   LoadKeybind (&config.render.keys.hud_toggle);
+  LoadKeybind (&config.osd.keys.console_toggle);
   LoadKeybind (&config.screenshots.game_hud_free_keybind);
   LoadKeybind (&config.screenshots.sk_osd_free_keybind);
   LoadKeybind (&config.screenshots.sk_osd_insertion_keybind);
@@ -6140,6 +6173,7 @@ SK_SaveConfig ( std::wstring name,
       render.hdr.enable_32bpc->store              (config.render.hdr.enable_32bpc);
       render.hdr.remaster_8bpc_as_unorm->store    (config.render.hdr.remaster_8bpc_as_unorm);
       render.hdr.remaster_subnative_unorm->store  (config.render.hdr.remaster_subnative_as_unorm);
+      render.hdr.last_used_colorspace->store      (config.render.hdr.last_used_colorspace);
 
       texture.d3d11.cache->store                  (config.textures.d3d11.cache);
       texture.d3d11.use_l3_hash->store            (config.textures.d3d11.use_l3_hash);
