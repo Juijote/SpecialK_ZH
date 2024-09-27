@@ -21,6 +21,11 @@
 
 #include <SpecialK/stdafx.h>
 
+#ifdef  __SK_SUBSYSTEM__
+#undef  __SK_SUBSYSTEM__
+#endif
+#define __SK_SUBSYSTEM__ L"Compat Sys"
+
 volatile LONG __SK_TaskDialogActive = FALSE;
 
 HWND WINAPI SK_GetForegroundWindow (void);
@@ -1079,153 +1084,126 @@ bool SK_COMPAT_IgnoreEOSOVHCall (LPCVOID pReturn)
                                L"EOSOVH-Win64-Shipping.dll" ) ) );
 }
 
+using  slIsFeatureSupported_pfn = sl::Result (*)(sl::Feature feature, const sl::AdapterInfo& adapterInfo);
+static slIsFeatureSupported_pfn
+       slIsFeatureSupported_Original = nullptr;
+
+using  slInit_pfn = sl::Result (*)(const sl::Preferences &pref, uint64_t sdkVersion);
+static slInit_pfn
+       slInit_Original = nullptr;
+
+sl::Result
+slIsFeatureSupported_Detour (sl::Feature feature, const sl::AdapterInfo& adapterInfo)
+{
+  std::ignore = feature;
+  std::ignore = adapterInfo;
+
+  return sl::Result::eOk;
+}
+
+sl::Result
+slInit_Detour (const sl::Preferences &pref, uint64_t sdkVersion = sl::kSDKVersion)
+{
+  SK_LOG_FIRST_CALL
+
+  SK_LOGi0 (L"[!] slInit (pref.structVersion=%d, sdkVersion=%d)",
+                          pref.structVersion,    sdkVersion);
+
+  // For versions of Streamline using a compatible preferences struct,
+  //   start overriding stuff for compatibility.
+  if (pref.structVersion == sl::kStructVersion1)
+  {
+    sl::Preferences pref_copy = pref;
+
+    //
+    // Always print Streamline debug output to Special K's game_output.log,
+    //   disable any log redirection the game would ordinarily do on its own.
+    //
+    pref_copy.logMessageCallback = nullptr;
+#ifdef _DEBUG
+    pref_copy.logLevel           = sl::LogLevel::eVerbose;
+#else
+    pref_copy.logLevel           = sl::LogLevel::eDefault;
+#endif
+
+    // Make forcing proxies into an option
+    //pref_copy.flags |=
+    //  sl::PreferenceFlags::eUseDXGIFactoryProxy;
+
+    return
+      slInit_Original (pref_copy, sdkVersion);
+  }
+
+  SK_LOGi0 (
+    L"WARNING: Game is using a version of Streamline too new for Special K!"
+  );
+
+  return
+    slInit_Original (pref, sdkVersion);
+}
+
 bool
 SK_COMPAT_CheckStreamlineSupport (void)
 {
+  if (SK_IsModuleLoaded (L"sl.interposer.dll"))
+  {
+    if (! config.compatibility.allow_fake_streamline)
+    {
+      SK_RunOnce (
+        SK_CreateDLLHook2 (      L"sl.interposer.dll",
+                                  "slInit",
+                                   slInit_Detour,
+          static_cast_p2p <void> (&slInit_Original));
+
+        SK_ApplyQueuedHooks ();
+      );
+    }
+
+    // Feature Spoofing
+/*
+      SK_CreateDLLHook2 (      L"sl.interposer.dll",
+                                "slIsFeatureSupported",
+                                 slIsFeatureSupported_Detour,
+        static_cast_p2p <void> (&slIsFeatureSupported_Original));
+*/
+  }
+
   return true;
 
   //
   // As of 23.9.13, compatibility in all known games is perfect!
   //
-
-#if 0
-  // Global without DLSS_G is good, we can skip this
-  if (SK_IsInjected () && SK_GetModuleHandleW (L"sl.dlss_g.dll") == nullptr)
-    return true;
-
-  if (config.compatibility.using_wine)
-    return true;
-
-  // HDR support will be lost, but Streamline won't puke on SK w/ an injection delay
-  if (SK_IsInjected () && config.system.global_inject_delay > 0.0f)
-    return true;
-
-  // We're compatible
-  if (SK_GetCurrentGameID () == SK_GAME_ID::DiabloIV)
-    return true;
-
-  if (config.nvidia.bugs.allow_dlss_g)
-  {
-    if (GetModuleHandleW (L"sl.dlss_g.dll"))
-      return true;
-  }
-
-  static const int _MaxTestCount = 5;
-
-  static int  iTestCount  = 0;
-  static bool bCompatible = true;
-
-  if (SK_GetModuleHandleW (L"sl.dlss_g.dll"))
-  {
-    SK_RunOnce (
-    {
-      auto path_to_dlss_g =
-        SK_GetModuleFullName (SK_GetModuleHandleW (L"sl.dlss_g.dll"));
-
-      if (config.nvidia.bugs.auto_delete_dlss_g)
-      {
-        SK_File_MoveNoFail ( path_to_dlss_g.c_str (),
-                            L"sl.dlss_g.dll-bak" );
-
-        if (! PathFileExistsW (path_to_dlss_g.c_str  ()))
-        {
-          SK_RestartGame ();
-          ExitProcess    (0xdead0cde);
-        }
-      }
-
-      SK_MessageBox (
-        L"Special K cannot be used unless you remove sl.dlss_g.dll",
-        L"DLSS 3 Frame Generation Is Incompatible With Special K",
-        MB_ICONERROR | MB_OK
-      );
-
-      PathRemoveFileSpecW (path_to_dlss_g.data  ());
-      SK_Util_ExplorePath (path_to_dlss_g.c_str ());
-
-      Sleep (250UL);
-
-      ExitProcess (0xdeadc0de);
-    });
-  }
-
-  bool bPotentiallyIncompatible =
-    SK_IsInjected () || SK_GetCurrentGameID () == SK_GAME_ID::RatchetAndClank_RiftApart;
-
-  // Handle possible late injection
-  if (bPotentiallyIncompatible && iTestCount++ < _MaxTestCount)
-  {
-    HMODULE hModSLInterposer =
-      SK_GetModuleHandleW (L"sl.interposer.dll");
-
-    if (hModSLInterposer != SK_Modules->INVALID_MODULE)
-    {
-      std::wstring module_path = SK_GetModuleFullName (hModSLInterposer);
-      std::wstring ver_str     = SK_GetDLLVersionStr  (module_path.c_str ());
-
-      if (! SK_GetProcAddress (module_path.c_str (), "skFixedVersion"))
-      {
-        bCompatible = false;
-        iTestCount  = _MaxTestCount;
-
-        std::wstring msg =
-          SK_IsInjected () ? // Global Injection: General Warning
-            L"Special K may not be compatible with this game because it uses "
-            L"NVIDIA Streamline Interposer."
-            L"\r\n\r\n   "
-
-            L">> Try Local Injection (dxgi.dll) or replace the Interposer."
-                           : // Local Injection: Known incompatible game
-            L"Special K may not be compatible with this game because it uses "
-            L"NVIDIA Streamline Interposer."
-            L"\r\n\r\n   "
-
-            L">> You must replace the Interposer in this game."
-            L"\r\n\r\n---------------------\r\n\r\n";
-
-        msg += module_path;
-        msg += L"\r\n\r\n @ ";
-        msg += ver_str;
-
-        msg += L"\r\n\r\n---------------------\r\n\r\n"
-          L" * Check the Wiki or Discord for help replacing the Interposer.";
-
-        DWORD dwRet =
-          SK_MessageBox (
-            msg.c_str (), L"Special K Incompatibility",
-              MB_ICONERROR | MB_OKCANCEL
-          );
-
-        if (dwRet == IDOK)
-        {
-          SK_Util_OpenURI (
-            LR"(https://wiki.special-k.info/Compatibility/Streamline)",
-              SW_SHOWNORMAL
-          );
-        }
-      }
-    }
-  }
-
-  return bCompatible;
-#endif
 }
 
-using PFun_slGetNativeInterface = sl::Result(void* proxyInterface, void** baseInterface);
-using PFun_slUpgradeInterface   = sl::Result(                      void** baseInterface);
+// It is never necessary to call this, it can be implemented using QueryInterface
+using slGetNativeInterface_pfn = sl::Result (*)(void* proxyInterface, void** baseInterface);
+// This, on the other hand, requires an import from sl.interposer.dll
+using slUpgradeInterface_pfn   = sl::Result (*)(                      void** baseInterface);
+
+struct DECLSPEC_UUID ("ADEC44E2-61F0-45C3-AD9F-1B37379284FF")
+  IStreamlineBaseInterface : IUnknown { };
 
 sl::Result
 SK_slGetNativeInterface (void *proxyInterface, void **baseInterface)
 {
-  // Unsafe to do this for local injection
-  if (SK_IsInjected ())
-  {
-    static PFun_slGetNativeInterface * slGetNativeInterface =
-          (PFun_slGetNativeInterface *) SK_GetProcAddress (L"sl.interposer.dll", "slGetNativeInterface");
+#if 0
+  if (proxyInterface == nullptr || baseInterface == nullptr)
+    return sl::Result::eErrorMissingInputParameter;
 
-    if (     slGetNativeInterface != nullptr)
-      return slGetNativeInterface (proxyInterface, baseInterface);
-  }
+  IUnknown* pUnk =
+    static_cast <IUnknown *> (proxyInterface);
+
+  if (FAILED (pUnk->QueryInterface (__uuidof (IStreamlineBaseInterface), baseInterface)))
+    return sl::Result::eErrorUnsupportedInterface;
+#else
+  slGetNativeInterface_pfn
+  slGetNativeInterface =
+ (slGetNativeInterface_pfn)SK_GetProcAddress (L"sl.interposer.dll",
+ "slGetNativeInterface");
+
+  if (slGetNativeInterface != nullptr)
+    return slGetNativeInterface (proxyInterface, baseInterface);
+#endif
 
   return sl::Result::eErrorNotInitialized;
 }
@@ -1233,15 +1211,62 @@ SK_slGetNativeInterface (void *proxyInterface, void **baseInterface)
 sl::Result
 SK_slUpgradeInterface (void **baseInterface)
 {
-  // Unsafe to do this for local injection
-  if (SK_IsInjected ())
-  {
-    static PFun_slUpgradeInterface * slUpgradeInterface =
-          (PFun_slUpgradeInterface *) SK_GetProcAddress (L"sl.interposer.dll", "slUpgradeInterface");
+#if 0
+  if (baseInterface == nullptr)
+    return sl::Result::eErrorMissingInputParameter;
 
-    if (     slUpgradeInterface != nullptr)
-      return slUpgradeInterface (baseInterface);
+  IUnknown* pUnkInterface = *(IUnknown **)baseInterface;
+  void*     pProxy        = nullptr;
+
+  if (SUCCEEDED (pUnkInterface->QueryInterface (__uuidof (IStreamlineBaseInterface), &pProxy)))
+  {
+    // The passed interface already has a proxy, do nothing...
+    static_cast <IUnknown *> (pProxy)->Release ();
+
+    return sl::Result::eOk;
   }
+
+  // If slInit (...) has not been called yet, sl.common.dll will not be present 
+  if (! SK_IsModuleLoaded (L"sl.common.dll"))
+    return sl::Result::eErrorInitNotCalled;
+
+  auto slUpgradeInterface =
+      (slUpgradeInterface_pfn)SK_GetProcAddress (L"sl.interposer.dll",
+      "slUpgradeInterface");
+
+  if (slUpgradeInterface != nullptr)
+  {
+    auto result =
+      slUpgradeInterface (baseInterface);
+
+    if (result == sl::Result::eOk)
+    {
+      static HMODULE
+          hModPinnedInterposer  = nullptr,   hModPinnedCommon  = nullptr;
+      if (hModPinnedInterposer == nullptr || hModPinnedCommon == nullptr)
+      {
+        // Once we have done this, there's no going back...
+        //   we MUST pin the interposer DLL permanently.
+        const BOOL bPinnedSL =
+           (nullptr != hModPinnedInterposer || GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN, L"sl.interposer.dll", &hModPinnedInterposer))
+        && (nullptr != hModPinnedCommon     || GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN,     L"sl.common.dll", &hModPinnedCommon    ));
+
+        if (! bPinnedSL)
+          SK_LOGi0 (L"Streamline Integration Has Invalid State!");
+      }
+    }
+
+    return result;
+  }
+#else
+  slUpgradeInterface_pfn
+  slUpgradeInterface =
+ (slUpgradeInterface_pfn)SK_GetProcAddress (L"sl.interposer.dll",
+ "slUpgradeInterface");
+
+  if (slUpgradeInterface != nullptr)
+    return slUpgradeInterface (baseInterface);
+#endif
 
   return sl::Result::eErrorNotInitialized;
 }

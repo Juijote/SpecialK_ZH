@@ -1065,164 +1065,6 @@ SK_D3D11_UnRegisterHUDShader ( uint32_t         bytecode_crc32c,
     );
 }
 
-struct ParamsPQ
-{
-  DirectX::XMVECTOR N, M;
-  DirectX::XMVECTOR C1, C2, C3;
-};
-
-static const ParamsPQ PQ =
-{
-  DirectX::XMVectorReplicate (2610.0 / 4096.0 / 4.0),   // N
-  DirectX::XMVectorReplicate (2523.0 / 4096.0 * 128.0), // M
-  DirectX::XMVectorReplicate (3424.0 / 4096.0),         // C1
-  DirectX::XMVectorReplicate (2413.0 / 4096.0 * 32.0),  // C2
-  DirectX::XMVectorReplicate (2392.0 / 4096.0 * 32.0),  // C3
-};
-
-static const DirectX::XMMATRIX c_fromXYZtoLMS = // Transposed
-{
-    0.3592f, -0.1922f, 0.0070f, 0.0f,
-    0.6976f,  1.1004f, 0.0749f, 0.0f,
-   -0.0358f,  0.0755f, 0.8434f, 0.0f,
-    0.0f,     0.0f,    0.0f,    1.0f
-};
-
-static const DirectX::XMMATRIX c_fromLMStoXYZ = // Transposed
-{
-   2.070180056695613509600f,  0.364988250032657479740f, -0.049595542238932107896f, 0.0f,
-  -1.326456876103021025500f,  0.680467362852235141020f, -0.049421161186757487412f, 0.0f,
-   0.206616006847855170810f, -0.045421753075853231409f,  1.187995941732803439400f, 0.0f,
-   0.0f,                      0.0f,                      0.0f,                     1.0f
-};
-
-static const DirectX::XMMATRIX c_from709toXYZ = // Transposed
-{
-  0.4123907983303070068359375f,  0.2126390039920806884765625f,   0.0193308182060718536376953125f, 0.0f,
-  0.3575843274593353271484375f,  0.715168654918670654296875f,    0.119194783270359039306640625f,  0.0f,
-  0.18048079311847686767578125f, 0.072192318737506866455078125f, 0.950532138347625732421875f,     0.0f,
-  0.0f,                          0.0f,                           0.0f,                            1.0f
-};
-
-static const DirectX::XMMATRIX c_fromXYZto709 = // Transposed
-{
-   3.2409698963165283203125f,    -0.96924364566802978515625f,       0.055630080401897430419921875f, 0.0f,
-  -1.53738319873809814453125f,    1.875967502593994140625f,        -0.2039769589900970458984375f,   0.0f,
-  -0.4986107647418975830078125f,  0.0415550582110881805419921875f,  1.05697154998779296875f,        0.0f,
-   0.0f,                          0.0f,                             0.0f,                           1.0f
-};
-
-static const DirectX::XMVECTOR g_MaxPQValue =
-  DirectX::XMVectorReplicate (125.0f);
-
-auto PQToLinear = [](DirectX::XMVECTOR N, DirectX::XMVECTOR maxPQValue = g_MaxPQValue)
-{
-using namespace DirectX;
-
-  XMVECTOR ret;
-
-  XMVECTOR sign =
-    XMVectorSet (XMVectorGetX (N) < 0.0f ? -1.0f : 1.0f,
-                 XMVectorGetY (N) < 0.0f ? -1.0f : 1.0f,
-                 XMVectorGetZ (N) < 0.0f ? -1.0f : 1.0f, 1.0f);
-
-  ret =
-    XMVectorPow (XMVectorAbs (N), XMVectorDivide (g_XMOne, PQ.M));
-
-  XMVECTOR nd;
-
-  nd =
-    XMVectorDivide (
-      XMVectorMax (XMVectorSubtract (ret, PQ.C1), g_XMZero),
-                   XMVectorSubtract (     PQ.C2,
-            XMVectorMultiply (PQ.C3, ret)));
-
-  ret =
-    XMVectorMultiply (XMVectorMultiply (XMVectorPow (nd, XMVectorDivide (g_XMOne, PQ.N)), maxPQValue), sign);
-
-  return ret;
-};
-
-auto LinearToPQ = [](DirectX::XMVECTOR N, DirectX::XMVECTOR maxPQValue = g_MaxPQValue)
-{
-  using namespace DirectX;
-
-  XMVECTOR ret;
-  XMVECTOR sign =
-    XMVectorSet (XMVectorGetX (N) < 0.0f ? -1.0f : 1.0f,
-                 XMVectorGetY (N) < 0.0f ? -1.0f : 1.0f,
-                 XMVectorGetZ (N) < 0.0f ? -1.0f : 1.0f, 1.0f);
-
-  ret =
-    XMVectorPow (XMVectorDivide (XMVectorAbs (N), maxPQValue), PQ.N);
-
-  XMVECTOR nd =
-    XMVectorDivide (
-       XMVectorAdd (  PQ.C1, XMVectorMultiply (PQ.C2, ret)),
-       XMVectorAdd (g_XMOne, XMVectorMultiply (PQ.C3, ret))
-    );
-
-  return
-    XMVectorMultiply (XMVectorPow (nd, PQ.M), sign);
-};
-
-float LinearToPQY (float N)
-{
-  const float fScaledN =
-    fabs (N * 0.008f); // 0.008 = 1/125.0
-
-  float ret =
-    pow (fScaledN, 0.1593017578125f);
-
-  float nd =
-    fabs ( (0.8359375f + (18.8515625f * ret)) /
-           (1.0f       + (18.6875f    * ret)) );
-
-  return
-    pow (nd, 78.84375f);
-};
-
-DirectX::XMVECTOR Rec709toICtCp (DirectX::XMVECTOR N)
-{
-  using namespace DirectX;
-
-  static const DirectX::XMMATRIX ConvMat = // Transposed
-  {
-    0.5000f,  1.6137f,  4.3780f, 0.0f,
-    0.5000f, -3.3234f, -4.2455f, 0.0f,
-    0.0000f,  1.7097f, -0.1325f, 0.0f,
-    0.0f,     0.0f,     0.0f,    1.0f
-  };
-
-  return
-    XMVector3Transform (
-      LinearToPQ (
-        XMVector3Transform (
-        XMVector3Transform (N, c_from709toXYZ), c_fromXYZtoLMS)
-                 ), ConvMat
-    );
-};
-
-DirectX::XMVECTOR ICtCptoRec709 (DirectX::XMVECTOR N)
-{
-  using namespace DirectX;
-
-  static const DirectX::XMMATRIX ConvMat = // Transposed
-  {
-    1.0f,                  1.0f,                  1.0f,                 0.0f,
-    0.00860514569398152f, -0.00860514569398152f,  0.56004885956263900f, 0.0f,
-    0.11103560447547328f, -0.11103560447547328f, -0.32063747023212210f, 0.0f,
-    0.0f,                  0.0f,                  0.0f,                 1.0f
-  };
-
-  return
-    XMVector3Transform (
-    XMVector3Transform (
-      PQToLinear (XMVector3Transform (N, ConvMat)),
-        c_fromLMStoXYZ ),
-        c_fromXYZto709 );
-};
-
 bool
 SK_D3D11_CaptureScreenshot  ( SK_ScreenshotStage when =
                               SK_ScreenshotStage::EndOfFrame,
@@ -1292,6 +1134,15 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                                     bool               wait,
                                     bool               purge)
 {
+  static std::atomic_int run_count = 0;
+
+  if (stage_ != SK_ScreenshotStage::_FlushQueue)
+    ++run_count;
+
+  else if (run_count == 0)
+    return;
+
+
   const SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
@@ -1482,6 +1333,7 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                                 _TRUNCATE );
 
               if ( config.steam.screenshots.enable_hook &&
+                  !config.platform.steam_is_b0rked      &&
                           steam_ctx.Screenshots ()      != nullptr )
               {
                 PathAppendW          (wszAbsolutePathToScreenshot, L"SK_SteamScreenshotImport.jpg");
@@ -1560,14 +1412,6 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                   -0.588112737547978f,   1.13281946828499f,    -0.100666415661988f,  0.0f,
                   -0.0728510571654192f, -0.00834227175508652f,  1.11882357364784f,   0.0f,
                    0.0f,                 0.0f,                  0.0f,                1.0f
-                };
-
-                static const XMMATRIX c_from709to2020 = // Transposed
-                {
-                  0.627225305694944f,  0.0690418812810714f, 0.0163911702607078f, 0.0f,
-                  0.329476882715808f,  0.919605681354755f,  0.0880887513437058f, 0.0f,
-                  0.0432978115892484f, 0.0113524373641739f, 0.895520078395586f,  0.0f,
-                  0.0f,                0.0f,                0.0f,                1.0f
                 };
 
                 HRESULT hr = S_OK;
@@ -1705,7 +1549,7 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                     percent -=
                       100.0 * ((double)luminance_freq [i] / img_size);
 
-                    if (percent <= 99.9)
+                    if (percent <= 99.94)
                     {
                       maxLum =
                         minLum + (fLumRange * ((float)i / 65536.0f));
@@ -1733,79 +1577,34 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                       LinearToPQY (std::min (_maxNitsToTonemap, maxLum))
                     );
 
-                  hr =               un_srgb.GetImageCount () == 1 ?
-                    TransformImage ( un_srgb.GetImages     (),
-                                     un_srgb.GetImageCount (),
-                                     un_srgb.GetMetadata   (),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                    {
-                      UNREFERENCED_PARAMETER(y);
+                  static std::vector <parallel_tonemap_job_s> parallel_jobs   (config.screenshots.avif.max_threads);
+                  static std::vector <HANDLE>                 parallel_start  (config.screenshots.avif.max_threads);
+                  static std::vector <HANDLE>                 parallel_finish (config.screenshots.avif.max_threads);
+                         std::vector <XMVECTOR>               parallel_pixels (un_srgb.GetMetadata ().width *
+                                                                               un_srgb.GetMetadata ().height);
 
-                      auto TonemapHDR = [](float L, float Lc, float Ld) -> float
-                      {
-                        float a = (  Ld / pow (Lc, 2.0f));
-                        float b = (1.0f / Ld);
-                      
-                        return
-                          L * (1 + a * L) / (1 + b * L);
-                      };
+                  SK_Image_InitializeTonemap   (         parallel_jobs, parallel_start,      parallel_finish);
+                  SK_Image_EnqueueTonemapTask  (un_srgb, parallel_jobs, parallel_pixels, maxYInPQ, SDR_YInPQ);
+                  SK_Image_DispatchTonemapJobs (         parallel_jobs);
+                  SK_Image_GetTonemappedPixels (final_sdr, un_srgb,     parallel_pixels,     parallel_finish);
 
-                      for (size_t j = 0; j < width; ++j)
-                      {
-                        XMVECTOR value = inPixels [j];
-
-                        XMVECTOR ICtCp =
-                          Rec709toICtCp (value);
-
-                        float Y_in  = std::max (XMVectorGetX (ICtCp), 0.0f);
-                        float Y_out = 1.0f;
-
-                        Y_out =
-                          TonemapHDR (Y_in, maxYInPQ, SDR_YInPQ);
-
-                        if (Y_out + Y_in > 0.0f)
-                        {
-                          ICtCp.m128_f32 [0] = std::pow (XMVectorGetX (ICtCp), 1.18f);
-
-                          float I0      = XMVectorGetX (ICtCp);
-                          float I1      = 0.0f;
-                          float I_scale = 0.0f;
-
-                          ICtCp.m128_f32 [0] *=
-                            std::max ((Y_out / Y_in), 0.0f);
-
-                          I1 = XMVectorGetX (ICtCp);
-
-                          if (I0 != 0.0f && I1 != 0.0f)
-                          {
-                            I_scale =
-                              std::min (I0 / I1, I1 / I0);
-                          }
-
-                          ICtCp.m128_f32 [1] *= I_scale;
-                          ICtCp.m128_f32 [2] *= I_scale;
-                        }
-
-                        value =
-                          ICtCptoRec709 (ICtCp);
-
-                        maxTonemappedRGB =
-                          XMVectorMax (maxTonemappedRGB, XMVectorMax (value, g_XMZero));
-
-                        outPixels [j] = value;
-                      }
-                    }, final_sdr) : E_POINTER;
+                  for (auto& job : parallel_jobs)
+                  {
+                    maxTonemappedRGB =
+                      XMVectorMax (job.maxTonemappedRGB, maxTonemappedRGB);
+                  }
 
                   float fMaxR = XMVectorGetX (maxTonemappedRGB);
                   float fMaxG = XMVectorGetY (maxTonemappedRGB);
                   float fMaxB = XMVectorGetZ (maxTonemappedRGB);
 
-                  if (( fMaxR <  1.0f ||
-                        fMaxG <  1.0f ||
-                        fMaxB <  1.0f ) &&
-                      ( fMaxR >= 1.0f ||
-                        fMaxG >= 1.0f ||
-                        fMaxB >= 1.0f ))
+                  if (false)
+                      //( fMaxR <  1.0f ||
+                      //  fMaxG <  1.0f ||
+                      //  fMaxB <  1.0f ) &&
+                      //( fMaxR >= 1.0f ||
+                      //  fMaxG >= 1.0f ||
+                      //  fMaxB >= 1.0f ))
                   {
                     float fSmallestComp =
                       std::min ({fMaxR, fMaxG, fMaxB});
@@ -1922,7 +1721,15 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                                 )
                    )
                 {
+#if 0
+                  if (codec == WIC_CODEC_JPEG && hdr)
+                  {
+                    SK_Screenshot_SaveUHDR (raw_img, *un_scrgb.GetImages (), wszAbsolutePathToScreenshot);
+                  }
+#endif
+
                   if ( config.steam.screenshots.enable_hook &&
+                      !config.platform.steam_is_b0rked      &&
                           steam_ctx.Screenshots () != nullptr )
                   {
                     wchar_t       wszAbsolutePathToThumbnail [ MAX_PATH + 2 ] = { };
@@ -2139,14 +1946,6 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                           {    pDst [j] = 255UL;        }
                         } break;
 
-                      //case DXGI_FORMAT_R10G10B10A2_UNORM:
-                      //{
-                      //  for ( UINT j = 3                          ;
-                      //             j < pFrameData->PackedDstPitch ;
-                      //             j += 4 )
-                      //  {    pDst [j]  |=  0x3;       }
-                      //} break;
-
                         case DXGI_FORMAT_R16G16B16A16_FLOAT:
                         {
                           using namespace DirectX::PackedVector;
@@ -2209,9 +2008,15 @@ SK_D3D11_ProcessScreenshotQueueEx ( SK_ScreenshotStage stage_,
                                                                                     static_cast <uint16_t> (std::max (0.0f, pFrameData->hdr.avg_cll_nits)));
                       }
 
+                      if (hdr && config.screenshots.use_jxl)
+                      {
+                        SK_Screenshot_SaveJXL (un_srgb, wszAbsolutePathToLossless);
+                      }
+
                       HRESULT hrSaveToWIC = S_OK;
 
-                      if ((! hdr) || (! config.screenshots.use_avif))
+                      if ((! hdr) || (! (config.screenshots.use_avif ||
+                                         config.screenshots.use_jxl)))
                       {
                         const bool bUseCompatHacks =
                           config.screenshots.compatibility_mode;

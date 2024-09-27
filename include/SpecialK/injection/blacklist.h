@@ -100,7 +100,6 @@ static constexpr constexpr_module_s::list_type __graylist = {
 
 static constexpr constexpr_module_s::list_type __blacklist = {
 #ifdef _M_AMD64
-  L"cl.exe",
   L"msbuild.exe",
   L"systemsettings.exe",
   L"systemsettingsbroker.exe",
@@ -165,6 +164,7 @@ static constexpr constexpr_module_s::list_type __blacklist = {
   L"obs32.exe",
 #endif
 
+  L"crash_handler.exe", // Metaphor ReFantazio
   L"postcrashdump.exe",
 
   L"launcher.exe",
@@ -276,9 +276,7 @@ static constexpr constexpr_module_s::list_type __blacklist = {
   L"esrv.exe",
   L"ipoint.exe",
   L"itype.exe",
-  L"msedge.exe",
   L"vsgraphics.exe",
-  L"msedgewebview2.exe",
   L"powershell.exe",
   L"devenv.exe",
 

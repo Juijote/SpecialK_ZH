@@ -236,6 +236,11 @@ SK_GetCurrentGameID (void)
           { L"GoW.exe",                                SK_GAME_ID::GodOfWar                     },
           { L"Talos2-Win64-Shipping.exe",              SK_GAME_ID::TalosPrinciple2              },
           { L"CrashBandicootNSaneTrilogy.exe",         SK_GAME_ID::CrashBandicootNSaneTrilogy   },
+          { L"Outlaws.exe",                            SK_GAME_ID::StarWarsOutlaws              },
+          { L"Outlaws_Plus.exe",                       SK_GAME_ID::StarWarsOutlaws              },
+          { L"shadPS4.exe",                            SK_GAME_ID::ShadPS4                      },
+          { L"GoWR.exe",                               SK_GAME_ID::GodOfWarRagnarok             },
+          { L"METAPHOR.exe",                           SK_GAME_ID::Metaphor                     }
         };
 
     first_check  = false;
@@ -254,20 +259,27 @@ SK_GetCurrentGameID (void)
       if (app_id == 1382330)
         current_game = SK_GAME_ID::Persona5Strikers;
 
-      if ( StrStrIW ( SK_GetHostApp (), L"ffxv" ) )
+      if ( StrStrIW ( SK_GetHostApp (), L"ffxv" ) ==
+                      SK_GetHostApp () )
       {
         if ( StrStrIW ( SK_GetHostApp (), L"ffxv_" ) )
         {
           current_game = SK_GAME_ID::FinalFantasyXV;
-
-          SK_FFXV_InitPlugin ();
         }
 
-        else if ( StrStrIW ( SK_GetHostApp (), L"ffxvi_" ) )
+        else if ( StrStrIW ( SK_GetHostApp (), L"ffxvi" ) )
         {
-          current_game = SK_GAME_ID::FinalFantasyXVI;
+          // Streamline shenanigans
+          config.compatibility.init_sync_for_streamline = true;
 
-          SK_FFXVI_InitPlugin ();
+          // Game has native PlayStation support
+          config.input.gamepad.xinput.emulate = false;
+
+          config.render.dxgi.fake_fullscreen_mode       = true;
+          config.render.dstorage.submit_threads         = 2;
+          config.system.auto_load_asi_files             = true;
+
+          current_game = SK_GAME_ID::FinalFantasyXVI;
         }
       }
 
@@ -663,6 +675,10 @@ struct {
   struct {
     sk::ParameterBool*    store_hdr               = nullptr;
   } png;
+
+  struct {
+    sk::ParameterBool*    use_jxl                 = nullptr;
+  } jxl;
 } screenshots;
 
 struct {
@@ -796,6 +812,7 @@ sk::ParameterBool*        silent                  = nullptr;
 sk::ParameterFloat*       init_delay              = nullptr;
 sk::ParameterBool*        return_to_skif          = nullptr;
 sk::ParameterInt*         skif_autostop_behavior  = nullptr;
+sk::ParameterBool*        auto_load_asi_files     = nullptr;
 sk::ParameterStringW*     version                 = nullptr;
                        // Version at last boot
 
@@ -877,6 +894,7 @@ struct {
     sk::ParameterFloat*   warn_if_vram_exceeds    = nullptr;
     sk::ParameterBool*    allow_d3d12_footguns    = nullptr;
     sk::ParameterBool*    fake_fullscreen_mode    = nullptr;
+    sk::ParameterFloat*   vram_budget_scale       = nullptr;
   } dxgi;
 
   struct {
@@ -884,6 +902,8 @@ struct {
     sk::ParameterBool*    disable_telemetry       = nullptr;
     sk::ParameterBool*    disable_gpu_decomp      = nullptr;
     sk::ParameterBool*    force_file_buffering    = nullptr;
+    sk::ParameterInt*     submit_threads          = nullptr;
+    sk::ParameterInt*     cpu_decomp_threads      = nullptr;
   } dstorage;
 
   struct {
@@ -900,6 +920,12 @@ struct {
     sk::ParameterBool*    enable_flipex           = nullptr;
     sk::ParameterBool*    use_d3d9on12            = nullptr;
   } d3d9;
+
+  struct {
+    sk::ParameterInt*     max_anisotropy          = nullptr;
+    sk::ParameterBool*    force_anisotropic       = nullptr;
+    sk::ParameterFloat*   force_lod_bias          = nullptr;
+  } d3d12;
 
   struct {
     sk::ParameterBool*    draw_in_vidcap          = nullptr;
@@ -1097,6 +1123,8 @@ struct {
     sk::ParameterBool*    highest_priority        = nullptr;
     sk::ParameterBool*    deny_foreign_change     = nullptr;
     sk::ParameterInt*     min_render_priority     = nullptr;
+    sk::ParameterInt64*   cpu_affinity_mask       = nullptr;
+    sk::ParameterBool*    perf_cores_only         = nullptr;
   } priority;
 } scheduling;
 
@@ -1114,6 +1142,7 @@ struct {
   sk::ParameterBool*      async_init              = nullptr;
   sk::ParameterBool*      reshade_mode            = nullptr;
   sk::ParameterBool*      fsr3_mode               = nullptr;
+  sk::ParameterBool*      allow_fake_streamline   = nullptr;
 } compatibility;
 
 struct {
@@ -1536,7 +1565,8 @@ auto DeclKeybind =
     ConfigEntry (screenshots.override_path,              L"Where to store screenshots (if non-empty)",                 osd_ini,         L"Screenshot.System",     L"OverridePath"),
     ConfigEntry (screenshots.filename_format,            L"wcsftime format; Non-Standard Specifier: %G = <Game Name>", osd_ini,         L"Screenshot.System",     L"FilenameFormat"),
     ConfigEntry (screenshots.compression_quality,        L"Compression Quality: 0=Worst, 100=Lossless",                osd_ini,         L"Screenshot.System",     L"Quality"),
-    ConfigEntry (screenshots.compatibility_mode,         L"Use less advanced encoding in JPEG-XR and AVIF for compat.",osd_ini,         L"Screenshot.System",     L"CompatibilityMode"),
+    ConfigEntry (screenshots.compatibility_mode,         L"Use less advanced encoding in JPEG XR and AVIF for compat.",osd_ini,         L"Screenshot.System",     L"CompatibilityMode"),
+    ConfigEntry (screenshots.jxl.use_jxl,                L"Use JPEG XL file format for HDR screenshots",               osd_ini,         L"Screenshot.System",     L"UseJPEGXL"),
     ConfigEntry (screenshots.avif.use_avif,              L"Use AVIF file format for HDR screenshots",                  osd_ini,         L"Screenshot.System",     L"UseAVIF"),
     ConfigEntry (screenshots.avif.yuv_subsampling,       L"Chroma Subsampling (444, 422, 420, 400)",                   osd_ini,         L"Screenshot.AVIF",       L"SubsampleYUV"),
     ConfigEntry (screenshots.avif.scrgb_bit_depth,       L"Bits to use for scRGB to PQ encoded images",                osd_ini,         L"Screenshot.AVIF",       L"scRGBtoPQBits"),
@@ -1705,6 +1735,7 @@ auto DeclKeybind =
     ConfigEntry (compatibility.async_init,               L"Runs hook initialization on a separate thread; high safety",dll_ini,         L"Compatibility.General", L"AsyncInit"),
     ConfigEntry (compatibility.reshade_mode,             L"Initializes hooks in a way that ReShade will not interfere",dll_ini,         L"Compatibility.General", L"ReShadeMode"),
     ConfigEntry (compatibility.fsr3_mode,                L"Avoid hooks on CreateSwapChainForHwnd",                     dll_ini,         L"Compatibility.General", L"FSR3Mode"),
+    ConfigEntry (compatibility.allow_fake_streamline,    L"Allow invalid stuff, that might let fake DLSS3 mods work.", dll_ini,         L"Compatibility.General", L"AllowFakeStreamline"),
 
     ConfigEntry (apis.last_known,                        L"Last Known Render API",                                     dll_ini,         L"API.Hook",              L"LastKnown"),
 
@@ -1748,6 +1779,7 @@ auto DeclKeybind =
     ConfigEntry (game_output,                            L"Log Application's Debug Output",                            dll_ini,         L"SpecialK.System",       L"GameOutput"),
     ConfigEntry (init_delay,                             L"Delay Global Injection Initialization for x-many Seconds",  dll_ini,         L"SpecialK.System",       L"GlobalInjectDelay"),
     ConfigEntry (return_to_skif,                         L"At Application Exit, make SKIF the new Foreground Window",  dll_ini,         L"SpecialK.System",       L"ReturnToSKIF"),
+    ConfigEntry (auto_load_asi_files,                    L"Automatically load .asi files from the game's directory",   dll_ini,         L"SpecialK.System",       L"AutoLoadASIFiles"),
     ConfigEntry (version,                                L"The last version that wrote the config file",               dll_ini,         L"SpecialK.System",       L"Version"),
 
 
@@ -1902,11 +1934,18 @@ auto DeclKeybind =
     ConfigEntry (render.dxgi.allow_d3d12_footguns,       L"Feel like shooting your foot with unsafe d3d12 settings..?",dll_ini,         L"Render.DXGI",           L"AllowD3D12FootGuns"),
     ConfigEntry (render.dxgi.fake_fullscreen_mode,       L"Lie to games and tell them they're in FSE, all the while, "
                                                          L"they are actually running a fullscreen borderless window.", dll_ini,         L"Render.DXGI",           L"FakeFullscreenMode"),
+    ConfigEntry (render.dxgi.vram_budget_scale,          L"Multiplier for reported VRAM budget for D3D12 era engines.",dll_ini,         L"Render.DXGI",           L"VRAMBudgetScale"),
+
+    ConfigEntry (render.d3d12.max_anisotropy,            L"Maximum Anisotropic Filter Level",                          dll_ini,         L"Render.D3D12",          L"MaxAnisotropy"),
+    ConfigEntry (render.d3d12.force_anisotropic,         L"Forced Anisotropic Filtering",                              dll_ini,         L"Render.D3D12",          L"ForceAnisotropic"),
+    ConfigEntry (render.d3d12.force_lod_bias,            L"Forced LOD Bias",                                           dll_ini,         L"Render.D3D12",          L"ForceLODBias"),
 
     ConfigEntry (render.dstorage.disable_bypass_io,      L"Disable DirectStorage BypassIO",                            dll_ini,         L"Render.DStorage",       L"DisableBypassIO"),
     ConfigEntry (render.dstorage.disable_telemetry,      L"Disable DirectStorage Telemetry",                           dll_ini,         L"Render.DStorage",       L"DisableTelemetry"),
     ConfigEntry (render.dstorage.disable_gpu_decomp,     L"Disable DirectStorage (1.2) GPU Decompression",             dll_ini,         L"Render.DStorage",       L"DisableGPUDecompression"),
     ConfigEntry (render.dstorage.force_file_buffering,   L"Force DirectStorage File Buffering",                        dll_ini,         L"Render.DStorage",       L"ForceFileBuffering"),
+    ConfigEntry (render.dstorage.submit_threads,         L"Override default number of DirectStorage Submit threads",   dll_ini,         L"Render.DStorage",       L"NumberOfSubmitThreads"),
+    ConfigEntry (render.dstorage.cpu_decomp_threads,     L"Override default number of CPU Decompression threads",      dll_ini,         L"Render.DStorage",       L"NumberOfCPUDecompThreads"),
 
     ConfigEntry (texture.d3d9.clamp_lod_bias,            L"Clamp Negative LOD Bias",                                   dll_ini,         L"Textures.D3D9",         L"ClampNegativeLODBias"),
     ConfigEntry (texture.d3d11.cache,                    L"Cache Textures",                                            dll_ini,         L"Textures.D3D11",        L"Cache"),
@@ -1975,6 +2014,8 @@ auto DeclKeybind =
     ConfigEntry (scheduling.priority.highest_priority,   L"Boost process priority to High instead of Above Normal",    dll_ini,         L"Scheduler.Boost",       L"RaisePriorityToHigh"),
     ConfigEntry (scheduling.priority.deny_foreign_change,L"Do not allow third-party apps to change priority",          dll_ini,         L"Scheduler.Boost",       L"DenyForeignChanges"),
     ConfigEntry (scheduling.priority.min_render_priority,L"Minimum priority for a game's render thread",               dll_ini,         L"Scheduler.Boost",       L"MinimumRenderThreadPriority"),
+    ConfigEntry (scheduling.priority.cpu_affinity_mask,  L"Mask of CPU cores the process is eligible for scheduling.", dll_ini,         L"Scheduler.System",      L"ProcessorAffinityMask"),
+    ConfigEntry (scheduling.priority.perf_cores_only,    L"Limit the scheduler to Intel P-Cores",                      dll_ini,         L"Scheduler.System",      L"PerformanceCoresOnly"),
 
     ConfigEntry (sound.minimize_latency,                 L"Minimize Audio Latency while Game is Running",              dll_ini,         L"Sound.Mixing",          L"MinimizeLatency"),
 
@@ -2795,6 +2836,10 @@ auto DeclKeybind =
 
       case SK_GAME_ID::BaldursGate3:
       {
+        // Game has native support for DualSense, but not DualSense Edge
+        config.input.gamepad.scepad.hide_ds_edge_pid = true;
+        config.input.gamepad.xinput.emulate          = false;
+
         // The Vulkan executable is simply bg3.exe,
         //   D3D11 is bg3_dx11.exe
         bool bVulkan =
@@ -2861,6 +2906,9 @@ auto DeclKeybind =
         config.apis.OpenGL.hook          = false;
         config.apis.d3d9.hook            = false;
         config.apis.d3d9ex.hook          = false;
+
+        // Game now has native PlayStation support
+        config.input.gamepad.xinput.emulate = false;
       } break;
 
       case SK_GAME_ID::PathOfExile:
@@ -2947,6 +2995,30 @@ auto DeclKeybind =
 
       case SK_GAME_ID::HorizonForbiddenWest:
       {
+#if 0
+        if (SK_IsInjected () && ((! PathFileExists (L"dxgi.dll")) &&
+                                 (! PathFileExists (L"d3d12.dll"))))
+        {
+          wchar_t      wszProfileSKinny [MAX_PATH] = {};
+          PathAppendW (wszProfileSKinny, SK_GetConfigPath ());
+          PathAppendW (wszProfileSKinny,    L"SKinny.ignore");
+
+          if (! (PathFileExists (L"SKinny.ignore") ||
+                 PathFileExists (wszProfileSKinny)))
+          {
+            if (IDYES ==
+                SK_MessageBox (
+                  L"Special K has Compatibility Issues with this Game\r\n\r\n"
+                  L" * Please use Local Injection or SKinny\r\n\r\n"
+                  L"Click Yes for more info on SKinny.", L"Special K Incompatibility",
+                    MB_YESNO|MB_ICONWARNING))
+            {
+              SK_Util_OpenURI (L"https://github.com/SpecialKO/SKinny/releases", SW_RESTORE);
+            }
+          }
+        }
+#endif
+
         bool bSteam = false,
              bEpic  = false;
 
@@ -3193,7 +3265,7 @@ auto DeclKeybind =
         if (PathFileExistsW ((std::filesystem::path (SK_D3D11_res_root->c_str ()) / LR"(inject\textures\CDE62E66.dds)").c_str ()))
         {
           void *pSteamInput001 =
-            SK_Scan ("SteamInput001", 13, "SteamInput001");
+            SK_ScanAligned ("SteamInput001", 13, "SteamInput001", 16);
 
           if (pSteamInput001 != nullptr)
           {
@@ -3380,8 +3452,9 @@ auto DeclKeybind =
       // Nintendo Switch Emulators ( OpenGL / Vulkan )
       case SK_GAME_ID::yuzu:
       case SK_GAME_ID::Ryujinx:
-      case SK_GAME_ID::cemu:  // Wii U
-      case SK_GAME_ID::RPCS3: // PS3
+      case SK_GAME_ID::cemu:    // Wii U
+      case SK_GAME_ID::RPCS3:   // PS3
+      case SK_GAME_ID::ShadPS4: // PS4
       {
         config.steam.appid                = 0;
         config.platform.silent            = true;
@@ -3433,6 +3506,28 @@ auto DeclKeybind =
 
       case SK_GAME_ID::ForzaHorizon5:
       {
+        if (SK_IsInjected () && ((! PathFileExists (L"dxgi.dll")) &&
+                                 (! PathFileExists (L"d3d12.dll"))))
+        {
+          wchar_t      wszProfileSKinny [MAX_PATH] = {};
+          PathAppendW (wszProfileSKinny, SK_GetConfigPath ());
+          PathAppendW (wszProfileSKinny,    L"SKinny.ignore");
+
+          if (! (PathFileExists (L"SKinny.ignore") ||
+                 PathFileExists (wszProfileSKinny)))
+          {
+            if (IDYES ==
+                SK_MessageBox (
+                  L"Special K has Compatibility Issues with this Game\r\n\r\n"
+                  L" * Please use Local Injection or SKinny\r\n\r\n"
+                  L"Click Yes for more info on SKinny.", L"Special K Incompatibility",
+                    MB_YESNO|MB_ICONWARNING))
+            {
+              SK_Util_OpenURI (L"https://github.com/SpecialKO/SKinny/releases", SW_RESTORE);
+            }
+          }
+        }
+
         // Prevent VRR disable when using game's framerate limiter
         config.render.framerate.sync_interval_clamp = 1;
 
@@ -3446,6 +3541,12 @@ auto DeclKeybind =
         config.input.gamepad.xinput.placehold [1]   = false;
         config.input.gamepad.xinput.placehold [2]   = false;
         config.input.gamepad.xinput.placehold [3]   = false;
+      } break;
+
+      case SK_GAME_ID::StarWarsOutlaws:
+      {
+        // Avoid anti-debug stuff
+        SK_GetCurrentRenderBackend ().windows.capcom = true;
       } break;
 
       case SK_GAME_ID::FinalFantasy7Remake:
@@ -3533,6 +3634,8 @@ auto DeclKeybind =
         // Work-around anti-cheat
         config.compatibility.disable_debug_features =  true;
         config.system.handle_crashes                = false;
+        // Game has native PlayStation support
+        config.input.gamepad.xinput.emulate         = false;
         break;
 
       case SK_GAME_ID::FinalFantasyXIV:
@@ -3543,6 +3646,18 @@ auto DeclKeybind =
 
       case SK_GAME_ID::NoMansSky:
         config.apis.NvAPI.vulkan_bridge = 1;
+        break;
+
+      case SK_GAME_ID::Metaphor:
+        config.input.keyboard.override_alt_f4    = true; // Oh lord, kill that buggy exit confirmation
+        config.window.dont_hook_wndproc          = true;
+        config.render.dxgi.fake_fullscreen_mode  = true;
+        config.render.framerate.sleepless_render = true;
+        config.render.framerate.sleepless_window = true;
+        config.input.gamepad.xinput.emulate      = true; // XInput-only
+        config.input.gamepad.xinput.disable [1]  = true;
+        config.input.gamepad.xinput.disable [2]  = true;
+        config.input.gamepad.xinput.disable [3]  = true;
         break;
 
       case SK_GAME_ID::DiabloIV:
@@ -3558,6 +3673,10 @@ auto DeclKeybind =
 
       // Pain in the ass Nixxes port
       case SK_GAME_ID::RatchetAndClank_RiftApart:
+        // Game has native PlayStation support
+        config.input.gamepad.xinput.emulate        = false;
+        config.compatibility.allow_fake_streamline = false;
+        // Workaround Nixxes quirks
         break;
 
       case SK_GAME_ID::BatmanArkhamKnight:
@@ -3578,6 +3697,11 @@ auto DeclKeybind =
         apis.last_known->store     ((int)config.apis.last_known     );
         apis.OpenGL.hook->store    (     config.apis.OpenGL.hook    );
         apis.d3d11.hook->store     (     config.apis.dxgi.d3d11.hook);
+        break;
+
+      case SK_GAME_ID::Cyberpunk2077:
+        // Game now has native PlayStation support
+        config.input.gamepad.xinput.emulate = false;
         break;
 
       case SK_GAME_ID::DOOMEternal:
@@ -3671,8 +3795,20 @@ auto DeclKeybind =
 
       case SK_GAME_ID::GodOfWar:
       {
-        // Prevent crashes in the Steam and GOG versions of the game
-        config.compatibility.allow_dxdiagn = false;
+        // Game has native PlayStation support
+        config.input.gamepad.xinput.emulate = false;
+      } break;
+
+      case SK_GAME_ID::GodOfWarRagnarok:
+      {
+        // Game has native PlayStation support
+        config.input.gamepad.xinput.emulate = false;
+        // Window management tweaks to assist this game in keeping
+        //   the Windows task bar away in borderless mode
+        config.window.always_on_top     = SmartAlwaysOnTop;
+        config.window.center            = true;
+        config.window.borderless        = true;
+        config.window.background_render = true;
       } break;
 
       case SK_GAME_ID::TalosPrinciple2:
@@ -3747,13 +3883,14 @@ auto DeclKeybind =
   //
   // Load Parameters
   //
-  compatibility.fsr3_mode->load          (config.compatibility.fsr3_mode);
-  compatibility.reshade_mode->load       (config.compatibility.reshade_mode);
-  compatibility.async_init->load         (config.compatibility.init_on_separate_thread);
-  compatibility.disable_nv_bloat->load   (config.compatibility.disable_nv_bloat);
-  compatibility.rehook_loadlibrary->load (config.compatibility.rehook_loadlibrary);
-  compatibility.using_wine->load         (config.compatibility.using_wine);
-  compatibility.allow_dxdiagn->load      (config.compatibility.allow_dxdiagn);
+  compatibility.allow_fake_streamline->load (config.compatibility.allow_fake_streamline);
+  compatibility.fsr3_mode->load             (config.compatibility.fsr3_mode);
+  compatibility.reshade_mode->load          (config.compatibility.reshade_mode);
+  compatibility.async_init->load            (config.compatibility.init_on_separate_thread);
+  compatibility.disable_nv_bloat->load      (config.compatibility.disable_nv_bloat);
+  compatibility.rehook_loadlibrary->load    (config.compatibility.rehook_loadlibrary);
+  compatibility.using_wine->load            (config.compatibility.using_wine);
+  compatibility.allow_dxdiagn->load         (config.compatibility.allow_dxdiagn);
 
 #ifdef _M_IX86
   compatibility.auto_large_address->load (config.compatibility.auto_large_address_patch);
@@ -4066,6 +4203,14 @@ auto DeclKeybind =
   scheduling.priority.highest_priority->load    (config.priority.highest_priority);
   scheduling.priority.deny_foreign_change->load (config.priority.deny_foreign_change);
   scheduling.priority.min_render_priority->load (config.priority.minimum_render_prio);
+  scheduling.priority.cpu_affinity_mask->load   (config.priority.cpu_affinity_mask);
+
+  if (config.priority.cpu_affinity_mask != 0xFFFFFFFFULL)
+  {
+    SetProcessAffinityMask (GetCurrentProcess (), (DWORD_PTR)config.priority.cpu_affinity_mask);
+  }
+
+  scheduling.priority.perf_cores_only->load     (config.priority.perf_cores_only);
 
   if (config.priority.raise_always)
     SetPriorityClass (GetCurrentProcess (), ABOVE_NORMAL_PRIORITY_CLASS);
@@ -4262,6 +4407,7 @@ auto DeclKeybind =
     }
   }
 
+  render.dxgi.vram_budget_scale->load    (config.render.dxgi.vram_budget_scale);
   render.dxgi.fake_fullscreen_mode->load (config.render.dxgi.fake_fullscreen_mode);
   render.dxgi.allow_d3d12_footguns->load (config.render.dxgi.allow_d3d12_footguns);
   render.dxgi.debug_layer->load          (config.render.dxgi.debug_layer);
@@ -4304,12 +4450,22 @@ auto DeclKeybind =
   render.dxgi.skip_redundant_modes->load (config.render.dxgi.skip_mode_changes);
   render.dxgi.warn_if_vram_exceeds->load (config.render.dxgi.warn_if_vram_exceeds);
 
+  render.d3d12.max_anisotropy->load      (config.render.d3d12.max_anisotropy);
+  render.d3d12.force_anisotropic->load   (config.render.d3d12.force_anisotropic);
+  render.d3d12.force_lod_bias->load      (config.render.d3d12.force_lod_bias);
+
+  config.render.d3d12.force_lod_bias = // TODO: What are the actual limits?
+    std::clamp (config.render.d3d12.force_lod_bias, -32.0f, 32.0f);
+
   render.dstorage.disable_bypass_io->load(config.render.dstorage.disable_bypass_io);
   render.dstorage.disable_telemetry->load(config.render.dstorage.disable_telemetry);
   render.dstorage.disable_gpu_decomp->
                                     load (config.render.dstorage.disable_gpu_decomp);
   render.dstorage.force_file_buffering->
                                     load (config.render.dstorage.force_file_buffering);
+  render.dstorage.submit_threads->  load (config.render.dstorage.submit_threads);
+  render.dstorage.cpu_decomp_threads->
+                                    load (config.render.dstorage.cpu_decomp_threads);
 
   texture.d3d11.cache->load              (config.textures.d3d11.cache);
   texture.d3d11.use_l3_hash->load        (config.textures.d3d11.use_l3_hash);
@@ -5102,6 +5258,8 @@ auto DeclKeybind =
   screenshots.compression_quality->load       (config.screenshots.compression_quality);
   screenshots.compatibility_mode->load        (config.screenshots.compatibility_mode);
 
+  screenshots.jxl.use_jxl->load               (config.screenshots.use_jxl);
+
   screenshots.avif.use_avif->load             (config.screenshots.use_avif);
   screenshots.avif.yuv_subsampling->load      (config.screenshots.avif.yuv_subsampling);
   screenshots.avif.scrgb_bit_depth->load      (config.screenshots.avif.scrgb_bit_depth);
@@ -5109,10 +5267,6 @@ auto DeclKeybind =
 
   screenshots.png.store_hdr->load             (config.screenshots.use_hdr_png);
   screenshots.allow_hdr_clipboard->load       (config.screenshots.allow_hdr_clipboard);
-
-  // AVIF Unsupported in 32-bit
-  if (SK_GetBitness () == SK_Bitness::ThirtyTwoBit)
-    config.screenshots.use_avif = false;
 
   LoadKeybind (&config.render.keys.hud_toggle);
   LoadKeybind (&config.osd.keys.console_toggle);
@@ -5209,23 +5363,24 @@ auto DeclKeybind =
   osd.viewport.scale->load (config.osd.scale);
 
 
-  silent->load            (config.system.silent);
-  trace_libraries->load   (config.system.trace_load_library);
-  strict_compliance->load (config.system.strict_compliance);
-  log_level->load         (config.system.log_level);
-  sk::logs::base_log_lvl = config.system.log_level;
-  prefer_fahrenheit->load (config.system.prefer_fahrenheit);
-  handle_crashes->load    (config.system.handle_crashes);
-  silent_crash->load      (config.system.silent_crash);
-  crash_suppression->load (config.system.suppress_crashes);
-  debug_wait->load        (config.system.wait_for_debugger);
-  debug_output->load      (config.system.display_debug_out);
-  game_output->load       (config.system.game_output);
-  init_delay->load        (config.system.global_inject_delay);
-  return_to_skif->load    (config.system.return_to_skif);
+  silent->load              (config.system.silent);
+  trace_libraries->load     (config.system.trace_load_library);
+  strict_compliance->load   (config.system.strict_compliance);
+  log_level->load           (config.system.log_level);
+  sk::logs::base_log_lvl  =  config.system.log_level;
+  prefer_fahrenheit->load   (config.system.prefer_fahrenheit);
+  handle_crashes->load      (config.system.handle_crashes);
+  silent_crash->load        (config.system.silent_crash);
+  crash_suppression->load   (config.system.suppress_crashes);
+  debug_wait->load          (config.system.wait_for_debugger);
+  debug_output->load        (config.system.display_debug_out);
+  game_output->load         (config.system.game_output);
+  init_delay->load          (config.system.global_inject_delay);
+  return_to_skif->load      (config.system.return_to_skif);
+  auto_load_asi_files->load (config.system.auto_load_asi_files);
 
-  if (version->load       (config.system.version))
-                           config.system.first_run = false;
+  if (version->load         (config.system.version))
+                             config.system.first_run = false;
 
   skif_autostop_behavior->load (config.skif.auto_stop_behavior);
 
@@ -5249,6 +5404,21 @@ auto DeclKeybind =
   // EMERGENCY OVERRIDES
   //
   config.input.ui.use_raw_input = false;
+
+
+  //
+  // If DXGI ever fails to create a SwapChain complaining about WS_EX_TOPMOST,
+  //   it may be necessary to force this off for that game.
+  //
+  static bool bDisallowAlwaysOnTop =
+    (SK_GetCurrentGameID () == SK_GAME_ID::GodOfWarRagnarok);
+
+  if (bDisallowAlwaysOnTop)
+  {
+    if (config.window.always_on_top !=  SmartAlwaysOnTop)
+        config.window.always_on_top = PreventAlwaysOnTop; // DXGI SwapChain creation may fail without this
+  }
+
 
   static bool scanned = false;
 
@@ -5671,6 +5841,7 @@ SK_SaveConfig ( std::wstring name,
   compatibility.rehook_loadlibrary->store     (config.compatibility.rehook_loadlibrary);
   compatibility.using_wine->store             (config.compatibility.using_wine);
   compatibility.allow_dxdiagn->store          (config.compatibility.allow_dxdiagn);
+  compatibility.allow_fake_streamline->store  (config.compatibility.allow_fake_streamline);
 
 #ifdef _M_IX86
   compatibility.auto_large_address->store     (config.compatibility.auto_large_address_patch);
@@ -6055,6 +6226,8 @@ SK_SaveConfig ( std::wstring name,
     scheduling.priority.highest_priority->store    (config.priority.highest_priority);
     scheduling.priority.deny_foreign_change->store (config.priority.deny_foreign_change);
     scheduling.priority.min_render_priority->store (config.priority.minimum_render_prio);
+    scheduling.priority.cpu_affinity_mask->store   (config.priority.cpu_affinity_mask);
+    scheduling.priority.perf_cores_only->store     (config.priority.perf_cores_only);
 
     if (render.framerate.rescan_ratio != nullptr)
     {
@@ -6254,6 +6427,7 @@ SK_SaveConfig ( std::wstring name,
           break;
       }
 
+      render.dxgi.vram_budget_scale->store    (config.render.dxgi.vram_budget_scale);
       render.dxgi.fake_fullscreen_mode->store (config.render.dxgi.fake_fullscreen_mode);
       render.dxgi.debug_layer->store          (config.render.dxgi.debug_layer);
       render.dxgi.allow_d3d12_footguns->store (config.render.dxgi.allow_d3d12_footguns);
@@ -6273,12 +6447,19 @@ SK_SaveConfig ( std::wstring name,
       render.dxgi.skip_redundant_modes->store (config.render.dxgi.skip_mode_changes);
       render.dxgi.warn_if_vram_exceeds->store (config.render.dxgi.warn_if_vram_exceeds);
 
+      render.d3d12.max_anisotropy->store      (config.render.d3d12.max_anisotropy);
+      render.d3d12.force_anisotropic->store   (config.render.d3d12.force_anisotropic);
+      render.d3d12.force_lod_bias->store      (config.render.d3d12.force_lod_bias);
+
       render.dstorage.disable_bypass_io->store(config.render.dstorage.disable_bypass_io);
       render.dstorage.disable_telemetry->store(config.render.dstorage.disable_telemetry);
       render.dstorage.disable_gpu_decomp->
                                         store (config.render.dstorage.disable_gpu_decomp);
       render.dstorage.force_file_buffering->
                                         store (config.render.dstorage.force_file_buffering);
+      render.dstorage.submit_threads->  store (config.render.dstorage.submit_threads);
+      render.dstorage.cpu_decomp_threads->
+                                        store (config.render.dstorage.cpu_decomp_threads);
     }
 
     if ( SK_IsInjected () || ( SK_GetDLLRole () & DLL_ROLE::D3D9    ) ||
@@ -6436,14 +6617,11 @@ SK_SaveConfig ( std::wstring name,
   screenshots.png.store_hdr->store             (config.screenshots.use_hdr_png);
   screenshots.allow_hdr_clipboard->store       (config.screenshots.allow_hdr_clipboard);
 
-  // AVIF Unsupported in 32-bit
-  if (SK_GetBitness () != SK_Bitness::ThirtyTwoBit)
-  {
-    screenshots.avif.use_avif->store           (config.screenshots.use_avif);
-    screenshots.avif.yuv_subsampling->store    (config.screenshots.avif.yuv_subsampling);
-    screenshots.avif.scrgb_bit_depth->store    (config.screenshots.avif.scrgb_bit_depth);
-    screenshots.avif.compression_speed->store  (config.screenshots.avif.compression_speed);
-  }
+  screenshots.jxl.use_jxl->store               (config.screenshots.use_jxl);
+  screenshots.avif.use_avif->store             (config.screenshots.use_avif);
+  screenshots.avif.yuv_subsampling->store      (config.screenshots.avif.yuv_subsampling);
+  screenshots.avif.scrgb_bit_depth->store      (config.screenshots.avif.scrgb_bit_depth);
+  screenshots.avif.compression_speed->store    (config.screenshots.avif.compression_speed);
 
   uplay.overlay.hdr_luminance->store           (config.uplay.overlay_luminance);
   discord.overlay.hdr_luminance->store         (config.discord.overlay_luminance);
@@ -6481,6 +6659,7 @@ SK_SaveConfig ( std::wstring name,
   strict_compliance->store                     (config.system.strict_compliance);
   init_delay->store                            (config.system.global_inject_delay);
   return_to_skif->store                        (config.system.return_to_skif);
+  auto_load_asi_files->store                   (config.system.auto_load_asi_files);
   version->store                               (SK_GetVersionStrW ());
 
   if (! SK_IsInjected ())

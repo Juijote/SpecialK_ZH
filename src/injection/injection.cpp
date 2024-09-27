@@ -31,6 +31,11 @@
 
 #include <SpecialK/render/present_mon/TraceSession.hpp>
 
+#ifdef  __SK_SUBSYSTEM__
+#undef  __SK_SUBSYSTEM__
+#endif
+#define __SK_SUBSYSTEM__ L"GlobalHook"
+
 #define SK_INVALID_HANDLE nullptr
 
 NtUserSetWindowsHookEx_pfn    NtUserSetWindowsHookEx    = nullptr;
@@ -1157,7 +1162,7 @@ GetModuleLoadCount (HMODULE hDll)
       //  http://www.geoffchappell.com/studies/windows/win32/ntdll/structs/ldr_data_table_entry.htm
       //
       unsigned long long offDdagNode =
-        (0x14 - BITNESS) * sizeof (void *);   // See offset on LDR_DDAG_NODE *DdagNode;
+        (unsigned long long)(0x14 - BITNESS) * sizeof (void *);   // See offset on LDR_DDAG_NODE *DdagNode;
 
       ULONG count        = 0;
       char* addrDdagNode = ((char *)pLdrEntry) + offDdagNode;
@@ -1283,7 +1288,7 @@ SK_Inject_SpawnUnloadListener (void)
         {
           InterlockedIncrement (&injected_procs);
 
-          const DWORD dwTimeout   = SK_IsImmersiveProcess () ? 75UL : INFINITE;
+          const DWORD dwTimeout   = INFINITE;
           const DWORD dwWaitState =
             WaitForMultipleObjects ( 2, signals,
                                  FALSE, dwTimeout );
@@ -1348,7 +1353,7 @@ DebugProc ( _In_ int    nCode,
 {
   return
     CallNextHookEx (
-      0, nCode, wParam, lParam
+      hHookDebug, nCode, wParam, lParam
     );
 }
 
@@ -1360,7 +1365,7 @@ ShellProc ( _In_ int    nCode,
 {
   return
     CallNextHookEx (
-      0, nCode, wParam, lParam
+      hHookShell, nCode, wParam, lParam
     );
 }
 
@@ -1374,10 +1379,14 @@ CBTProc ( _In_ int    nCode,
   {
     return
       CallNextHookEx (
-        0, nCode, wParam, lParam
+        hHookCBT, nCode, wParam, lParam
       );
   }
 
+  // Enabling this is causing the DLL to become stuck in various processes
+  //   consider signaling the teardown thread to do it instead of trying to
+  //     run this code from inside the context of the program's window pump.
+#if 1
   if (game_window.hWnd == nullptr && (HWND)wParam != nullptr)
   {
     if (nCode == HCBT_MOVESIZE)
@@ -1396,10 +1405,11 @@ CBTProc ( _In_ int    nCode,
       }
     }
   }
+#endif
 
   return
     CallNextHookEx (
-      0, nCode, wParam, lParam
+      hHookCBT, nCode, wParam, lParam
     );
 }
 
@@ -1530,7 +1540,7 @@ SKX_RemoveCBTHook (void)
       DWORD_PTR dwpResult = 0x0;
       SendMessageTimeout ( HWND_BROADCAST,
                             WM_NULL, 0, 0,
-                         SMTO_ABORTIFHUNG,
+                               SMTO_BLOCK,
                                       8UL,
                &dwpResult );
 

@@ -1011,14 +1011,33 @@ SK::ControlPanel::Input::Draw (void)
           (int *)&config.input.gamepad.xinput.ui_slot;
 
         if (config.input.gamepad.xinput.ui_slot != 4)
-          ImGui::RadioButton (
-            SK_FormatString ("自动 (XInput " ICON_FA_GAMEPAD " %d)##XInputSlot",
-                              config.input.gamepad.xinput.ui_slot).c_str (), ui_slot, *ui_slot);
+        {
+          if ( ( connected [0] | connected [1] |
+                 connected [2] | connected [3] )
+                  || SK_HID_PlayStationControllers.empty () )
+          {
+            ImGui::RadioButton (
+              SK_FormatString (
+                (! SK_HID_PlayStationControllers.empty ()) ?
+                "自动 (" ICON_FA_PLAYSTATION "/" ICON_FA_XBOX " "
+                                          ICON_FA_GAMEPAD " %d)##XInputSlot":
+                "自动 (" ICON_FA_XBOX " " ICON_FA_GAMEPAD " %d)##XInputSlot",
+                  config.input.gamepad.xinput.ui_slot).c_str (),
+                                              ui_slot, *ui_slot);
+          }
+          else
+          {
+            ImGui::RadioButton (
+              "自动 (" ICON_FA_PLAYSTATION " " ICON_FA_GAMEPAD ")##XInputSlot",
+                                              ui_slot, *ui_slot);
+          }
+        }
         else
-          ImGui::RadioButton (R"(自动##XInputSlot)",                         ui_slot, 0);
+          ImGui::RadioButton (R"(Auto##XInputSlot)",    ui_slot, 0);
 
         ImGui::SameLine    ();
-        ImGui::RadioButton ("无##XInputSlot", (int *)&config.input.gamepad.xinput.ui_slot, 4);
+        ImGui::RadioButton ("无##XInputSlot",
+                    (int *)&config.input.gamepad.xinput.ui_slot, 4);
 
         if (ImGui::IsItemHovered ())
           ImGui::SetTooltip ("设置菜单仅响应键盘/鼠标输入");
@@ -1314,32 +1333,6 @@ SK::ControlPanel::Input::Draw (void)
           config.input.gamepad.hid.calc_latency = true;
 
           ImGui::TreePush ("");
-
-          static HMODULE hModScePad =
-            SK_GetModuleHandle (L"libscepad.dll");
-
-          if (hModScePad)
-          {
-            ImGui::Checkbox ("挂钩 libScePad", &config.input.gamepad.hook_scepad);
-
-            if (ImGui::IsItemHovered ())
-                ImGui::SetTooltip ("SONY 原生输入API，解锁使用它游戏中的附加设置");
-
-            if (config.input.gamepad.hook_scepad && last_scepad != 0)
-            {
-              ImGui::SameLine   (0.0f, 30);
-
-              ImGui::BeginGroup ();
-              ImGui::Checkbox   ("禁用触摸板",             &config.input.gamepad.scepad.disable_touch);
-              ImGui::Checkbox   ("使用功能键作为触摸板点击",  &config.input.gamepad.scepad.share_clicks_touch);
-              ImGui::EndGroup   ();
-
-              ImGui::SameLine   ();
-            }
-
-            else
-              ImGui::SameLine   (0.0f, 30);
-          }
 
           bool bBluetooth  = false;
           bool bDualSense  = false;
@@ -1975,6 +1968,34 @@ SK::ControlPanel::Input::Draw (void)
 
         if (bHasDualSenseEdge || bHasDualShock4v2 || bHasDualShock4 || bHasBluetooth)
         {
+#if 0
+          static HMODULE hModScePad =
+            SK_GetModuleHandle (L"libscepad.dll");
+
+          if (hModScePad)
+          {
+            ImGui::Checkbox ("Hook libScePad", &config.input.gamepad.hook_scepad);
+
+            if (ImGui::IsItemHovered ())
+                ImGui::SetTooltip ("SONY's native input API; unlocks additional settings in games that use it");
+
+            if (config.input.gamepad.hook_scepad && last_scepad != 0)
+            {
+              ImGui::SameLine   (0.0f, 30);
+
+              ImGui::BeginGroup ();
+              ImGui::Checkbox   ("Disable Touchpad",             &config.input.gamepad.scepad.disable_touch);
+              ImGui::Checkbox   ("Use Share as Touchpad Click",  &config.input.gamepad.scepad.share_clicks_touch);
+              ImGui::EndGroup   ();
+
+              ImGui::SameLine   ();
+            }
+
+            else
+              ImGui::SameLine   (0.0f, 30);
+          }
+#endif
+
           ImGui::BeginGroup ();
           if (ImGui::TreeNode ("Compatibility Options"))
           {

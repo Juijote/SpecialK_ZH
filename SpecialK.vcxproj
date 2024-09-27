@@ -487,7 +487,7 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalOptions>/GUARD:NO /IGNORE:4099,4286 %(AdditionalOptions)</AdditionalOptions>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <RegisterOutput>false</RegisterOutput>
       <CLRUnmanagedCodeCheck>false</CLRUnmanagedCodeCheck>
       <CETCompat>false</CETCompat>
@@ -714,7 +714,7 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalOptions>/GUARD:NO /IGNORE:4099,4286 %(AdditionalOptions)</AdditionalOptions>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <RegisterOutput>false</RegisterOutput>
       <CLRUnmanagedCodeCheck>false</CLRUnmanagedCodeCheck>
       <CETCompat>false</CETCompat>
@@ -1520,6 +1520,24 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
     <ClInclude Include="depends\include\glm\virtrev\xstream.hpp" />
     <ClInclude Include="depends\include\GL\glxew.h" />
     <ClInclude Include="depends\include\GL\wglew.h" />
+    <ClInclude Include="depends\include\jxl\cms.h" />
+    <ClInclude Include="depends\include\jxl\cms_interface.h" />
+    <ClInclude Include="depends\include\jxl\codestream_header.h" />
+    <ClInclude Include="depends\include\jxl\color_encoding.h" />
+    <ClInclude Include="depends\include\jxl\compressed_icc.h" />
+    <ClInclude Include="depends\include\jxl\decode.h" />
+    <ClInclude Include="depends\include\jxl\decode_cxx.h" />
+    <ClInclude Include="depends\include\jxl\encode.h" />
+    <ClInclude Include="depends\include\jxl\encode_cxx.h" />
+    <ClInclude Include="depends\include\jxl\gain_map.h" />
+    <ClInclude Include="depends\include\jxl\memory_manager.h" />
+    <ClInclude Include="depends\include\jxl\parallel_runner.h" />
+    <ClInclude Include="depends\include\jxl\resizable_parallel_runner.h" />
+    <ClInclude Include="depends\include\jxl\resizable_parallel_runner_cxx.h" />
+    <ClInclude Include="depends\include\jxl\stats.h" />
+    <ClInclude Include="depends\include\jxl\thread_parallel_runner.h" />
+    <ClInclude Include="depends\include\jxl\thread_parallel_runner_cxx.h" />
+    <ClInclude Include="depends\include\jxl\types.h" />
     <ClInclude Include="depends\include\lzma\7z.h" />
     <ClInclude Include="depends\include\lzma\7zAlloc.h" />
     <ClInclude Include="depends\include\lzma\7zBuf.h" />
@@ -1627,6 +1645,7 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
     <ClInclude Include="include\imgui\fa_solid_900.ttf.h" />
     <ClInclude Include="include\imgui\font_awesome.h" />
     <ClInclude Include="include\imgui\imfilebrowser.h" />
+    <ClInclude Include="include\intel\HybridDetect.h" />
     <ClInclude Include="include\json\json.hpp" />
     <ClInclude Include="include\shaders\cs_histogram.h" />
     <ClInclude Include="include\shaders\epic_d3d11_vs.h" />
@@ -1740,6 +1759,7 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
     <ClInclude Include="include\SpecialK\render\ngx\ngx.h" />
     <ClInclude Include="include\SpecialK\render\ngx\ngx_defs.h" />
     <ClInclude Include="include\SpecialK\render\ngx\ngx_dlss.h" />
+    <ClInclude Include="include\SpecialK\render\ngx\streamline.h" />
     <ClInclude Include="include\SpecialK\render\present_mon\Debug.hpp" />
     <ClInclude Include="include\SpecialK\render\present_mon\ETW\Microsoft_Windows_D3D9.h" />
     <ClInclude Include="include\SpecialK\render\present_mon\ETW\Microsoft_Windows_Dwm_Core.h" />
@@ -1779,6 +1799,18 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
     <ClInclude Include="include\stb\rect_pack.h" />
     <ClInclude Include="include\stb\textedit.h" />
     <ClInclude Include="include\stb\truetype.h" />
+    <ClInclude Include="include\ultrahdr\editorhelper.h" />
+    <ClInclude Include="include\ultrahdr\gainmapmath.h" />
+    <ClInclude Include="include\ultrahdr\gainmapmetadata.h" />
+    <ClInclude Include="include\ultrahdr\icc.h" />
+    <ClInclude Include="include\ultrahdr\jpegdecoderhelper.h" />
+    <ClInclude Include="include\ultrahdr\jpegencoderhelper.h" />
+    <ClInclude Include="include\ultrahdr\jpegr.h" />
+    <ClInclude Include="include\ultrahdr\jpegrutils.h" />
+    <ClInclude Include="include\ultrahdr\multipictureformat.h" />
+    <ClInclude Include="include\ultrahdr\ultrahdr.h" />
+    <ClInclude Include="include\ultrahdr\ultrahdrcommon.h" />
+    <ClInclude Include="include\ultrahdr\ultrahdr_api.h" />
     <ClInclude Include="include\vulkan\vk_icd.h" />
     <ClInclude Include="include\vulkan\vk_layer.h" />
     <ClInclude Include="include\vulkan\vk_platform.h" />
@@ -2090,7 +2122,12 @@ if exist "$(TargetDir)$(TargetName).exp" ( del "$(TargetDir)$(TargetName).exp" )
     <ClCompile Include="src\render\reflex\reflex.cpp" />
     <ClCompile Include="src\render\screenshot.cpp" />
     <ClCompile Include="src\render\streamline\streamline.cpp" />
-    <ClCompile Include="src\scheduler.cpp" />
+    <ClCompile Include="src\scheduler.cpp">
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release (clang)|Win32'">false</TreatWarningAsError>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</TreatWarningAsError>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release (clang)|x64'">false</TreatWarningAsError>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (clang)|Win32'">Create</PrecompiledHeader>

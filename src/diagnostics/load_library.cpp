@@ -214,9 +214,6 @@ SK_LoadLibrary_IsPinnable (const _T* pStr)
 
     SK_TEXT ("nvapi"), SK_TEXT ("NvCameraAllowlisting"),
 
-    SK_TEXT ("nvofapi"),   // DLSS-G spam reloads this when changing resolution
-    SK_TEXT ("sl.dlss_g"), // DLSS-G may crash at application exit if not pinned
-
     SK_TEXT ("kbd"), // Keyboard Layouts take > ~20 ms to load, leave 'em loaded
 
     //// Some software repeatedly loads and unloads this, which can
@@ -845,7 +842,7 @@ LoadLibrary_Marshal ( LPVOID   lpRet,
 
       bool bVulkanLayerDisabled = false;
 
-      if (SK_GetCallingDLL (lpRet) == SK_GetModuleHandle (L"vulkan-1.dll") && config.apis.NvAPI.vulkan_bridge == 1)
+      if (config.apis.NvAPI.vulkan_bridge == 1 && SK_GetCallingDLL (lpRet) == SK_GetModuleHandle (L"vulkan-1.dll"))
       {
         if (StrStrIW (compliant_path, L"graphics-hook"))
         {
@@ -1206,7 +1203,7 @@ LoadLibraryEx_Marshal ( LPVOID   lpRet, LPCWSTR lpFileName,
   
   bool bVulkanLayerDisabled = false;
 
-  if (SK_GetCallingDLL (lpRet) == SK_GetModuleHandle (L"vulkan-1.dll") && config.apis.NvAPI.vulkan_bridge == 1)
+  if (config.apis.NvAPI.vulkan_bridge == 1 && SK_GetCallingDLL (lpRet) == SK_GetModuleHandle (L"vulkan-1.dll"))
   {
     if (StrStrIW (compliant_path, L"graphics-hook"))
     {
@@ -2363,6 +2360,32 @@ BlacklistLibrary (const _T* lpFileName)
                           std::type_index (typeid (wchar_t)) ?
                       (LoadLibrary_pfn) &SK_LoadLibraryW :
                       (LoadLibrary_pfn) &SK_LoadLibraryA );
+
+  if (true/*config.compatibility.disable_streamline_incompatible_software*/)
+  {
+    static std::vector < const _T* > incompatible_dlls;
+
+    static bool          init = false;
+    if (! std::exchange (init, true))
+    {
+      if ( PathFileExistsW (L"sl.interposer.dll") ||
+          GetModuleHandleW (L"sl.interposer.dll") != nullptr )
+      {
+        incompatible_dlls.emplace_back (SK_TEXT("fps-mon64.dll"));
+      }
+    }
+
+    for (auto& it : incompatible_dlls)
+    {
+      if (StrStrI (lpFileName, it))
+      {
+        SK_LOGs0 ( L"DLL Loader",
+                   L"Known Streamline Incompatible DLL Blocked to Prevent Crashing" );
+
+        return TRUE;
+      }
+    }
+  }
 
   if (config.compatibility.disable_nv_bloat)
   {

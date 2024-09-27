@@ -636,6 +636,9 @@ extern void BasicInit (void);
     case SK_GAME_ID::StarOcean2R:
       SK_SO2R_InitPlugin ();
       break;
+    case SK_GAME_ID::Metaphor:
+      SK_Metaphor_InitPlugin ();
+      break;
 #else
     case SK_GAME_ID::SecretOfMana:
       SK_SOM_InitPlugin ();
@@ -801,7 +804,7 @@ SK_InitFinishCallback (void)
 
   SK::Framerate::Init ();
 
-  gsl::not_null <SK_ICommandProcessor *> cp (
+  static gsl::not_null <SK_ICommandProcessor *> cp (
     SK_GetCommandProcessor ()
   );
 
@@ -826,6 +829,137 @@ SK_InitFinishCallback (void)
         &config.imgui.scale
       )
   );
+
+  struct MemoryManager : public SK_IVariableListener
+  {
+    MemoryManager (void)
+    {
+      SK_Thread_CreateEx ([](LPVOID pUserParam)->DWORD
+      {
+        SK_Thread_SetCurrentPriority (THREAD_PRIORITY_IDLE);
+
+        auto pManager =
+          (MemoryManager *)pUserParam;
+
+        while ( WAIT_OBJECT_0 !=
+                  WaitForSingleObject (__SK_DLL_TeardownEvent, 250UL) )
+        {
+          PROCESS_MEMORY_COUNTERS pmc = {
+            .cb = sizeof (PROCESS_MEMORY_COUNTERS)
+          };
+
+          if (! GetProcessMemoryInfo (SK_GetCurrentProcess (), &pmc, pmc.cb))
+          {
+            if ( WAIT_OBJECT_0 ==
+                   WaitForSingleObject (__SK_DLL_TeardownEvent, 750UL) )
+            {
+              break;
+            }
+          }
+
+          pManager->working_set = pmc.WorkingSetSize;
+
+          MEMORYSTATUSEX
+          msex          = {           };// Mmmm, sex.
+          msex.dwLength = sizeof (msex);
+
+          if (GlobalMemoryStatusEx (&msex))
+          {
+            if (msex.dwMemoryLoad >= 98)
+            {
+              SK_ImGui_CreateNotification (
+                "RAM.HighLoad", SK_ImGui_Toast::Warning,
+                  SK_FormatString ( "Total System RAM Usage:\t%d%%\r\n\r\n"
+                                    "\t * Consider closing background software...",
+                                    msex.dwMemoryLoad
+                                  ).c_str (), "Critically Low System RAM", 20000,
+                                SK_ImGui_Toast::UseDuration |
+                                SK_ImGui_Toast::ShowTitle   |
+                                SK_ImGui_Toast::ShowCaption |
+                                SK_ImGui_Toast::ShowNewest );
+            }
+          }
+        }
+
+        SK_Thread_CloseSelf ();
+
+        return 0;
+      }, L"[SK] Memory Statistics", this);
+
+      vram_scale_var =
+        SK_CreateVar ( SK_IVariable::Float,
+                         &config.render.dxgi.vram_budget_scale, this );
+      working_set_var =
+        SK_CreateVar ( SK_IVariable::LongInt, &working_set,     this );
+
+      cp->AddVariable ("DXGI.VRAMBudgetScale",  vram_scale_var);
+      cp->AddVariable (   "Memory.WorkingSet", working_set_var);
+    }
+
+    ~MemoryManager (void)
+    {
+      if (working_set_var != nullptr)
+      {
+        cp->RemoveVariable ("Memory.WorkingSet");
+        delete working_set_var;
+      }
+
+      if (vram_scale_var != nullptr)
+      {
+        cp->RemoveVariable ("DXGI.VRAMBudgetScale");
+        delete vram_scale_var;
+      }
+    }
+
+    virtual bool OnVarChange (SK_IVariable* var, void* val = nullptr)
+    {
+      if (var != nullptr)
+      {
+        if (var->getValuePointer () == &working_set)
+        {
+          if (val != nullptr)
+          {
+            *(size_t *)val =
+              SK_Memory_EmptyWorkingSet ();
+
+            return true;
+          }
+
+          return false;
+        }
+
+        if (var->getValuePointer () == &config.render.dxgi.vram_budget_scale)
+        {
+          if (val != nullptr)
+          {
+            if (*(float *)val >= 0.1f &&
+                *(float *)val <= 5.0f)
+            {
+              config.render.dxgi.vram_budget_scale =
+                *(float *)val;
+
+              extern HANDLE __SK_DXGI_BudgetChangeEvent;
+              if (          __SK_DXGI_BudgetChangeEvent != INVALID_HANDLE_VALUE)
+                  SetEvent (__SK_DXGI_BudgetChangeEvent);
+
+              return true;
+            }
+          }
+
+          return false;
+        }
+      }
+
+      return false;
+    }
+
+  protected:
+    uint64         working_set;
+
+  private:
+    SK_IVariable*  working_set_var;
+    SK_IVariable*   vram_scale_var;
+  } static memory_manager;
 
   SK_InitRenderBackends ();
 
@@ -1004,6 +1138,22 @@ void BasicInit (void)
   if (config.system.display_debug_out)
     SK::Diagnostics::Debugger::SpawnConsole ();
 
+
+   // Games that need plug-in initialization before Steam
+   //
+   switch (SK_GetCurrentGameID ())
+   {
+#ifdef _WIN64
+     case SK_GAME_ID::FinalFantasyXVI:
+       SK_FFXVI_InitPlugin ();
+       break;
+#endif
+     case SK_GAME_ID::Launcher:
+     default:
+       break;
+   }
+
+
   // Steam Overlay and SteamAPI Manipulation
   //
   if (! config.platform.silent)
@@ -1067,7 +1217,7 @@ DllThread (LPVOID user)
   SetThreadPriority           ( SK_GetCurrentThread (), THREAD_PRIORITY_HIGHEST       );
   SetThreadPriorityBoost      ( SK_GetCurrentThread (), TRUE                          );
 
-  if (config.compatibility.init_on_separate_thread)
+  if (config.compatibility.init_on_separate_thread && (! config.compatibility.init_sync_for_streamline))
   {
     auto* params =
       static_cast <init_params_s *> (user);
@@ -1673,6 +1823,12 @@ SK_StartupCore (const wchar_t* backend, void* callback)
     return false;
   }
 
+  // Not a saved INI setting; use an alternate initialization
+  //   strategy when Streamline is detected...
+  config.compatibility.init_sync_for_streamline =
+    config.compatibility.allow_fake_streamline == false &&
+    (SK_GetModuleHandleW (L"sl.interposer.dll") != 0);
+
  try
  {
   if ( SK_GetProcAddress ( L"NtDll",
@@ -2088,7 +2244,7 @@ SK_StartupCore (const wchar_t* backend, void* callback)
 #ifndef _THREADED_BASIC_INIT
     BasicInit ();
 
-    if (! config.compatibility.init_on_separate_thread)
+    if ((! config.compatibility.init_on_separate_thread) || config.compatibility.init_sync_for_streamline)
     {
       bool gl = false, vulkan = false, d3d9  = false, d3d11 = false, d3d12 = false,
          dxgi = false, d3d8   = false, ddraw = false, glide = false;
@@ -2144,6 +2300,71 @@ SK_StartupCore (const wchar_t* backend, void* callback)
 
   if (! __SK_bypass)
   {
+    auto _AutoLoadASIMods = [&](void)
+    {
+      if (! config.system.auto_load_asi_files)
+        return;
+
+      using namespace std::filesystem;
+
+      std::error_code                                                ec;
+      directory_iterator           working_dir (wszWorkDir,          ec);
+      recursive_directory_iterator profile_dir (SK_GetConfigPath (), ec);
+      
+      std::vector <directory_entry>        files;
+      for (const auto& file : working_dir) files.emplace_back (file);
+      for (const auto& file : profile_dir) files.emplace_back (file);
+      for (const auto& file :              files )
+      {
+        const auto& path =
+               file.path ();
+
+        if (          file.is_regular_file (ec) &&
+           !_wcsicmp (path.extension ().c_str (), L".asi"))
+        {
+          // It's already loaded...
+          if (GetModuleHandleW (path.filename ().c_str ()))
+            continue;
+
+          const auto filename      = path.filename ().wstring  ();
+          const auto filename_utf8 = path.filename ().u8string ();
+
+          dll_log->LogEx (
+            true, L"[ SpecialK ]  * Loading Early ASI PlugIn: '%ws' from '%ws' ... ",
+              filename.c_str (),
+            SK_StripUserNameFromPathW (path.parent_path ().wstring ().data ())
+          );
+
+          const HMODULE hModASI =
+            SK_Modules->LoadLibraryLL (
+             path.wstring ().c_str () );
+
+          if (hModASI != skModuleRegistry::INVALID_MODULE)
+          {
+            dll_log->LogEx (false, L"success!\n");
+
+            SK_ImGui_CreateNotification (
+              "PlugIn.Load", SK_ImGui_Toast::Success,
+                (const char *)filename_utf8.c_str (),
+                        "Special K ASI Plug-In Loaded",
+                          5000, SK_ImGui_Toast::UseDuration |
+                                SK_ImGui_Toast::ShowCaption |
+                                SK_ImGui_Toast::ShowTitle );
+          }
+          
+          else
+          {
+            _com_error err (HRESULT_FROM_WIN32 (GetLastError ()));
+
+            dll_log->LogEx (false, L"failed: 0x%04X (%s)!\n",
+                            err.WCode (), err.ErrorMessage () );
+          }
+        }
+      }
+    };
+
+    _AutoLoadASIMods ();
+
     switch (SK_GetCurrentGameID ())
     {
 #ifdef _M_AMD64
@@ -3196,10 +3417,10 @@ SK_FrameCallback ( SK_RenderBackend& rb,
 
                 else
                 {
-                  SendMessageTimeout (game_window.hWnd, WM_ACTIVATEAPP, TRUE, 0, SMTO_ABORTIFHUNG, 100UL, nullptr);
+                  SendMessageTimeout (game_window.hWnd, WM_ACTIVATEAPP, TRUE, 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, 100UL, nullptr);
                   SendMessageTimeout (game_window.hWnd, WM_ACTIVATE,
-                                                   MAKEWPARAM (WA_ACTIVE, 0), 0, SMTO_ABORTIFHUNG, 100UL, nullptr);
-                  SendMessageTimeout (game_window.hWnd, WM_SETFOCUS,       0, 0, SMTO_ABORTIFHUNG, 100UL, nullptr);
+                                                   MAKEWPARAM (WA_ACTIVE, 0), 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, 100UL, nullptr);
+                  SendMessageTimeout (game_window.hWnd, WM_SETFOCUS,       0, 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, 100UL, nullptr);
                 }
 
                 // Activate the window
@@ -3324,6 +3545,9 @@ void
 __stdcall
 SK_BeginBufferSwapEx (BOOL bWaitOnFail)
 {
+  void SK_Render_CountVBlanks (void);
+       SK_Render_CountVBlanks ();
+
   if (config.render.framerate.enable_mmcss)
   {
     SK_MMCS_BeginBufferSwap ();

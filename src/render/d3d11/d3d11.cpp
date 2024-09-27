@@ -8170,6 +8170,29 @@ D3D11CreateDeviceAndSwapChain_Detour (IDXGIAdapter          *pAdapter,
   if (SK_COMPAT_IgnoreNvCameraCall ())
     return E_NOTIMPL;
 
+  if (! WaitForInitDXGI (0UL))
+  {
+    SK_ComPtr <IDXGIFactory>                       pFactory;
+    CreateDXGIFactory (IID_IDXGIFactory, (void **)&pFactory.p);
+
+    if (! WaitForInitDXGI (25UL))
+    {
+      if (! dxgi_caps.init.load ())
+      {
+        SK_LOGi0 (
+          L"Timed out waiting for DXGI to init, assuming Flip Model is "
+          L"supported by the current runtime..." );
+
+        dxgi_caps.present.flip_discard    = true;
+        dxgi_caps.present.flip_sequential = true;
+        dxgi_caps.swapchain.allow_tearing = true;
+      }
+    }
+
+    if (pSwapChainDesc != nullptr && SK_DXGI_IsSwapChainReal (*pSwapChainDesc))
+      WaitForInitDXGI ();
+  }
+
   if (! config.render.dxgi.debug_layer)
   {
     if (bEOSOverlay || (pSwapChainDesc != nullptr && !SK_DXGI_IsSwapChainReal (*pSwapChainDesc)))

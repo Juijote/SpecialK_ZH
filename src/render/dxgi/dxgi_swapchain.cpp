@@ -105,6 +105,9 @@ IWrapDXGISwapChain::RegisterDestructionCallback (void)
     E_NOTIMPL;
 }
 
+struct DECLSPEC_UUID ("ADEC44E2-61F0-45C3-AD9F-1B37379284FF")
+  IStreamlineBaseInterface : IUnknown { };
+
 // IDXGISwapChain
 HRESULT
 STDMETHODCALLTYPE
@@ -122,6 +125,14 @@ IWrapDXGISwapChain::QueryInterface (REFIID riid, void **ppvObj)
     pReal->AddRef ();
 
     return S_OK;
+  }
+
+  // Keep SwapChain wrapping the hell away from Streamline!
+  else if (riid == __uuidof (IStreamlineBaseInterface))
+  {
+    SK_LOGi1 (L"Tried to get Streamline Base Interface for a SwapChain that SK has wrapped...");
+
+    return E_NOINTERFACE;
   }
 
   else if (
@@ -298,18 +309,20 @@ IWrapDXGISwapChain::Release (void)
     auto& rb =
       SK_GetCurrentRenderBackend ();
 
+    _d3d12_rbk->drain_queue ();
+
     //  If this SwapChain is the primary one that SK is rendering to,
     //    then we must teardown our render backend to eliminate internal
     //      references preventing the SwapChain from being destroyed.
     if ( rb.swapchain.p == this ||
          rb.swapchain.p == pReal )
     {
-      rb.releaseOwnedResources ();
-
       // This is a hard reset, we're going to get a new cmd queue
       _d3d11_rbk->release (_d3d11_rbk->_pSwapChain);
       _d3d12_rbk->release (_d3d12_rbk->_pSwapChain);
       _d3d12_rbk->_pCommandQueue.Release ();
+
+      rb.releaseOwnedResources ();
     }
   }
 
@@ -342,6 +355,23 @@ IWrapDXGISwapChain::Release (void)
       InterlockedDecrement (&SK_DXGI_LiveWrappedSwapChains);
 
     pDev.Release ();
+
+    if ((! _d3d12_rbk->frames_.empty ()) ||
+           _d3d12_rbk->_pCommandQueue.p != nullptr)
+    {
+      SK_LOGi0 (
+        L"Clearing ImGui D3D12 Command Queue because SwapChain using it "
+        L"was destroyed..." );
+
+      // Finish up any queued presents, then re-initialize the command queue
+      _d3d12_rbk->release (_d3d12_rbk->_pSwapChain);
+      _d3d12_rbk->_pCommandQueue.Release ();
+
+      auto& rb =
+        SK_GetCurrentRenderBackend ();
+
+      rb.releaseOwnedResources ();
+    }
 
     //delete this;
   }
@@ -694,9 +724,9 @@ IWrapDXGISwapChain::GetBuffer (UINT Buffer, REFIID riid, void **ppSurface)
              texDesc.Width  == swapDesc.BufferDesc.Width  &&
              texDesc.Height == swapDesc.BufferDesc.Height &&
              DirectX::MakeTypeless (            texDesc.Format) ==
-             DirectX::MakeTypeless (swapDesc.BufferDesc.Format) &&
-             std::exchange (flip_model.last_srgb_mode, config.render.dxgi.srgb_behavior) ==
-                                                       config.render.dxgi.srgb_behavior )
+             DirectX::MakeTypeless (swapDesc.BufferDesc.Format) && !rb.active_traits.bOriginallysRGB )
+             //std::exchange (flip_model.last_srgb_mode, config.render.dxgi.srgb_behavior) ==
+             //                                          config.render.dxgi.srgb_behavior )
       {
         return
           _backbuffers [Buffer]->QueryInterface (riid, ppSurface);
@@ -726,12 +756,8 @@ IWrapDXGISwapChain::GetBuffer (UINT Buffer, REFIID riid, void **ppSurface)
           // sRGB is being turned off for Flip Model
           if (rb.active_traits.bOriginallysRGB && (! scrgb_hdr))
           {
-            if (config.render.dxgi.srgb_behavior >= 1)
-              texDesc.Format =
-                  DirectX::MakeSRGB (DirectX::MakeTypelessUNORM (typeless));
-            else
-              texDesc.Format = typeless;
-
+            texDesc.Format =
+                DirectX::MakeSRGB (DirectX::MakeTypelessUNORM (typeless));
           }
 
           // HDR Override: Firm override to a typed format is safe
@@ -1456,16 +1482,21 @@ IWrapDXGISwapChain::SetHDRMetaData ( DXGI_HDR_METADATA_TYPE  Type,
                       Type == DXGI_HDR_METADATA_TYPE_NONE ? L"Disabled"
                                                           : L"HDR10");
 
-  if (Size == sizeof (DXGI_HDR_METADATA_HDR10) && Type == DXGI_HDR_METADATA_TYPE_HDR10)
-  {
-    auto metadata =
-      *(DXGI_HDR_METADATA_HDR10 *)pMetaData;
+  DXGI_HDR_METADATA_HDR10 metadata = {};
 
-    SK_LOGi0 (
-      L"HDR Metadata: Max Mastering=%d nits, Min Mastering=%f nits, MaxCLL=%d nits, MaxFALL=%d nits",
-      metadata.MaxMasteringLuminance, (double)metadata.MinMasteringLuminance * 0.0001,
-      metadata.MaxContentLightLevel, metadata.MaxFrameAverageLightLevel
-    );
+  if (Type == DXGI_HDR_METADATA_TYPE_NONE || (Size == sizeof (DXGI_HDR_METADATA_HDR10) && Type == DXGI_HDR_METADATA_TYPE_HDR10))
+  {
+    if (Size == sizeof (DXGI_HDR_METADATA_HDR10) && Type == DXGI_HDR_METADATA_TYPE_HDR10)
+    {
+      metadata =
+        *(DXGI_HDR_METADATA_HDR10 *)pMetaData;
+
+      SK_LOGi0 (
+        L"HDR Metadata: Max Mastering=%d nits, Min Mastering=%f nits, MaxCLL=%d nits, MaxFALL=%d nits",
+        metadata.MaxMasteringLuminance, (double)metadata.MinMasteringLuminance * 0.0001,
+        metadata.MaxContentLightLevel,          metadata.MaxFrameAverageLightLevel
+      );
+    }
 
     if (config.render.dxgi.hdr_metadata_override == -1)
     {
@@ -1475,45 +1506,68 @@ IWrapDXGISwapChain::SetHDRMetaData ( DXGI_HDR_METADATA_TYPE  Type,
       auto& display =
         rb.displays [rb.active_display];
 
-#if 0
-      if ((float)metadata.MaxMasteringLuminance > display.gamut.maxY)
-                 metadata.MaxMasteringLuminance = (INT)floor (display.gamut.maxY);
+      if (display.gamut.maxLocalY == 0.0f)
+      {
+        SK_ComPtr <IDXGIOutput>      pOutput;
+        pReal->GetContainingOutput (&pOutput.p);
 
-      if (metadata.MaxContentLightLevel >                           metadata.MaxMasteringLuminance)
-          metadata.MaxContentLightLevel = sk::narrow_cast <UINT16> (metadata.MaxMasteringLuminance);
+        SK_ComQIPtr <IDXGIOutput6>
+            pOutput6 (   pOutput);
+        if (pOutput6.p != nullptr)
+        {
+          DXGI_OUTPUT_DESC1    outDesc1 = { };
+          pOutput6->GetDesc1 (&outDesc1);
 
-      if (metadata.MaxContentLightLevel      < metadata.MaxFrameAverageLightLevel)
-          metadata.MaxFrameAverageLightLevel = metadata.MaxContentLightLevel;
-#else
-        metadata.MinMasteringLuminance     = sk::narrow_cast <UINT>   (display.gamut.minY / 0.0001);
-        metadata.MaxMasteringLuminance     = sk::narrow_cast <UINT>   (display.gamut.maxY);
-        metadata.MaxContentLightLevel      = sk::narrow_cast <UINT16> (display.gamut.maxLocalY);
-        metadata.MaxFrameAverageLightLevel = sk::narrow_cast <UINT16> (display.gamut.maxLocalY);
+          display.gamut.maxLocalY   = outDesc1.MaxLuminance;
+          display.gamut.maxAverageY = outDesc1.MaxFullFrameLuminance;
+          display.gamut.maxY        = outDesc1.MaxLuminance;
+          display.gamut.minY        = outDesc1.MinLuminance;
+          display.gamut.xb          = outDesc1.BluePrimary  [0];
+          display.gamut.yb          = outDesc1.BluePrimary  [1];
+          display.gamut.xg          = outDesc1.GreenPrimary [0];
+          display.gamut.yg          = outDesc1.GreenPrimary [1];
+          display.gamut.xr          = outDesc1.RedPrimary   [0];
+          display.gamut.yr          = outDesc1.RedPrimary   [1];
+          display.gamut.Xw          = outDesc1.WhitePoint   [0];
+          display.gamut.Yw          = outDesc1.WhitePoint   [1];
+          display.gamut.Zw          = 1.0f - display.gamut.Xw - display.gamut.Yw;
 
-        metadata.BluePrimary  [0]          = sk::narrow_cast <UINT16> (display.gamut.xb);
-        metadata.BluePrimary  [1]          = sk::narrow_cast <UINT16> (display.gamut.yb);
-        metadata.RedPrimary   [0]          = sk::narrow_cast <UINT16> (display.gamut.xr);
-        metadata.RedPrimary   [1]          = sk::narrow_cast <UINT16> (display.gamut.yr);
-        metadata.GreenPrimary [0]          = sk::narrow_cast <UINT16> (display.gamut.xg);
-        metadata.GreenPrimary [1]          = sk::narrow_cast <UINT16> (display.gamut.yg);
-        metadata.WhitePoint   [0]          = sk::narrow_cast <UINT16> (display.gamut.Xw);
-        metadata.WhitePoint   [1]          = sk::narrow_cast <UINT16> (display.gamut.Yw);
-#endif
+          SK_ReleaseAssert (outDesc1.Monitor == display.monitor || display.monitor == 0);
+        }
+      }
+
+      metadata.MinMasteringLuminance     = sk::narrow_cast <UINT>   (display.gamut.minY / 0.0001);
+      metadata.MaxMasteringLuminance     = sk::narrow_cast <UINT>   (display.gamut.maxY);
+      metadata.MaxContentLightLevel      = sk::narrow_cast <UINT16> (display.gamut.maxLocalY);
+      metadata.MaxFrameAverageLightLevel = sk::narrow_cast <UINT16> (display.gamut.maxAverageY);
+
+      metadata.BluePrimary  [0]          = sk::narrow_cast <UINT16> (0.1500/*display.gamut.xb*/ * 50000.0F);
+      metadata.BluePrimary  [1]          = sk::narrow_cast <UINT16> (0.0600/*display.gamut.yb*/ * 50000.0F);
+      metadata.RedPrimary   [0]          = sk::narrow_cast <UINT16> (0.6400/*display.gamut.xr*/ * 50000.0F);
+      metadata.RedPrimary   [1]          = sk::narrow_cast <UINT16> (0.3300/*display.gamut.yr*/ * 50000.0F);
+      metadata.GreenPrimary [0]          = sk::narrow_cast <UINT16> (0.3000/*display.gamut.xg*/ * 50000.0F);
+      metadata.GreenPrimary [1]          = sk::narrow_cast <UINT16> (0.6000/*display.gamut.yg*/ * 50000.0F);
+      metadata.WhitePoint   [0]          = sk::narrow_cast <UINT16> (0.3127/*display.gamut.Xw*/ * 50000.0F);
+      metadata.WhitePoint   [1]          = sk::narrow_cast <UINT16> (0.3290/*display.gamut.Yw*/ * 50000.0F);
         
-        SK_RunOnce (
-          SK_LOGi0 (
-            L"Metadata Override: Max Mastering=%d nits, Min Mastering=%f nits, MaxCLL=%d nits, MaxFALL=%d nits",
-            metadata.MaxMasteringLuminance, (double)metadata.MinMasteringLuminance * 0.0001,
-            metadata.MaxContentLightLevel,          metadata.MaxFrameAverageLightLevel
-          )
-        );
+      SK_RunOnce (
+        SK_LOGi0 (
+          L"Metadata Override: Max Mastering=%d nits, Min Mastering=%f nits, MaxCLL=%d nits, MaxFALL=%d nits",
+          metadata.MaxMasteringLuminance, (double)metadata.MinMasteringLuminance * 0.0001,
+          metadata.MaxContentLightLevel,          metadata.MaxFrameAverageLightLevel
+        )
+      );
 
-      *(DXGI_HDR_METADATA_HDR10 *)pMetaData = metadata;
+      if (Size == sizeof (DXGI_HDR_METADATA_HDR10) && Type == DXGI_HDR_METADATA_TYPE_HDR10)
+        *(DXGI_HDR_METADATA_HDR10 *)pMetaData = metadata;
+      else
+      {
+        pMetaData = &metadata;
+        Size      = sizeof (DXGI_HDR_METADATA_HDR10);
+        Type      = DXGI_HDR_METADATA_TYPE_HDR10;
+      }
     }
   }
-
-  if (__SK_HDR_10BitSwap || __SK_HDR_16BitSwap)
-    return S_OK;
 
   //SK_LOG_FIRST_CALL
 
@@ -1674,6 +1728,7 @@ SK_DXGI_SwapChain_SetFullscreenState_Impl (
       pTarget    = nullptr;
       dll_log->Log ( L"[   DXGI   ]  >> Display Override "
                      L"(Requested: Fullscreen, Using: Windowed)" );
+      SK_Window_RemoveBorders ();
     }
 
     else if (request_mode_change == mode_change_request_e::Fullscreen &&

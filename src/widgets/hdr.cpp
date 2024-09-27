@@ -359,139 +359,6 @@ SK_HDR_KeyPress ( BOOL Control,
   return FALSE;
 }
 
-// PQ ST.2048 max value
-// 1.0 = 100nits, 100.0 = 10knits
-#define DEFAULT_MAX_PQ 100.0
-
-struct float3 {
-public:
-  float3 (float x_, float y_, float z_)
-  {
-    x = x_; y = y_; z = z_;
-  };
-
-  union {
-    float xyz [3];
-    float x, y, z;
-    float r, g, b;
-  };
-
-  float& operator [](int i) { return xyz [i]; }
-};
-
-static const float3 sdr_full_white = { 1.0f, 1.0f, 1.0f };
-
-struct ParamsPQ
-{
-  float N, M;
-  float C1, C2, C3;
-};
-
-static const ParamsPQ PQ =
-{
-  2610.0 / 4096.0 / 4.0,   // N
-  2523.0 / 4096.0 * 128.0, // M
-  3424.0 / 4096.0,         // C1
-  2413.0 / 4096.0 * 32.0,  // C2
-  2392.0 / 4096.0 * 32.0,  // C3
-};
-
-float rcp (float v)
-{
-  return
-    1.0f / v;
-};
-
-float3 rcp (float3 v)
-{
-  return
-    float3 ( rcp (v.x),
-             rcp (v.y),
-             rcp (v.z) );
-};
-
-// PositivePow remove this warning when you know the value is positive and avoid inf/NAN.
-float PositivePow (float base, float power)
-{
-  return
-    pow ( std::max (abs (base), float (FLT_EPSILON)), power );
-}
-
-float3 PositivePow (float3 base, float3 power)
-{
-  return
-    float3 (
-      std::pow (std::max (std::abs (base.x), FLT_EPSILON), power.x),
-      std::pow (std::max (std::abs (base.y), FLT_EPSILON), power.y),
-      std::pow (std::max (std::abs (base.z), FLT_EPSILON), power.z)
-    );
-}
-
-float3 PositivePow (float3 base, float power)
-{
-  return
-    PositivePow (base, float3 (power, power, power));
-}
-
-float3 LinearToPQ (float3 x);
-float3 LinearToPQ (float3 x, float maxPQValue)
-{
-  x =
-    PositivePow ( float3 (x [0] / maxPQValue,
-                          x [1] / maxPQValue,
-                          x [2] / maxPQValue),
-                  float3 (PQ.N,
-                          PQ.N,
-                          PQ.N) );
-  
-  float3 nd =
-    float3 (
-      (PQ.C1 + PQ.C2 * x.x) /
-       (1.0f + PQ.C3 * x.x),
-      (PQ.C1 + PQ.C2 * x.y) /
-       (1.0f + PQ.C3 * x.y),
-      (PQ.C1 + PQ.C2 * x.z) /
-       (1.0f + PQ.C3 * x.z)
-    );
-
-  return
-    PositivePow (nd, PQ.M);
-}
-
-float3 LinearToPQ (float3 x)
-{
-  return
-    LinearToPQ (x, DEFAULT_MAX_PQ);
-}
-
-float3 PQToLinear (float3 v, float maxPQValue)
-{
-  v =
-    PositivePow (v, rcp (PQ.M));
-
-  float3 nd =
-    float3 (
-      std::max (v.x - PQ.C1, 0.0f) /
-                     (PQ.C2 - (PQ.C3 * v.x)),
-      std::max (v.y - PQ.C1, 0.0f) /
-                     (PQ.C2 - (PQ.C3 * v.z)),
-      std::max (v.z - PQ.C1, 0.0f) /
-                     (PQ.C2 - (PQ.C3 * v.z))
-    );
-
-  return
-    float3 (PositivePow (nd.x, rcp (PQ.N)) * maxPQValue,
-            PositivePow (nd.y, rcp (PQ.N)) * maxPQValue,
-            PositivePow (nd.z, rcp (PQ.N)) * maxPQValue);
-}
-
-float3 PQToLinear (float3 x)
-{
-  return
-    PQToLinear (x, DEFAULT_MAX_PQ);
-}
-
-
 std::wstring
 SK_Display_GetDeviceNameAndGUID (const wchar_t *wszPathName)
 {
@@ -1304,6 +1171,31 @@ public:
           }
         }
 
+        // Swap presets when changing between scRGB and HDR10 native
+        if (__SK_HDR_Preset == 3 && __SK_HDR_16BitSwap)
+        {
+          __SK_HDR_Preset = 2;
+          hdr_presets [__SK_HDR_Preset].cfg_tonemap->set_value (SK_HDR_TONEMAP_HDR10_PASSTHROUGH);
+        }
+
+        else if (__SK_HDR_Preset == 2 && __SK_HDR_10BitSwap)
+        {
+          __SK_HDR_Preset = 3;
+          hdr_presets [__SK_HDR_Preset].cfg_tonemap->set_value (SK_HDR_TONEMAP_RAW_IMAGE);
+        }
+
+        auto& preset =
+          hdr_presets [__SK_HDR_Preset];
+
+        if (preset.cfg_nits->get_value () == 1.0f)
+        {
+          preset.peak_white_nits = 0.99999f;
+          preset.cfg_nits->set_value (preset.peak_white_nits);
+
+          preset.activate ();
+          preset.store    ();
+        }
+
         config.utility.save_async ();
 
         SK_ComQIPtr <IDXGISwapChain3> pSwapChain (rb.swapchain);
@@ -1340,10 +1232,10 @@ public:
       }
     }
 
-    static const bool bStreamline =
+    static const bool bStreamlineDLSSG =
       SK_IsModuleLoaded (L"sl.dlss_g.dll");
 
-    if (bStreamline && ImGui::IsItemHovered ())
+    if (bStreamlineDLSSG && ImGui::IsItemHovered ())
     {
       ImGui::BeginTooltip      ( );
       {
@@ -1867,27 +1759,6 @@ public:
 
             else
             {
-#if 0
-              float3 pq_color =
-                LinearToPQ ( sdr_full_white, preset.pq_boost0 );
-
-              pq_color.x *= preset.pq_boost2;
-              pq_color.y *= preset.pq_boost2;
-              pq_color.z *= preset.pq_boost2;
-
-              float3 new_color =
-                PQToLinear (pq_color, preset.pq_boost1);
-
-              new_color.x /= preset.pq_boost3;
-              new_color.y /= preset.pq_boost3;
-              new_color.z /= preset.pq_boost3;
-
-              float
-                peak_adjusted =
-                  std::max ( new_color.x,
-                  std::max ( new_color.y,
-                             new_color.z ) );
-#endif
               peak_nits /= 80.0f;
 
               bool bDefaultPB_v0 =
@@ -2075,6 +1946,12 @@ public:
                   preset.colorspace.tonemap = SK_HDR_TONEMAP_NONE;
                   preset.eotf               = 1.0f;
 
+                  if (preset.cfg_nits->get_value () == 1.0f)
+                  {
+                    preset.peak_white_nits = 0.99999f;
+                    preset.cfg_nits->set_value (preset.peak_white_nits);
+                  }
+
                   preset.activate ();
                   preset.store    ();
                 }
@@ -2085,6 +1962,12 @@ public:
 
                   preset.colorspace.tonemap = SK_HDR_TONEMAP_HDR10_PASSTHROUGH;
                   preset.eotf               = 1.0f;
+
+                  if (preset.cfg_nits->get_value () == 1.0f)
+                  {
+                    preset.peak_white_nits = 0.99999f;
+                    preset.cfg_nits->set_value (preset.peak_white_nits);
+                  }
 
                   preset.activate ();
                   preset.store    ();
@@ -2234,10 +2117,10 @@ public:
 
             sec.add_key_value (
               SK_FormatStringW (L"scRGBLuminance_[%lu]", __SK_HDR_Preset),
-                                                 std::to_wstring (preset.peak_white_nits) );
+                                             std::to_wstring (preset.peak_white_nits) );
             sec.add_key_value (
               SK_FormatStringW (L"scRGBPaperWhite_[%lu]", __SK_HDR_Preset),
-                                                  std::to_wstring (preset.paper_white_nits) );
+                                             std::to_wstring (preset.paper_white_nits) );
             sec.add_key_value (
               SK_FormatStringW (L"scRGBGamma_[%lu]", __SK_HDR_Preset),
                                              std::to_wstring (preset.eotf) );
@@ -2450,7 +2333,7 @@ public:
 
             const bool pboost = (preset.pq_boost0 > 0.0f);
 
-            if (abs (__SK_HDR_Luma) != 1.0f)
+            if (abs (__SK_HDR_Luma) >= 1.0f)
             {
               if (ImGui::Checkbox ("Tonemap Overbright Bits", &preset.tonemap_overbright))
               {
@@ -2463,7 +2346,8 @@ public:
 
             if (pboost)
             {
-              ImGui::SameLine ();
+              if (abs (__SK_HDR_Luma) >= 1.0f)
+                ImGui::SameLine ();
 
               float colorboost =
                 100.0f * preset.pq_colorboost;

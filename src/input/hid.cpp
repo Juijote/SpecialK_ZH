@@ -1018,7 +1018,7 @@ ReadFile_Detour (HANDLE       hFile,
 
           if ((! lpOverlapped) && dev_allowed)
           {
-            if (                   cached_report.size   ()          < nNumberOfBytesRead)
+            if (                   cached_report.size   ()          < nNumberOfBytesRead && nNumberOfBytesRead > 0)
                                    cached_report.resize (             nNumberOfBytesRead);
               SK_UNTRUSTED_memcpy (cached_report.data   (), lpBuffer, nNumberOfBytesRead);
           }
@@ -1139,15 +1139,18 @@ ReadFile_Detour (HANDLE       hFile,
               if (hid_file->_cachedInputReportsByReportId [report_id].size () <= dwBytesRead)
                   hid_file->_cachedInputReportsByReportId [report_id].resize (   dwBytesRead);
 
-              hid_file->_cachedInputReportsByReportId [report_id].data ()[0] = report_id;
-
-              //if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead))
+              if (dwBytesRead > 0)
               {
-                SK_UNTRUSTED_memcpy (
-                  hid_file->_cachedInputReportsByReportId [report_id].data (), lpBuffer,
-                      dwBytesRead );
+                hid_file->_cachedInputReportsByReportId [report_id].data ()[0] = report_id;
 
-                hid_file->neutralizeHidInput (report_id, dwBytesRead);
+                //if (hid_file->neutralizeHidInput (report_id, nNumberOfBytesToRead))
+                {
+                  SK_UNTRUSTED_memcpy (
+                    hid_file->_cachedInputReportsByReportId [report_id].data (), lpBuffer,
+                        dwBytesRead );
+
+                  hid_file->neutralizeHidInput (report_id, dwBytesRead);
+                }
               }
             }
 
@@ -1918,8 +1921,9 @@ SetupDiGetClassDevsW_Detour (
   _In_opt_       HWND    hwndParent,
   _In_           DWORD   Flags )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -1935,8 +1939,9 @@ SetupDiGetClassDevsA_Detour (
   _In_opt_       HWND   hwndParent,
   _In_           DWORD  Flags )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -1955,8 +1960,9 @@ SetupDiGetClassDevsExW_Detour (
   _In_opt_       PCWSTR   MachineName,
   _Reserved_     PVOID    Reserved )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -1977,8 +1983,9 @@ SetupDiGetClassDevsExA_Detour (
   _In_opt_       PCSTR    MachineName,
   _Reserved_     PVOID    Reserved )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -1997,8 +2004,9 @@ SetupDiEnumDeviceInterfaces_Detour (
   _In_       DWORD                     MemberIndex,
   _Out_      PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -2020,8 +2028,9 @@ SetupDiGetDeviceInterfaceDetailW_Detour (
             PDWORD                             RequiredSize,
   _Out_opt_ PSP_DEVINFO_DATA                   DeviceInfoData )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -2046,8 +2055,9 @@ SetupDiGetDeviceInterfaceDetailA_Detour (
             PDWORD                             RequiredSize,
   _Out_opt_ PSP_DEVINFO_DATA                   DeviceInfoData )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
@@ -2065,8 +2075,9 @@ WINAPI
 SetupDiDestroyDeviceInfoList_Detour (
   _In_ HDEVINFO DeviceInfoSet )
 {
-  if (SK_GetCallingDLL () != SK_GetDLL ())
-  {
+  static bool _once = false;
+  if (        _once == false && SK_GetCallingDLL () != SK_GetDLL ())
+  {           _once = true;
     SK_LOG_FIRST_CALL
   }
 
