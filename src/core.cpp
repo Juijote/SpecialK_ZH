@@ -869,10 +869,10 @@ SK_InitFinishCallback (void)
             {
               SK_ImGui_CreateNotification (
                 "RAM.HighLoad", SK_ImGui_Toast::Warning,
-                  SK_FormatString ( "Total System RAM Usage:\t%d%%\r\n\r\n"
-                                    "\t * Consider closing background software...",
+                  SK_FormatString ( "系统内存总使用量:\t%d%%\r\n\r\n"
+                                    "\t * 考虑关闭后台软件...",
                                     msex.dwMemoryLoad
-                                  ).c_str (), "Critically Low System RAM", 20000,
+                                  ).c_str (), "系统内存严重不足", 20000,
                                 SK_ImGui_Toast::UseDuration |
                                 SK_ImGui_Toast::ShowTitle   |
                                 SK_ImGui_Toast::ShowCaption |
@@ -884,7 +884,7 @@ SK_InitFinishCallback (void)
         SK_Thread_CloseSelf ();
 
         return 0;
-      }, L"[SK] Memory Statistics", this);
+      }, L"[SK] 内存统计", this);
 
       vram_scale_var =
         SK_CreateVar ( SK_IVariable::Float,
