@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -109,7 +90,7 @@ SK_Thread_WaitWhilePumpingMessages (DWORD dwMilliseconds, BOOL bAlertable, SK_TL
 
   if (dwMilliseconds == INFINITE)
   {
-    SK_LOG0 ( ( L"Infinite Sleep On Window Thread (!!) - SK will not force thread awake..." ),
+    SK_LOG0 ( ( L"窗口线程上的无限睡眠 (!!) -SK 不会强制唤醒线程..." ),
                 L"Win32-Pump" );
 
     SK_SleepEx (
@@ -171,8 +152,7 @@ SK_Thread_WaitWhilePumpingMessages (DWORD dwMilliseconds, BOOL bAlertable, SK_TL
     {  Translate (&msg);
         Dispatch (&msg);
 
-      SK_LOG1 ( ( L"Dispatched Message: %x to %ws HWND: %x while "
-                  L"framerate limiting!",
+      SK_LOG1 ( ( L"发送消息：%x 至 %ws HWND：%x，同时帧率限制！",
                    msg.message, wszDesc,
                    msg.hwnd ),                       L"Win32-Pump" );
     }
@@ -276,7 +256,7 @@ SK_Thread_WaitWhilePumpingMessages (DWORD dwMilliseconds, BOOL bAlertable, SK_TL
         SK_MMCS_TaskEntry* task_me =
           ( config.render.framerate.enable_mmcss ?
             SK_MMCS_GetTaskForThreadID ( SK_GetCurrentThreadId (),
-                      "Dubious Sleeper (0 ms)" ) : nullptr );
+                      "可疑睡眠（0 毫秒）" ) : nullptr );
 
         if (task_me != nullptr)
         {
@@ -364,8 +344,7 @@ SK_Thread_WaitWhilePumpingMessages (DWORD dwMilliseconds, BOOL bAlertable, SK_TL
       else
       {
         SK_ReleaseAssert (!
-                          L"Unexpected Wait State in call to "
-                          L"MsgWaitForMultipleObjectsEx (...)");
+                          L"调用 MsgWaitForMultipleObjects 时出现意外等待状态 (...)");
 
         return;
       }
@@ -440,7 +419,7 @@ SK_WaitForSingleObject_Micro ( _In_  HANDLE          hHandle,
       }
     }
 
-    dll_log->Log (L"Unexpected SK_WaitForSingleObject_Micro Status: '%x'", (DWORD)NtStatus);
+    dll_log->Log (L"意外的 SK_WaitForSingleObject_Micro 状态: '%x'", (DWORD)NtStatus);
 
     // ???
     return
@@ -632,7 +611,7 @@ NtWaitForSingleObject_Detour (
   {
     // Not to be confused with the other thing
     bool hardly_working =
-      (! StrCmpW (pTLS->debug.name, L"Worker Thread"));
+      (! StrCmpW (pTLS->debug.name, L"工作线程"));
 
     if ( SK_POE2_Stage3UnityFix || hardly_working )
     {
@@ -1129,8 +1108,8 @@ SleepEx_Detour (DWORD dwMilliseconds, BOOL bAlertable)
       static int times_warned = 0;
       if (     ++times_warned < 5 || config.system.log_level > 0)
       {
-        SK_LOGs0 ( L"Scheduler ",
-          L"Excessive sleep duration (%d-ms) detected on render thread, limiting to 500 ms",
+        SK_LOGs0 ( L"调度程序 ",
+          L"在渲染线程上检测到过多的睡眠持续时间 (%d-ms)，限制为 500 毫秒",
             dwMilliseconds );
       }     dwMilliseconds = 500;
     }
@@ -1160,8 +1139,7 @@ SleepEx_Detour (DWORD dwMilliseconds, BOOL bAlertable)
         static bool reported = false;
              if ((! reported) || config.system.log_level > 2)
               {
-                dll_log->Log ( L"[FrameLimit] Sleep called from render "
-                               L"thread: %lu ms!", dwMilliseconds );
+                dll_log->Log ( L"[FrameLimit] 从渲染线程调用的睡眠：%lu 毫秒!", dwMilliseconds );
                 reported = true;
               }
       }
@@ -1206,8 +1184,8 @@ SleepEx_Detour (DWORD dwMilliseconds, BOOL bAlertable)
       static int times_warned = 0;
       if (     ++times_warned < 5 || config.system.log_level > 0)
       {
-        SK_LOGs0 ( L"Scheduler ",
-          L"Excessive sleep duration (%d-ms) detected on window thread, limiting to 250 ms",
+        SK_LOGs0 ( L"调度程序 ",
+          L"在窗口线程上检测到过多的睡眠持续时间 (%d-ms)，限制为 250 毫秒",
             dwMilliseconds );
       }     dwMilliseconds = 250;
     }
@@ -1220,8 +1198,7 @@ SleepEx_Detour (DWORD dwMilliseconds, BOOL bAlertable)
         static bool reported = false;
               if (! reported)
               {
-                dll_log->Log ( L"[FrameLimit] Sleep called from GUI thread: "
-                               L"%lu ms!", dwMilliseconds );
+                dll_log->Log ( L"[FrameLimit] 从 GUI 线程调用睡眠：%lu 毫秒！", dwMilliseconds );
                 reported = true;
               }
       }
@@ -1522,7 +1499,7 @@ QueryPerformanceCounter_Shenmue_Detour (_Out_ LARGE_INTEGER* lpPerformanceCount)
               shenmue_clock.pacified =
                 SK_Shenmue_InitLimiterOverride (_ReturnAddress ());
 
-              SK_LOG0 ( (L"Shenmue Framerate Limiter Located and Pacified"),
+              SK_LOG0 ( (L"《莎木》帧率限制器已定位并得到解决"),
                          L"ShenmueDbg" );
             }
           }
@@ -1666,8 +1643,8 @@ NtSetTimerResolution_Detour
     if ( bPrint               &&
          pSetCount != nullptr && (*(pSetCount) % 100) == 1 )
     {
-      SK_LOGs0 ( L"  Timing  ",
-                 L"Kernel resolution.: %f ms", static_cast <float>
+      SK_LOGs0 ( L"  定时  ",
+                 L"内核分辨率.: %f ms", static_cast <float>
                                    (cur * 100)/1000000.0f
       );
     }
@@ -1685,8 +1662,8 @@ NtSetTimerResolution_Detour
 
   if (bPrint && ((! pSetCount) || (*(pSetCount) % 100) == 1))
   {
-    SK_LOGs0 ( L"Scheduler ",
-               L"NtSetTimerResolution (%f ms : %s) issued by %s ... %lu times",
+    SK_LOGs0 ( L"调度程序 ",
+               L"NtSetTimerResolution (%f ms : %s) %s 发出...%lu 次",
                 (double)(DesiredResolution * 100.0) / 1000000.0,
                             SetResolution ? L"Set" : L"Get",
                                   SK_GetCallerName ().c_str (),
@@ -1724,7 +1701,7 @@ SetProcessAffinityMask_Detour (
           config.system.log_level > 0)
       {
         SK_LOGi0 (
-          L"Preventing attempted change (%x) to process affinity mask.",
+          L"阻止尝试更改 (%x) 来处理关联掩码。",
             dwProcessAffinityMask
         );
       }

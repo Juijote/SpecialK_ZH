@@ -2306,13 +2306,13 @@ SK_DXGI_SwapChain_ResizeBuffers_Impl (
       case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
         NewFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
         dll_log->Log ( L"[ DXGI 1.2 ]  >> sRGB (B8G8R8A8) Override "
-                       L"Required to Enable Flip Model" );
+                       L"启用翻转模型需要" );
         rb.srgb_stripped = true;
         break;
       case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
         NewFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
         dll_log->Log ( L"[ DXGI 1.2 ]  >> sRGB (R8G8B8A8) Override "
-                       L"Required to Enable Flip Model" );
+                       L"启用翻转模型需要" );
         rb.srgb_stripped = true;
         break;
     }

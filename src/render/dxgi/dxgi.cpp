@@ -4472,13 +4472,13 @@ DXGISwap3_ResizeBuffers1_Override (IDXGISwapChain3* This,
       case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
         NewFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
         dll_log->Log ( L"[ DXGI 1.2 ]  >> sRGB (B8G8R8A8) Override "
-                       L"Required to Enable Flip Model" );
+                       L"启用翻转模型需要" );
         rb.srgb_stripped = true;
         break;
       case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
         NewFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
         dll_log->Log ( L"[ DXGI 1.2 ]  >> sRGB (R8G8B8A8) Override "
-                       L"Required to Enable Flip Model" );
+                       L"启用翻转模型需要" );
         rb.srgb_stripped = true;
         break;
     }
@@ -5118,7 +5118,7 @@ SK_DXGI_CreateSwapChain_PreInit (
         {
           case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
             SK_LOGs0 ( L" DXGI 1.2 ",
-                       L" >> sRGB (B8G8R8A8) Override Required to Enable Flip Model" );
+                       L" >> sRGB (B8G8R8A8) 启用翻转模型需要覆盖" );
             rb.srgb_stripped                 = true;
             rb.active_traits.bOriginallysRGB = true;
             pDesc->BufferDesc.Format         = DXGI_FORMAT_R10G10B10A2_UNORM;
@@ -5129,7 +5129,7 @@ SK_DXGI_CreateSwapChain_PreInit (
             break;
           case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
             SK_LOGs0 ( L" DXGI 1.2 ",
-                       L" >> sRGB (R8G8B8A8) Override Required to Enable Flip Model" );
+                       L" >> sRGB (R8G8B8A8) 启用翻转模型需要覆盖" );
 
             rb.srgb_stripped                 = true;
             rb.active_traits.bOriginallysRGB = true;
