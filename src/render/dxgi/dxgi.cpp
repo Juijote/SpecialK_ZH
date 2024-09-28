@@ -2096,7 +2096,7 @@ SK_ImGui_DrawD3D11 (IDXGISwapChain* This)
       This->GetDesc (&swapDesc);
 
       if (IsWindow (swapDesc.OutputWindow) &&
-                    swapDesc.OutputWindow != 0)
+                    swapDesc.OutputWindow != game_window.hWnd)
       {
         SK_RunOnce (SK_InstallWindowHook (swapDesc.OutputWindow));
       }
@@ -5121,30 +5121,22 @@ SK_DXGI_CreateSwapChain_PreInit (
                        L" >> sRGB (B8G8R8A8) Override Required to Enable Flip Model" );
             rb.srgb_stripped                 = true;
             rb.active_traits.bOriginallysRGB = true;
-            config.render.output.force_10bpc = true;
-            pDesc->BufferDesc.Format         = DXGI_FORMAT_R8G8B8A8_UNORM;
-            if (config.render.dxgi.srgb_behavior == -2)
-                config.render.dxgi.srgb_behavior = 1;
+            pDesc->BufferDesc.Format         = DXGI_FORMAT_R10G10B10A2_UNORM;
             break;//[[fallthrough]];
           case DXGI_FORMAT_B8G8R8A8_UNORM:
-          case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+          case DXGI_FORMAT_B8G8R8A8_TYPELESS: // WTF? Should be typed...
             pDesc->BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
             break;
           case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-            pDesc->BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
             SK_LOGs0 ( L" DXGI 1.2 ",
                        L" >> sRGB (R8G8B8A8) Override Required to Enable Flip Model" );
 
             rb.srgb_stripped                 = true;
             rb.active_traits.bOriginallysRGB = true;
-            config.render.output.force_10bpc = true;
-            pDesc->BufferDesc.Format         = DXGI_FORMAT_R8G8B8A8_UNORM;
-            if (config.render.dxgi.srgb_behavior == -2)
-                config.render.dxgi.srgb_behavior = 1;
+            pDesc->BufferDesc.Format         = DXGI_FORMAT_R10G10B10A2_UNORM;
             break;//[[fallthrough]];
           case DXGI_FORMAT_R8G8B8A8_UNORM:
-          case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+          case DXGI_FORMAT_R8G8B8A8_TYPELESS: // WTF? Should be typed...
             pDesc->BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
             break;        }
 
@@ -5164,7 +5156,9 @@ SK_DXGI_CreateSwapChain_PreInit (
       if (config.render.output.force_10bpc && (! __SK_HDR_16BitSwap))
       {
         if ( DirectX::MakeTypeless (pDesc->BufferDesc.Format) ==
-             DirectX::MakeTypeless (DXGI_FORMAT_R8G8B8A8_UNORM) )
+             DirectX::MakeTypeless (DXGI_FORMAT_R8G8B8A8_UNORM) || 
+             DirectX::MakeTypeless (pDesc->BufferDesc.Format) ==
+             DirectX::MakeTypeless (DXGI_FORMAT_B8G8R8A8_UNORM) )
         {
           SK_LOGi0 ( L" >> 8-bpc format (%hs) replaced with "
                      L"DXGI_FORMAT_R10G10B10A2_UNORM for 10-bpc override",
@@ -5523,13 +5517,16 @@ SK_DXGI_CreateSwapChain_PostInit (
   _In_  DXGI_SWAP_CHAIN_DESC  *pDesc,
   _In_  IDXGISwapChain       **ppSwapChain )
 {
+  SK_ReleaseAssert (pDesc != nullptr);
+
+  if (pDesc == nullptr)
+    return;
+
   SK_RenderBackend& rb =
     SK_GetCurrentRenderBackend ();
 
-  wchar_t wszClass [MAX_PATH + 2] = { };
-
-  if (pDesc != nullptr)
-    RealGetWindowClassW (pDesc->OutputWindow, wszClass, MAX_PATH);
+  wchar_t                                   wszClass [MAX_PATH + 2] = { };
+  RealGetWindowClassW (pDesc->OutputWindow, wszClass, MAX_PATH);
 
   bool dummy_window =
     SK_Win32_IsDummyWindowClass (pDesc->OutputWindow) ||
@@ -5538,11 +5535,11 @@ SK_DXGI_CreateSwapChain_PostInit (
                                ( pDesc->BufferDesc.Width  == 176 &&
                                  pDesc->BufferDesc.Height == 1 );
 
-  if ( (! dummy_window) && pDesc != nullptr
-     )
+  if (! dummy_window)
   {
+    
     HWND hWndDevice = pDesc->OutputWindow;
-    HWND hWndRoot   = GetAncestor (hWndDevice, GA_ROOT);
+    HWND hWndRoot   = GetAncestor (pDesc->OutputWindow, GA_ROOTOWNER);
 
     auto& windows =
       rb.windows;
@@ -5603,28 +5600,13 @@ SK_DXGI_CreateSwapChain_PostInit (
   auto width  = client.right  - client.left;
   auto height = client.bottom - client.top;
 
-  if (pDesc != nullptr)
-  {
-    if (                   pDesc->BufferDesc.Width != 0)
-         SK_SetWindowResX (pDesc->BufferDesc.Width);
-    else SK_SetWindowResX (                  width);
+  if (                   pDesc->BufferDesc.Width != 0)
+       SK_SetWindowResX (pDesc->BufferDesc.Width);
+  else SK_SetWindowResX (                  width);
 
-    if (                   pDesc->BufferDesc.Height != 0)
-         SK_SetWindowResY (pDesc->BufferDesc.Height);
-    else SK_SetWindowResY (                  height);
-  }
-
-  else
-  {
-    if (width > 0 && height > 0)
-    {
-      SK_SetWindowResX (width);
-      SK_SetWindowResY (height);
-    }
-
-    // Should never happen under normal circumstances
-    SK_ReleaseAssert (width > 0 && height > 0);
-  }
+  if (                   pDesc->BufferDesc.Height != 0)
+       SK_SetWindowResY (pDesc->BufferDesc.Height);
+  else SK_SetWindowResY (                  height);
 
   if (  ppSwapChain != nullptr &&
        *ppSwapChain != nullptr )
@@ -5658,8 +5640,7 @@ SK_DXGI_CreateSwapChain_PostInit (
   {
     g_pD3D11Dev = pDev;
 
-    if (pDesc != nullptr)
-      rb.fullscreen_exclusive = (! pDesc->Windowed);
+    rb.fullscreen_exclusive = (! pDesc->Windowed);
   }
 
   if (rb.fullscreen_exclusive)
@@ -6208,6 +6189,8 @@ DXGIFactory_CreateSwapChain_Override (
 
     return ret;
   }
+
+  WaitForInitDXGI ();
 
   auto                 orig_desc =  pDesc;
   DXGI_SWAP_CHAIN_DESC new_desc  = *pDesc;
@@ -6878,6 +6861,8 @@ _In_opt_       IDXGIOutput                     *pRestrictToOutput,
 
     return ret;
   }
+
+  WaitForInitDXGI ();
 
   auto& rb =
     SK_GetCurrentRenderBackend ();
