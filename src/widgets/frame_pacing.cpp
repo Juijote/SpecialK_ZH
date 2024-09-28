@@ -1014,18 +1014,18 @@ SK_ImGui_DrawGraph_FramePacing (void)
       if (! config.compatibility.using_wine)
       {
         ImGui::TextUnformatted (
-          "Presentation Model Unknown  (Full SK Install is Required)"
+          "演示模型未知（需要完整的 SK 安装）"
         );
 
         if (ImGui::IsItemHovered ())
         {
           ImGui::BeginTooltip    ();
           ImGui::TextUnformatted (
-            "User Account Permissions Do Not Permit Running PresentMon"
+            "用户帐户权限不允许运行 PresentMon"
           );
           ImGui::Separator       ();
           ImGui::BulletText      (
-            "Refer to SwapChain Presentation Monitor Settings in SKIF"
+            "请参阅 SKIF 中的 SwapChain 演示监视器设置"
           );
           ImGui::EndTooltip      ();
         }
@@ -1034,7 +1034,7 @@ SK_ImGui_DrawGraph_FramePacing (void)
       else
       {
         ImGui::TextUnformatted (
-          "SteamOS  (Presentation 模型未定义)"
+          "SteamOS  (演示模型未定义)"
         );
       }
     }
@@ -1042,14 +1042,13 @@ SK_ImGui_DrawGraph_FramePacing (void)
     else
     {
       ImGui::TextUnformatted (
-        "Presentation Model Tracking Unavailable"
+        "演示模型跟踪不可用"
       );
 
       if (ImGui::IsItemHovered ())
       {
         ImGui::SetTooltip (
-          "Too many applications may be using PresentMon;"
-          " often restarting the game will fix this."
+          "可能有太多应用程序正在使用 PresentMon；通常重启游戏即可解决此问题。"
         );
       }
     }

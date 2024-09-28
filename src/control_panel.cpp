@@ -2430,9 +2430,9 @@ DisplayModeMenu (bool windowed)
       mode      = std::min (std::max (config.render.dxgi.scaling_mode + 1, 0), 3);
       orig_mode = mode;
 
-      modes = "Application Preference\0Unspecified\0Centered\0Stretched\0\0";
+      modes = "应用偏好\0未指定\0居中\0拉伸\0\0";
 
-      if (ImGui::Combo ("Scaling Mode###SubMenu_DisplayScaling_Combo", &mode, modes, 4) && mode != orig_mode)
+      if (ImGui::Combo ("缩放模式###SubMenu_DisplayScaling_Combo", &mode, modes, 4) && mode != orig_mode)
       {
         switch (mode)
         {
@@ -2458,10 +2458,9 @@ DisplayModeMenu (bool windowed)
       if (ImGui::IsItemHovered ())
       {
         ImGui::BeginTooltip ( );
-        ImGui::Text         ( "Override Scaling Mode" );
+        ImGui::Text         ( "覆盖缩放模式" );
         ImGui::Separator    ( );
-        ImGui::BulletText   ( "Set to Unspecified to CORRECTLY run "
-                              "Fullscreen Display Native Resolution" );
+        ImGui::BulletText   ( "设置为“未指定”以正确运行全屏显示本机分辨率" );
         ImGui::EndTooltip   ( );
       }
 
@@ -2640,7 +2639,7 @@ DisplayModeMenu (bool windowed)
           {
             if ( encoding.first == NV_COLOR_FORMAT_AUTO && encoding.second == NV_BPC_DEFAULT )
             {
-              nv_color_combo += "Driver Default\0";
+              nv_color_combo += "驱动程序默认值\0";
                              ++ idx_cnt;
             }
 
@@ -2717,7 +2716,7 @@ DisplayModeMenu (bool windowed)
           {
             int idx = 1;
 
-            combo_str += "No Override";
+            combo_str += "无覆盖";
             combo_str += '\0';
 
             for ( auto& dxgi_mode : dxgi_modes )
@@ -2797,7 +2796,7 @@ DisplayModeMenu (bool windowed)
         ( current_item == -1 ? 0 : current_item );
 
       bool refresh_change =
-        ImGui::Combo ( "Refresh Rate###SubMenu_RefreshRate_Combo",
+        ImGui::Combo ( "刷新率###SubMenu_RefreshRate_Combo",
                          &rel_item, combo_str.c_str () );
 
       if (refresh_change)
@@ -2852,7 +2851,7 @@ DisplayModeMenu (bool windowed)
 
       if (! nv_color_encodings.empty ())
       {
-        if ( ImGui::Combo ( "Color Encoding###SubMenu_HDREncode_Combo",
+        if ( ImGui::Combo ( "颜色编码###SubMenu_HDREncode_Combo",
                               &nv_color_idx,
                                nv_color_combo.c_str    (),
                           sk::narrow_cast <int> (

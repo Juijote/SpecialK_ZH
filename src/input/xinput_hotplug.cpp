@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -229,7 +210,7 @@ SK_XInput_NotifyDeviceArrival (void)
                         playstation |= wcsstr (wszFileName, L"054c") != nullptr;
                       }
 
-                      SK_LOG0 ( ( L" Device %s:\t%32ws (%s)", arrival ? L"Arrival"
+                      SK_LOG0 ( ( L" 设备 %s:\t%32ws (%s)", arrival ? L"Arrival"
                                                                       : L"Removal",
                                                             wszDeviceName,
                                                             pDev->dbcc_name ),
@@ -352,7 +333,7 @@ SK_XInput_NotifyDeviceArrival (void)
                             {
                               if (controller.vid == SK_HID_VID_SONY)
                               {
-                                SK_LOGi0 (L"SONY Controller with Unknown PID ignored: %ws", wszFileName);
+                                SK_LOGi0 (L"忽略未知 PID 的 Sony 控制器: %ws", wszFileName);
                               }
 
                               return
@@ -393,8 +374,8 @@ SK_XInput_NotifyDeviceArrival (void)
                                 if (num_caps > 2)
                                 {
                                   SK_LOGi0 (
-                                    L"PlayStation Controller has too many button sets (%d);"
-                                    L" will ignore Device=%ws", num_caps, wszFileName
+                                    L"PlayStation 控制器的按钮组过多 (%d);"
+                                    L" 将忽略设备=%ws", num_caps, wszFileName
                                   );
 
                                   return
@@ -627,7 +608,7 @@ SK_XInput_NotifyDeviceArrival (void)
         }
 
         else if (config.system.log_level > 0)
-          SK_ReleaseAssert (! L"Failed to register Window Class!");
+          SK_ReleaseAssert (! L"注册窗口类失败！");
 
         SK_CloseHandle (SK_XInputHot_NotifyEvent);
                         SK_XInputHot_NotifyEvent = 0;
@@ -635,7 +616,7 @@ SK_XInput_NotifyDeviceArrival (void)
         SK_Thread_CloseSelf ();
 
         return 0;
-      }, L"[SK] HID Hotplug Dispatch", (LPVOID)SK_XInputHot_NotifyEvent
+      }, L"[SK] HID 热插拔调度", (LPVOID)SK_XInputHot_NotifyEvent
     );
   });
 }
@@ -692,7 +673,7 @@ void SK_XInput_DeferredStatusChecks (void)
       SK_Thread_CloseSelf ();
 
       return 0;
-    }, L"[SK] XInput Polling Thread")
+    }, L"[SK] XInput 轮询线程")
   );
 
   // Always refresh at the beginning of a frame rather than the end,
@@ -1233,8 +1214,8 @@ RegisterDeviceNotificationW_Detour (
     HRESULT hr =
       StringFromGUID2 (pNotifyFilter->dbcc_classguid, wszGUID, 127);
 
-    SK_LOG0 ( ( L"@ Game registered device notification for GUID: '%s'", wszGUID ),
-                L"Input Mgr." );
+    SK_LOG0 ( ( L"@ GUID 的游戏注册设备通知: '%s'", wszGUID ),
+                L"Input 管理" );
 #endif
 
     // Fix for Watch_Dogs 2 and possibly other games
@@ -1242,7 +1223,7 @@ RegisterDeviceNotificationW_Detour (
     {
       Flags |= DEVICE_NOTIFY_ALL_INTERFACE_CLASSES;
 
-      SK_LOG1 ( (L" >> Fixing Zero GUID used in call to RegisterDeviceNotificationW (...)"),
+      SK_LOG1 ( (L" >> 修复 RegisterDeviceNotificationW 调用中使用的零 GUID (...)"),
                  __SK_SUBSYSTEM__ );
     }
   }
@@ -1284,8 +1265,8 @@ RegisterDeviceNotificationA_Detour (
     HRESULT hr =
       StringFromGUID2 (pNotifyFilter->dbcc_classguid, wszGUID, 127);
 
-    SK_LOG0 ( ( L"@ Game registered device notification for GUID: '%s'", wszGUID ),
-                L"Input Mgr." );
+    SK_LOG0 ( ( L"@ GUID 的游戏注册设备通知: '%s'", wszGUID ),
+                L"Input 管理" );
 #endif
 
     // Fix for Watch_Dogs 2 and possibly other games
@@ -1293,7 +1274,7 @@ RegisterDeviceNotificationA_Detour (
     {
       Flags |= DEVICE_NOTIFY_ALL_INTERFACE_CLASSES;
 
-      SK_LOG1 ( (L" >> Fixing Zero GUID used in call to RegisterDeviceNotificationA (...)"),
+      SK_LOG1 ( (L" >> 修复 RegisterDeviceNotification 调用中使用的零 GUID (...)"),
                  __SK_SUBSYSTEM__ );
     }
   }

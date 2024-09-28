@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -40,7 +21,7 @@ using finish_pfn = void (WINAPI *)(void);
 
 
 #define DINPUT8_CALL(_Ret, _Call) {                                      \
-  dll_log->LogEx (true, L"[   Input  ]  Calling original function: ");   \
+  dll_log->LogEx (true, L"[   Input  ]  调用原函数: ");   \
   (_Ret) = (_Call);                                                      \
   _com_error err ((_Ret));                                               \
   if ((_Ret) != S_OK)                                                    \
@@ -251,7 +232,7 @@ SK_BootDI8 (void)
         (SK_GetDLLRole () & DLL_ROLE::DInput8) ?
               backend_dll : SK_Modules->LoadLibraryLL (L"dinput8.dll");
 
-      dll_log->Log (L"[ DInput 8 ] Importing DirectInput8Create....");
+      dll_log->Log (L"[ DInput 8 ] 导入 DirectInput8Create....");
       dll_log->Log (L"[ DInput 8 ] ================================");
 
       if (! _wcsicmp (SK_GetModuleName (SK_GetDLL ()).c_str (), L"dinput8.dll"))
@@ -1753,7 +1734,7 @@ DI8_CallbackEnumDevicesA (LPCDIDEVICEINSTANCEA dev_inst, LPVOID pUser)
   //  return TRUE;
   //}
 
-  if (StrStrIA (dev_inst->tszProductName, "Controller (XBOX 360 For Windows)"))
+  if (StrStrIA (dev_inst->tszProductName, "控制器 (XBOX 360 For Windows)"))
   {
     OLECHAR wszInstance [128] = { };
     OLECHAR wszProduct  [128] = { };
@@ -1796,7 +1777,7 @@ DI8_CallbackEnumDevicesW (LPCDIDEVICEINSTANCEW dev_inst, LPVOID pUser)
   //  return TRUE;
   //}
 
-  if (StrStrIW (dev_inst->tszProductName, L"Controller (XBOX 360 For Windows)"))
+  if (StrStrIW (dev_inst->tszProductName, L"控制器 (XBOX 360 For Windows)"))
   {
     OLECHAR wszInstance [128] = { };
     OLECHAR wszProduct  [128] = { };
@@ -1847,8 +1828,8 @@ IDirectInput8A_EnumDevices_Detour ( IDirectInput8A*          This,
                       SK_GUIDFromStringW (L"{028E045E-0000-0000-0000-504944564944}", &dev_inst.guidProduct);
 
                       dev_inst.dwDevType  = 66069;
-              strcpy (dev_inst.tszInstanceName, "Controller (XBOX 360 For Windows)");
-              strcpy (dev_inst.tszProductName,  "Controller (XBOX 360 For Windows)");
+              strcpy (dev_inst.tszInstanceName, "控制器 (XBOX 360 For Windows)");
+              strcpy (dev_inst.tszProductName,  "控制器 (XBOX 360 For Windows)");
                       dev_inst.wUsage     = 5;
                       dev_inst.wUsagePage = 1;
 
@@ -1889,8 +1870,8 @@ IDirectInput8W_EnumDevices_Detour ( IDirectInput8W*          This,
                       SK_GUIDFromStringW (L"{028E045E-0000-0000-0000-504944564944}", &dev_inst.guidProduct);
 
                       dev_inst.dwDevType  = 66069;
-              wcscpy (dev_inst.tszInstanceName, L"Controller (XBOX 360 For Windows)");
-              wcscpy (dev_inst.tszProductName,  L"Controller (XBOX 360 For Windows)");
+              wcscpy (dev_inst.tszInstanceName, L"控制器 (XBOX 360 For Windows)");
+              wcscpy (dev_inst.tszProductName,  L"控制器 (XBOX 360 For Windows)");
                       dev_inst.wUsage     = 5;
                       dev_inst.wUsagePage = 1;
 
@@ -1932,7 +1913,7 @@ SK_Input_HookDI8 (void)
         return;
       }
 
-      SK_LOG0 ( ( L"Game uses DirectInput 8, installing input hooks..." ),
+      SK_LOG0 ( ( L"游戏使用 DirectInput 8，安装输入挂钩..." ),
                     L"  Input   " );
 
       //HMODULE hBackend =

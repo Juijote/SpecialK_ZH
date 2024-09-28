@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// 汉化相关
+
+#pragma once
 
 #include <mmsystem.h>
 #include <Windows.h>
@@ -262,8 +264,8 @@ SK_ImGui_ProcessRawInput ( _In_      HRAWINPUT hRawInput,
 
   if ( pRawCtx->cached_input.hRawInput == hRawInput )
   {
-    SK_LOGs1 (     L" RawInput ",
-      L"Cache Hit for RawInput Handle %p (on tid=%x)",
+    SK_LOGs1 (     L" 原始输入 ",
+      L"RawInput 句柄 %p 的缓存命中（在 tid=%x 上）",
                      hRawInput, GetCurrentThreadId () );
 
     switch (uiCommand)
@@ -352,8 +354,8 @@ SK_ImGui_ProcessRawInput ( _In_      HRAWINPUT hRawInput,
         }
       }
 
-      SK_LOGs1 (      L" RawInput ",
-        L"Cache Miss for RawInput Handle %p (on tid=%x)",
+      SK_LOGs1 (      L" 原始输入 ",
+        L"RawInput 句柄 %p 的缓存未命中（在 tid=%x 上）",
                         hRawInput, GetCurrentThreadId () );
     }
   }
@@ -800,7 +802,7 @@ MessageProc ( const HWND&   hWnd,
         {
           case FAPPCOMMAND_KEY:
           {
-            OutputDebugStringW (L"WM_APPCOMMAND Keyboard Event");
+            OutputDebugStringW (L"WM_APPCOMMAND 键盘事件");
 
             //if (SK_ImGui_WantKeyboardCapture ())
             //{
@@ -813,11 +815,11 @@ MessageProc ( const HWND&   hWnd,
           {
             if (SK_ImGui_WantMouseCapture ())
             {
-              OutputDebugStringW (L"Removed WM_APPCOMMAND Mouse Event");
+              OutputDebugStringW (L"删除 WM_APPCOMMAND 鼠标事件");
               return true;
             }
 
-            OutputDebugStringW (L"WM_APPCOMMAND Mouse Event");
+            OutputDebugStringW (L"WM_APPCOMMAND 鼠标事件");
 
             LPARAM dwPos = static_cast <LPARAM> (GetMessagePos ());
             LONG   lRet  = SK_ImGui_DeltaTestMouse (
@@ -826,7 +828,7 @@ MessageProc ( const HWND&   hWnd,
 
             if (lRet >= 0)
             {
-              OutputDebugStringW (L"Removed WM_APPCOMMAND Mouse Delta Failure");
+              OutputDebugStringW (L"删除 WM_APPCOMMAND 鼠标增量故障");
               return true;
             }
           } break;
@@ -1489,13 +1491,13 @@ ImGui_WndProcHandler ( HWND   hWnd,   UINT   msg,
               {
                 if (arrival)
                 {
-                  SK_LOG0 ( ( L" (Input Device Connected)" ),
+                  SK_LOG0 ( ( L" (输入设备已连接）" ),
                               L"XInput_Hot" );
                 }
 
                 else
                 {
-                  SK_LOG0 ( ( L" (Input Device Disconnected)" ),
+                  SK_LOG0 ( ( L" (输入设备已断开)" ),
                               L"XInput_Hot" );
                 }
 
@@ -3300,7 +3302,7 @@ SK_ImGui_User_NewFrame (void)
 #define SK_LOG_ONCE(expr,src) \
           SK_LOG_ONCE_N(0,expr,src);
 
-        SK_LOG_ONCE ( ( L"Mouse input appears to be inconsistent..." ),
+        SK_LOG_ONCE ( ( L"鼠标输入似乎不一致..." ),
                         L"Win32Input" );
 #endif
 

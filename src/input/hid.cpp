@@ -1,23 +1,4 @@
-﻿/**
- * This file is part of Special K.
- *
- * Special K is free software : you can redistribute it
- * and/or modify it under the terms of the GNU General Public License
- * as published by The Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * Special K is distributed in the hope that it will be useful,
- *
- * But WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Special K.
- *
- *   If not, see <http://www.gnu.org/licenses/>.
- *
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 
@@ -157,7 +138,7 @@ SK_HID_DeviceFile::SK_HID_DeviceFile (HANDLE file, const wchar_t *wszPath)
                 GetCurrentProcess (), &hFile,
                   0x0, FALSE, DUPLICATE_SAME_ACCESS ) )
         {
-          SK_LOGi0 (L"Failed to duplicate handle for HID device: %ws!", lpFileName);
+          SK_LOGi0 (L"无法复制 HID 设备的句柄: %ws!", lpFileName);
           return;
         }
 #else
@@ -235,11 +216,11 @@ SK_HID_DeviceFile::SK_HID_DeviceFile (HANDLE file, const wchar_t *wszPath)
                      wszManufacturerName,
                      wszProductName, device_vid,
                                      device_pid, ulBuffers ).c_str () :
-                  SK_FormatString ("Generic Driver: %ws\r\n\tVID: 0x%04x | PID: 0x%04x\r\n"
+                  SK_FormatString ("通用驱动程序: %ws\r\n\tVID: 0x%04x | PID: 0x%04x\r\n"
                                    "\t[Driver Buffers: %d]",
                      wszProductName, device_vid,
                                      device_pid, ulBuffers ).c_str (),
-                "HID Compliant Gamepad Connected", 10000
+                "已连接符合 HID 标准的游戏控制器", 10000
               );
             } break;
 
@@ -299,7 +280,7 @@ SK_HID_DeviceFile::SK_HID_DeviceFile (HANDLE file, const wchar_t *wszPath)
               SK_ImGui_Warning (wszSerialNumber);
 
               SK_LOGi1 (
-                L"Unknown HID Device Type (Product=%ws):  UsagePage=%x, Usage=%x",
+                L"未知的 HID 设备类型 (Product=%ws):  UsagePage=%x, Usage=%x",
                   wszProductName, hidpCaps.UsagePage, hidpCaps.Usage
               );
             }
@@ -341,9 +322,9 @@ SK_HID_DeviceFile::setBufferCount (DWORD dwBuffers)
   if (dwBuffers < 2)
   {
     SK_LOGi0 (
-      L"Invalid Buffer Count (%u) passed to "
+      L"传递到的无效缓冲区计数 (%u) "
       L"SK_HID_DeviceFile::setBufferCount (...); "
-      L"Using minimum supported value (2) instead.",
+      L"使用最小支持值 (2) 代替。",
       dwBuffers
     );
 

@@ -192,13 +192,13 @@ SK_ImGui_DrawTexCache_Chart (void)
 
         ImGui::BeginGroup ();
         if (fully_resident != 0)
-          ImGui::TextColored (ImColor (0.3f, 0.78f, 0.3f),   "%d Textures in VRAM\t",          fully_resident);
+          ImGui::TextColored (ImColor (0.3f, 0.78f, 0.3f),   "%d 显存中的纹理\t",          fully_resident);
 
         if (shared_memory != 0)
-          ImGui::TextColored (ImColor (0.78f, 0.78f, 0.55f), "%d Textures in Shared Memory\t", shared_memory);
+          ImGui::TextColored (ImColor (0.78f, 0.78f, 0.55f), "%d 共享内存中的纹理\t", shared_memory);
 
         if (on_disk != 0)
-          ImGui::TextColored (ImColor (0.78f, 0.3f, 0.3f),   "%d Textures Paged to Disk\t",    on_disk);
+          ImGui::TextColored (ImColor (0.78f, 0.3f, 0.3f),   "%d 纹理分页到磁盘\t",    on_disk);
         ImGui::EndGroup ();
 
         ImGui::SameLine ();
@@ -454,27 +454,27 @@ SK::ControlPanel::D3D11::Draw (void)
             const bool gdeflate_gpu_fallback =
               (gdeflate_support & DSTORAGE_COMPRESSION_SUPPORT_GPU_FALLBACK) != 0;
             ImGui::Text     (
-              "%hs, using %hs",
-                ( gdeflate_cpu_fallback ? "CPU Fallback"
+              "%hs, 使用 %hs",
+                ( gdeflate_cpu_fallback ? "CPU 回退"
                                         :
-                  gdeflate_gpu_fallback ? "GPU Fallback"
-                                        : "GPU Optimized" ),
+                  gdeflate_gpu_fallback ? "GPU 回退"
+                                        : "GPU 优化" ),
                     (gdeflate_support & DSTORAGE_COMPRESSION_SUPPORT_USES_COMPUTE_QUEUE) != 0 ?
-                                          "Compute Queue"
-                                        : "Copy Queue"
+                                          "计算队列"
+                                        : "复制队列"
             );
           }
           ImGui::
-            TextUnformatted ( SK_DStorage_IsUsingGDeflate () ? "Yes"
-                                                             : "No" );
+            TextUnformatted ( SK_DStorage_IsUsingGDeflate () ? "是"
+                                                             : "否" );
           ImGui::EndGroup   ();
 
 #if 0
           ImGui::BeginGroup ();
           ImGui::
-            TextUnformatted ("IO Request Submit Threads: ");
+            TextUnformatted ("IO 请求提交线程: ");
           ImGui::
-            TextUnformatted ("CPU Decompression Threads: ");
+            TextUnformatted ("CPU 解压线程: ");
           ImGui::EndGroup   ();
           ImGui::SameLine   ();
           ImGui::BeginGroup ();
@@ -485,7 +485,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
           if (SK_GetCurrentGameID () == SK_GAME_ID::RatchetAndClank_RiftApart)
           {
-            if (ImGui::TreeNode ("Priorities (Ratchet and Clank)"))
+            if (ImGui::TreeNode ("优先事项（《瑞奇与叮当》）"))
             {
               auto &dstorage =
                 SK_GetDLLConfig ()->get_section (L"RatchetAndClank.DStorage");
@@ -498,10 +498,10 @@ SK::ControlPanel::D3D11::Draw (void)
                   SK_DStorage_PriorityFromStr (dstorage.get_cvalue (wszKey).c_str ()) + 1;
 
                 bool changed =
-                  ImGui::Combo (szName, &prio, "Low\0Normal\0High\0Realtime\0\0");
+                  ImGui::Combo (szName, &prio, "低于正常\0正常\0高于正常\0实时\0\0");
 
                 if (ImGui::IsItemHovered ())
-                    ImGui::SetTooltip ("A game restart is required to change this...");
+                    ImGui::SetTooltip ("需要重启游戏才能更改此设置...");
 
                 if (changed)
                 {
@@ -529,21 +529,21 @@ SK::ControlPanel::D3D11::Draw (void)
             }
           }
 
-          if (ImGui::TreeNode ("Overrides"))
+          if (ImGui::TreeNode ("覆盖"))
           {
             bool changed = false;
 
             changed |=
-              ImGui::Checkbox ("Disable BypassIO", &config.render.dstorage.disable_bypass_io);
+              ImGui::Checkbox ("禁用 BypassIO", &config.render.dstorage.disable_bypass_io);
 
             changed |=
-              ImGui::Checkbox ("Disable GPU Decompression", &config.render.dstorage.disable_gpu_decomp);
+              ImGui::Checkbox ("禁用 GPU 解压缩", &config.render.dstorage.disable_gpu_decomp);
 
             changed |=
-              ImGui::Checkbox ("Force File Buffering", &config.render.dstorage.force_file_buffering);
+              ImGui::Checkbox ("强制文件缓冲", &config.render.dstorage.force_file_buffering);
 
             changed |=
-              ImGui::Checkbox ("Disable Telemetry", &config.render.dstorage.disable_telemetry);
+              ImGui::Checkbox ("禁用遥测", &config.render.dstorage.disable_telemetry);
 
             if (changed)
               config.utility.save_async ();
@@ -559,9 +559,9 @@ SK::ControlPanel::D3D11::Draw (void)
       auto currentFrame =
         SK_GetFramesDrawn ();
 
-#pragma region "Advanced"
+#pragma region "高级"
       if ( (config.render.dxgi.allow_d3d12_footguns || config.reshade.is_addon) &&
-           ImGui::TreeNode ("Recently Used Shaders")
+           ImGui::TreeNode ("最近使用的着色器")
          )
       {
         static auto constexpr _RECENT_USE_THRESHOLD = 30;
@@ -767,7 +767,7 @@ SK::ControlPanel::D3D11::Draw (void)
       ImGui::TreePush ("");
 
       const bool filtering =
-        ImGui::CollapsingHeader ("Texture Filtering");
+        ImGui::CollapsingHeader ("纹理过滤");
 
       if (filtering)
       {
@@ -775,7 +775,7 @@ SK::ControlPanel::D3D11::Draw (void)
 
         static bool restart_warning = false;
 
-        if (ImGui::Checkbox ("Force Anisotropic Filtering", &config.render.d3d12.force_anisotropic))
+        if (ImGui::Checkbox ("各向异性过滤", &config.render.d3d12.force_anisotropic))
         {
           restart_warning = true;
 
@@ -783,12 +783,12 @@ SK::ControlPanel::D3D11::Draw (void)
         }
 
         if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("Upgrade standard bilinear or trilinear filtering to anisotropic");
+            ImGui::SetTooltip ("将标准双线性或三线性过滤升级为各向异性");
 
         ImGui::SameLine ();
 
-        if (ImGui::SliderInt ("Anistropic Level", &config.render.d3d12.max_anisotropy, -1, 16,
-                                                   config.render.d3d12.max_anisotropy > 0 ? "%dx" : "Game Default"))
+        if (ImGui::SliderInt ("各向异性水平", &config.render.d3d12.max_anisotropy, -1, 16,
+                                                   config.render.d3d12.max_anisotropy > 0 ? "%dx" : "游戏默认"))
         {
           restart_warning = true;
 
@@ -796,11 +796,10 @@ SK::ControlPanel::D3D11::Draw (void)
         }
 
         if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip ("Force maximum anisotropic filtering level, for native anisotropic "
-                               "filtered render passes as well as any forced.");
+            ImGui::SetTooltip ("强制最大各向异性过滤级别，适用于本机各向异性过滤渲染通道以及任何强制。");
 
-        if (ImGui::SliderFloat ("Mipmap LOD Bias", &config.render.d3d12.force_lod_bias, -5.0f, 5.0f,
-                                                    config.render.d3d12.force_lod_bias == 0.0f ? "Game Default" : "%3.2f"))
+        if (ImGui::SliderFloat ("Mipmap LOD 偏差", &config.render.d3d12.force_lod_bias, -5.0f, 5.0f,
+                                                    config.render.d3d12.force_lod_bias == 0.0f ? "游戏默认" : "%3.2f"))
         {
           restart_warning = true;
 
@@ -808,12 +807,12 @@ SK::ControlPanel::D3D11::Draw (void)
         }
 
         if (ImGui::IsItemHovered ())
-            ImGui::SetTooltip    ("Use a small (i.e. -0.6'ish) negative LOD bias to sharpen DLSS and FSR games");
+            ImGui::SetTooltip    ("使用小数值（即 -0.6'ish）负 LOD 偏差来锐化 DLSS 和 FSR 游戏");
 
         if (restart_warning)
         {
           ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
-          ImGui::BulletText     ("Game Restart Required");
+          ImGui::BulletText     ("需要重启游戏");
           ImGui::PopStyleColor  ();
         }
 
