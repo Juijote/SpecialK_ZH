@@ -1332,7 +1332,7 @@ SK::Framerate::Limiter::init (double target, bool _tracks_window)
                            (pDisplay->signal.timing.vsync_freq.Numerator))
     {
 #if 0
-      SK_ImGui_Warning (SK_FormatStringW (L"VSync Freq: %5.2f Hz, HSync Freq: %5.2f kHz",
+      SK_ImGui_Warning (SK_FormatStringW (L"垂直同步频率: %5.2f Hz, HSync Freq: %5.2f kHz",
                                                                              ( static_cast <double> (pDisplay->signal.timing.vsync_freq.Numerator)   /
                                                                                static_cast <double> (pDisplay->signal.timing.vsync_freq.Denominator) ),
                                                                              ( static_cast <double> (pDisplay->signal.timing.hsync_freq.Numerator)   /

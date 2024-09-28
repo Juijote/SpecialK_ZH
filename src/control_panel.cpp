@@ -4823,7 +4823,7 @@ SK_ImGui_ControlPanel (void)
            if (import.role->get_value () != L"PlugIn")
            {
              ImGui::MenuItem (
-               SK_FormatString ( "Third-Party Plug-In:  (%ws)",
+               SK_FormatString ( "第三方插件:  (%ws)",
                                    import.name.c_str () ).c_str (),
                SK_WideCharToUTF8 (
                  import.product_desc
@@ -4834,7 +4834,7 @@ SK_ImGui_ControlPanel (void)
            else
            {
              ImGui::MenuItem (
-               SK_FormatString ( "Official Plug-In:  (%ws)",
+               SK_FormatString ( "官方插件:  (%ws)",
                                    import.name.c_str () ).c_str (),
                SK_WideCharToUTF8 (
                  import.product_desc
