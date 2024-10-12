@@ -1871,6 +1871,23 @@ SK_D3D11_InsertDuplicateFrame (int MakeBreak = 0)
   return E_UNEXPECTED;
 }
 
+// NVIDIA-only feature for now
+//
+void
+SK_Framerate_AutoVRRCheckpoint (void)
+{
+  if (sk::NVAPI::nv_hardware)
+  {
+    // PresentMon is needed to handle these two cases
+    if ((config.render.framerate.auto_low_latency.waiting) ||
+        (config.render.framerate.auto_low_latency.triggered && config.render.framerate.auto_low_latency.policy.auto_reapply))
+    {
+      extern void SK_SpawnPresentMonWorker (void);
+      SK_RunOnce (SK_SpawnPresentMonWorker (); config.apis.NvAPI.implicit_gsync = true;);
+    }
+  }
+}
+
 void
 SK_D3D11_PostPresent (ID3D11Device* pDev, IDXGISwapChain* pSwap, HRESULT hr)
 {
@@ -1882,8 +1899,8 @@ SK_D3D11_PostPresent (ID3D11Device* pDev, IDXGISwapChain* pSwap, HRESULT hr)
     UINT currentBuffer = 0;
 
     bool __WantGSyncUpdate =
-      ( (config.fps.show && config.osd.show ) || SK_ImGui_Visible || std::exchange (config.apis.NvAPI.implicit_gsync, false) || (SK_GetFramesDrawn () < 120 && config.render.framerate.auto_low_latency.waiting) )
-                         && ReadAcquire (&__SK_NVAPI_UpdateGSync) != 0;
+      ( (config.fps.show && config.osd.show ) || SK_ImGui_Visible || config.apis.NvAPI.implicit_gsync || config.render.framerate.auto_low_latency.waiting ) &&
+                                                                 ReadAcquire (&__SK_NVAPI_UpdateGSync) != 0;
 
     if (__WantGSyncUpdate)
     {
@@ -1903,6 +1920,7 @@ SK_D3D11_PostPresent (ID3D11Device* pDev, IDXGISwapChain* pSwap, HRESULT hr)
         {
           rb.gsync_state.update ();
           InterlockedExchange (&__SK_NVAPI_UpdateGSync, FALSE);
+                      config.apis.NvAPI.implicit_gsync = false;
         }
 
         else rb.surface.dxgi = nullptr;
@@ -1914,6 +1932,8 @@ SK_D3D11_PostPresent (ID3D11Device* pDev, IDXGISwapChain* pSwap, HRESULT hr)
     SK_Screenshot_ProcessQueue  (SK_ScreenshotStage::ClipboardOnly, rb);
     SK_Screenshot_ProcessQueue  (SK_ScreenshotStage::_FlushQueue,   rb);
     SK_D3D11_TexCacheCheckpoint (                                     );
+
+    SK_Framerate_AutoVRRCheckpoint ();
 
     if (__SK_BFI)
     {
@@ -1940,6 +1960,8 @@ SK_D3D12_PostPresent (ID3D12Device* pDev, IDXGISwapChain* pSwap, HRESULT hr)
     SK_Screenshot_ProcessQueue  (SK_ScreenshotStage::EndOfFrame,    rb);
     SK_Screenshot_ProcessQueue  (SK_ScreenshotStage::ClipboardOnly, rb);
     SK_Screenshot_ProcessQueue  (SK_ScreenshotStage::_FlushQueue,   rb);
+
+    SK_Framerate_AutoVRRCheckpoint ();
   }
 }
 
@@ -6812,9 +6834,9 @@ _In_opt_       IDXGIOutput                     *pRestrictToOutput,
         );
 
         SK_SetWindowLongPtrW (hWnd, GWL_EXSTYLE, ex_style & ~WS_EX_TOPMOST);
-        SK_SetWindowPos      (hWnd, SK_HWND_TOP, 0, 0, 0, 0,
-                              SWP_NOZORDER | SWP_NOREPOSITION | SWP_NOSIZE |
-                              SWP_NOMOVE   | SWP_NOACTIVATE   | SWP_NOSENDCHANGING);
+
+        if (SK_GetForegroundWindow () == hWnd)
+             SK_RealizeForegroundWindow (hWnd);
       }
     }
   }
@@ -8419,6 +8441,41 @@ SK_HookDXGI (void)
     }
 
     SK_ApplyQueuedHooks ();
+
+
+    static auto _InitDXGIFactoryInterfaces = [&](void)
+    {
+      SK_AutoCOMInit _autocom;
+      SK_ComPtr <IDXGIFactory>                       pFactory;
+      CreateDXGIFactory (IID_IDXGIFactory, (void **)&pFactory.p);
+    };
+
+    // This is going to fail if performed from DllMain
+    if (! SK_TLS_Bottom ()->debug.in_DllMain)
+    {
+      _InitDXGIFactoryInterfaces ();
+    }
+
+    else
+    {
+      // Thus we need to use a secondary thread
+      HANDLE hSecondaryThread =
+        SK_Thread_CreateEx ([](LPVOID)->DWORD
+        {
+          _InitDXGIFactoryInterfaces ();
+
+          return 0;
+        });
+
+      // And ... wait briefly on that thread, the timeout is critical
+      //   because this could deadlock otherwise.
+      if (hSecondaryThread != 0)
+      {
+        WaitForSingleObject (hSecondaryThread, 250UL);
+        SK_CloseHandle      (hSecondaryThread);
+      }
+    }
+    
 
     if (config.apis.dxgi.d3d11.hook)
     {
