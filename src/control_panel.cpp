@@ -792,7 +792,7 @@ SK_ImGui_ControlPanelTitle (void)
   {
     title += "Special K [v ";
     title += SK_GetVersionStrA ();
-    title += "] [Juij 汉化] [2024-09-27]";
+    title += "] [Juij 汉化] [2024-10-12]";
   }
 
   title += "  控制面板";
