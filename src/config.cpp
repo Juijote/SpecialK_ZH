@@ -5456,8 +5456,6 @@ auto DeclKeybind =
   ///  }
   ///}
 
-  steam.screenshots.smart_capture = false; // 由于兼容性问题，汉化版默认禁用 EnableSmartCapture 【汉化修改配置额外添加】
-
 
   SK_Resource_SetRoot (config.textures.d3d11.res_root.c_str ());
 
