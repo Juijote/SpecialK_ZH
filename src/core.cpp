@@ -543,78 +543,6 @@ extern void BasicInit (void);
       SK_Sekiro_InitPlugin ();
       break;
 
-    case SK_GAME_ID::FarCry5:
-    {
-      auto _UnpackEasyAntiCheatBypass = [&](void) ->
-      void
-      {
-        HMODULE hModSelf =
-          SK_GetDLL ();
-
-        HRSRC res =
-          FindResource ( hModSelf, MAKEINTRESOURCE (IDR_FC5_KILL_ANTI_CHEAT), L"7ZIP" );
-
-        if (res)
-        {
-          DWORD   res_size     =
-            SizeofResource ( hModSelf, res );
-
-          HGLOBAL packed_anticheat =
-            LoadResource   ( hModSelf, res );
-
-          if (! packed_anticheat) return;
-
-          const void* const locked =
-            (void *)LockResource (packed_anticheat);
-
-          if (locked != nullptr)
-          {
-            wchar_t      wszBackup      [MAX_PATH + 2] = { };
-            wchar_t      wszArchive     [MAX_PATH + 2] = { };
-            wchar_t      wszDestination [MAX_PATH + 2] = { };
-
-            wcscpy (wszDestination, SK_GetHostPath ());
-
-            if (GetFileAttributesW (wszDestination) == INVALID_FILE_ATTRIBUTES)
-              SK_CreateDirectories (wszDestination);
-
-            PathAppendW (wszDestination, L"EasyAntiCheat");
-            wcscpy      (wszBackup,      wszDestination);
-            PathAppendW (wszBackup,      L"EasyAntiCheat_x64_orig.dll");
-
-            if (GetFileAttributesW (wszBackup) == INVALID_FILE_ATTRIBUTES)
-            {
-              wchar_t      wszBackupSrc [MAX_PATH + 2] = { };
-              wcscpy      (wszBackupSrc, wszDestination);
-              PathAppendW (wszBackupSrc, L"EasyAntiCheat_x64.dll");
-              CopyFileW   (wszBackupSrc, wszBackup, TRUE);
-
-              SK_LOG0 ( ( L"Unpacking EasyAntiCheatDefeat for FarCry 5" ),
-                          L"AntiDefeat" );
-
-              wcscpy      (wszArchive, wszDestination);
-              PathAppendW (wszArchive, L"EasyAntiCheatDefeat.7z");
-
-              FILE* fPackedCompiler =
-                _wfopen   (wszArchive, L"wb");
-
-              if (fPackedCompiler != nullptr)
-              {
-                fwrite    (locked, 1, res_size, fPackedCompiler);
-                fclose    (fPackedCompiler);
-              }
-
-              SK_Decompress7zEx (wszArchive, wszDestination, nullptr);
-              DeleteFileW       (wszArchive);
-            }
-          }
-
-          UnlockResource (packed_anticheat);
-        }
-      };
-
-      _UnpackEasyAntiCheatBypass ();
-    } break;
     case SK_GAME_ID::Ys_Eight:
       SK_YS8_InitPlugin ();
       break;
@@ -637,10 +565,7 @@ extern void BasicInit (void);
       SK_SO2R_InitPlugin ();
       break;
     case SK_GAME_ID::Metaphor:
-      if (config.compatibility.allow_dxdiagn)
-      {
-        SK_Metaphor_InitPlugin ();
-      }
+      SK_Metaphor_InitPlugin ();
       break;
 #else
     case SK_GAME_ID::SecretOfMana:
@@ -2704,6 +2629,49 @@ SK_Log_CleanupLogs (void)
   tex_log->close    ();
 }
 
+bool
+SK_Inject_IsWindowSKIF (HWND hWnd)
+{
+  DWORD                            dwPid = 0x0;
+  GetWindowThreadProcessId (hWnd, &dwPid);
+
+  if (dwPid == 0 ||
+      dwPid == GetCurrentProcessId ())
+  {
+    return false;
+  }
+
+  SK_AutoHandle hProcess (
+    OpenProcess ( PROCESS_QUERY_LIMITED_INFORMATION,
+                    FALSE, dwPid )
+  );
+
+  if (! hProcess.isValid ())
+    return false;
+
+  wchar_t wszImageName [MAX_PATH] = {};
+  DWORD    dwImageNameLen         = MAX_PATH;
+
+  if (QueryFullProcessImageNameW (hProcess, 0, wszImageName, &dwImageNameLen))
+  {
+    bool is_skif =
+      StrStrIW (wszImageName, L"SKIF") != nullptr;
+
+    if (! is_skif)
+    { // Most likely any false positive is SKIV, because it shares window code.
+      SK_RunOnce (
+        SK_LOGs0 ( L"InjectUtil",
+          L"Tested window (%x) belongs to '%ws', NOT SKIF",
+            hWnd, wszImageName );
+      );
+    }
+
+    return is_skif;
+  }
+
+  return false;
+}
+
 void
 SK_Inject_PostHeartbeatToSKIF (void)
 {
@@ -2731,6 +2699,10 @@ SK_Inject_PostHeartbeatToSKIF (void)
   
         if (SK_GetWindowLongPtrW (hWnd, GWL_EXSTYLE) & WS_EX_APPWINDOW)
         {
+          // What we thought was SKIF, is not actually SKIF...?
+          if (! SK_Inject_IsWindowSKIF (hWnd))
+            return TRUE;
+
           // Success, we found the app window!
           hWndSKIF = hWnd;
   
@@ -2749,7 +2721,7 @@ SK_Inject_PostHeartbeatToSKIF (void)
   if (SK_Inject_IsHookActive ()) 
   { // If done only when hook is running, it fixes periodic VRR loss,
     //   but alt-tab can still flicker.
-    if (hWndSKIF != nullptr && IsWindow (hWndSKIF))
+    if (hWndSKIF != game_window.hWnd && IsWindow (hWndSKIF))
     {
       DWORD                                dwPid = 0x0;
       GetWindowThreadProcessId (hWndSKIF, &dwPid);
@@ -2761,13 +2733,18 @@ SK_Inject_PostHeartbeatToSKIF (void)
             dwLastHeartbeat = 0;
         if (dwLastHeartbeat < SK_timeGetTime () - 133)
         {   dwLastHeartbeat = SK_timeGetTime ();
-
-          if (SK_GetForegroundWindow () == hWndSKIF)
+          if ( SK_GetForegroundWindow () == hWndSKIF &&
+                    SK_Inject_IsWindowSKIF (hWndSKIF) )
           {
             // Wake SKIF up and make it redraw
             PostMessage (hWndSKIF, WM_NULL, 0x0, 0x0);
           }
         }
+      }
+
+      else
+      {
+        hWndSKIF = game_window.hWnd;
       }
     }
 
@@ -2817,6 +2794,10 @@ SK_Inject_ReturnToSKIF (void)
   
         if (SK_GetWindowLongPtrW (hWnd, GWL_EXSTYLE) & WS_EX_APPWINDOW)
         {
+          // What we thought was SKIF, is not actually SKIF...?
+          if (! SK_Inject_IsWindowSKIF (hWnd))
+            return TRUE;
+
           // Success, we found the app window!
           hWndExisting = hWnd;
   
@@ -2837,7 +2818,8 @@ SK_Inject_ReturnToSKIF (void)
     GetWindowThreadProcessId (hWndExisting, &dwPid);
   
     if ( dwPid != 0x0 &&
-         dwPid != GetCurrentProcessId () )
+         dwPid != GetCurrentProcessId () &&
+           SK_Inject_IsWindowSKIF (hWndExisting) )
     {
 #define        WM_SKIF_REPOSITION     WM_USER + 0x4096
 constexpr UINT WM_SKIF_EVENT_SIGNAL = WM_USER + 0x3000;
@@ -3748,6 +3730,20 @@ SK_BackgroundRender_EndFrame (void)
   if (            first_frame ||
        (background_last_frame != config.window.background_render) )
   {
+    if (first_frame && ( SK_GetModuleHandleW (L"SDL2.dll") ||
+                         SK_GetModuleHandleW (L"SDL3.dll")) )
+    {
+      if (SK_GetCurrentGameID () == SK_GAME_ID::YsX)
+        config.input.keyboard.override_alt_f4 = true;
+
+      // A few games change the window class name from the default...
+      //   assume that the game uses SDL if one of its DLLs are loaded.
+      SK_GetCurrentRenderBackend ().windows.sdl = true;
+
+      // A more reasonable check might be for a thread named SDL_joystick,
+      //   but that seems to be spawned unpredictably late.
+    }
+
     first_frame = false;
 
     // Does not indicate the window was IN the background, but that it

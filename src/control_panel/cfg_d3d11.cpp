@@ -416,6 +416,66 @@ SK::ControlPanel::D3D11::Draw (void)
         ImGui::TextUnformatted (tracking ? szThreadLocalStr : " ");
       }
       ImGui::PopStyleColor ();
+
+      ImGui::PushStyleColor (ImGuiCol_Header,        ImVec4 (0.90f, 0.68f, 0.02f, 0.45f));
+      ImGui::PushStyleColor (ImGuiCol_HeaderHovered, ImVec4 (0.90f, 0.72f, 0.07f, 0.80f));
+      ImGui::PushStyleColor (ImGuiCol_HeaderActive,  ImVec4 (0.87f, 0.78f, 0.14f, 0.80f));
+      ImGui::TreePush ("");
+
+      const bool filtering =
+        ImGui::CollapsingHeader ("Texture Filtering");
+
+      if (filtering)
+      {
+        ImGui::TreePush ("");
+
+        static bool restart_warning = false;
+
+        if (ImGui::Checkbox ("Force Anisotropic Filtering", &config.render.d3d12.force_anisotropic))
+        {
+          restart_warning = true;
+
+          config.utility.save_async ();
+        }
+
+        if (ImGui::IsItemHovered ())
+            ImGui::SetTooltip ("Upgrade standard bilinear or trilinear filtering to anisotropic");
+
+        ImGui::SameLine ();
+
+        if (ImGui::SliderInt ("Anistropic Level", &config.render.d3d12.max_anisotropy, -1, 16,
+                                                   config.render.d3d12.max_anisotropy > 0 ? "%dx" : "Game Default"))
+        {
+          restart_warning = true;
+
+          config.utility.save_async ();
+        }
+
+        if (ImGui::IsItemHovered ())
+            ImGui::SetTooltip ("Force maximum anisotropic filtering level, for native anisotropic "
+                               "filtered render passes as well as any forced.");
+
+        if (ImGui::SliderFloat ("Mipmap LOD Bias", &config.render.d3d12.force_lod_bias, -5.0f, 5.0f,
+                                                    config.render.d3d12.force_lod_bias == 0.0f ? "Game Default" : "%3.2f"))
+        {
+          restart_warning = true;
+
+          config.utility.save_async ();
+        }
+
+        if (ImGui::IsItemHovered ())
+            ImGui::SetTooltip    ("Use a small (i.e. -0.6'ish) negative LOD bias to sharpen DLSS and FSR games");
+
+        if (restart_warning)
+        {
+          ImGui::PushStyleColor (ImGuiCol_Text, ImColor::HSV (.3f, .8f, .9f).Value);
+          ImGui::BulletText     ("Game Restart Required");
+          ImGui::PopStyleColor  ();
+        }
+
+        ImGui::TreePop     ( );
+      } ImGui::TreePop     ( );
+      ImGui::PopStyleColor (3);
     }
 
     // D3D12
@@ -1386,6 +1446,11 @@ SK::ControlPanel::D3D11::Draw (void)
           bool bClearLog =
             ImGui::Button ("清除日志");
 
+          ImGui::SameLine ();
+
+          static int                         minimum_severity = 2;
+          ImGui::Combo ("Minimum Severity", &minimum_severity, "Corruption\0Error\0Warning\0Info\0Message\0\0");
+
           ImGui::BeginChild (
             ImGui::GetID ("D3 d11 调试面板"),
                   ImVec2 (0.0f, -1.0f),  true,
@@ -1588,7 +1653,8 @@ SK::ControlPanel::D3D11::Draw (void)
               enum _Type {
                 SK_DEBUG_MESSAGE_TYPE_UNKNOWN = 0x0,
                 SK_DEBUG_MESSAGE_TYPE_DXGI    = 0x1,
-                SK_DEBUG_MESSAGE_TYPE_D3D11   = 0x2
+                SK_DEBUG_MESSAGE_TYPE_D3D11   = 0x2,
+                SK_DEBUG_MESSAGE_TYPE_D3D12   = 0x4,
               } Type;
 
               union {
@@ -1604,6 +1670,13 @@ SK::ControlPanel::D3D11::Draw (void)
                   D3D11_MESSAGE_SEVERITY           Severity;
                   D3D11_MESSAGE_ID                 ID;
                 } d3d11;
+                
+                // Not Finished
+                struct SK_D3D12_MESSAGE {
+                  D3D12_MESSAGE_CATEGORY           Category;
+                  D3D12_MESSAGE_SEVERITY           Severity;
+                  D3D12_MESSAGE_ID                 ID;
+                } d3d12;
               };
 
               time_t                               Time;
@@ -1664,6 +1737,11 @@ SK::ControlPanel::D3D11::Draw (void)
                         ( msgIdx, pMsg, &msgLen ) )
                    )
                 {
+                  if (pMsg->Severity > (D3D11_MESSAGE_SEVERITY)minimum_severity)
+                  {
+                    continue;
+                  }
+
                   auto& timestamp =
                     debug_messages.
                       emplace_back (
@@ -1723,6 +1801,11 @@ SK::ControlPanel::D3D11::Draw (void)
                               msgIdx, pMsg, &msgLen ) )
                      )
                   {
+                    if (pMsg->Severity > (DXGI_INFO_QUEUE_MESSAGE_SEVERITY)minimum_severity)
+                    {
+                      continue;
+                    }
+
                     auto& timestamp =
                       debug_messages.
                         emplace_back (
@@ -1777,6 +1860,14 @@ SK::ControlPanel::D3D11::Draw (void)
 
             for ( const auto& debug_message : debug_messages )
             {
+              if ((debug_message.Type           == SK_DEBUG_MESSAGE::_Type::SK_DEBUG_MESSAGE_TYPE_D3D11 &&
+                   debug_message.d3d11.Severity  >           (D3D11_MESSAGE_SEVERITY)minimum_severity)  ||
+                  (debug_message.Type           == SK_DEBUG_MESSAGE::_Type::SK_DEBUG_MESSAGE_TYPE_DXGI  &&
+                   debug_message. dxgi.Severity  > (DXGI_INFO_QUEUE_MESSAGE_SEVERITY)minimum_severity))
+              {
+                continue;
+              }
+
               int message_id = 0;
 
               ImGui::Text        ("%*hs",

@@ -414,6 +414,15 @@ SK::ControlPanel::Window::Draw (void)
       {
         ImGui::SameLine ();
 
+        const bool fake_fullscreen =
+          config.render.dxgi.fake_fullscreen_mode;
+
+        if (fake_fullscreen)
+        {
+          background_render = true;
+          ImGui::BeginDisabled ();
+        }
+
         if ( ImGui::Checkbox ( "继续运行", &background_render ) )
           SK_DeferCommand    ("Window.BackgroundRender toggle");
 
@@ -425,8 +434,15 @@ SK::ControlPanel::Window::Draw (void)
           ImGui::BulletText   ("大多数游戏将继续运行");
           ImGui::BulletText   ("禁用游戏内置的 Alt+Tab 静音功能");
           ImGui::BulletText   ("请参阅“输入管理 | 启用/禁用设备”以设置后台行为");
+          if (fake_fullscreen)
+          {
+            ImGui::Separator  ();
+            ImGui::Text       ("当启用“假全屏”时，此模式始终处于激活状态");
+          }
           ImGui::EndTooltip   ();
         }
+        if (fake_fullscreen)
+          ImGui::EndDisabled  ();
 
         ImGui::SameLine    ();
         ImGui::SeparatorEx (ImGuiSeparatorFlags_Vertical);

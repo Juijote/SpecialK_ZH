@@ -240,7 +240,11 @@ SK_GetCurrentGameID (void)
           { L"Outlaws_Plus.exe",                       SK_GAME_ID::StarWarsOutlaws              },
           { L"shadPS4.exe",                            SK_GAME_ID::ShadPS4                      },
           { L"GoWR.exe",                               SK_GAME_ID::GodOfWarRagnarok             },
-          { L"METAPHOR.exe",                           SK_GAME_ID::Metaphor                     }
+          { L"METAPHOR.exe",                           SK_GAME_ID::Metaphor                     },
+          { L"SONIC_X_SHADOW_GENERATIONS.exe",         SK_GAME_ID::SonicXShadowGenerations      },
+          { L"SONIC_GENERATIONS.exe",                  SK_GAME_ID::SonicGenerations             },
+          { L"BS1R.exe",                               SK_GAME_ID::BrokenSword                  },
+          { L"ysx.exe",                                SK_GAME_ID::YsX                          }
         };
 
     first_check  = false;
@@ -1143,6 +1147,7 @@ struct {
   sk::ParameterBool*      reshade_mode            = nullptr;
   sk::ParameterBool*      fsr3_mode               = nullptr;
   sk::ParameterBool*      allow_fake_streamline   = nullptr;
+  sk::ParameterInt*       sdl_sanity_level        = nullptr;
 } compatibility;
 
 struct {
@@ -1736,6 +1741,7 @@ auto DeclKeybind =
     ConfigEntry (compatibility.reshade_mode,             L"Initializes hooks in a way that ReShade will not interfere",dll_ini,         L"Compatibility.General", L"ReShadeMode"),
     ConfigEntry (compatibility.fsr3_mode,                L"Avoid hooks on CreateSwapChainForHwnd",                     dll_ini,         L"Compatibility.General", L"FSR3Mode"),
     ConfigEntry (compatibility.allow_fake_streamline,    L"Allow invalid stuff, that might let fake DLSS3 mods work.", dll_ini,         L"Compatibility.General", L"AllowFakeStreamline"),
+    ConfigEntry (compatibility.sdl_sanity_level,         L"Set Default (1) or Override (2) SDL input/window behavior.",dll_ini,         L"Compatibility.General", L"SDLSanityLevel"),
 
     ConfigEntry (apis.last_known,                        L"Last Known Render API",                                     dll_ini,         L"API.Hook",              L"LastKnown"),
 
@@ -2900,6 +2906,10 @@ auto DeclKeybind =
 #ifdef _M_AMD64
       case SK_GAME_ID::GenshinImpact:
       {
+        // Work-around anti-cheat
+        config.compatibility.disable_debug_features =  true;
+        config.system.handle_crashes                = false;
+
         // Game requires sRGB Passthrough for proper SDR color
         config.render.dxgi.srgb_behavior = 0;
 
@@ -3649,23 +3659,64 @@ auto DeclKeybind =
         config.apis.NvAPI.vulkan_bridge = 1;
         break;
 
-      case SK_GAME_ID::Metaphor:
-        config.compatibility.init_on_separate_thread  = false;
-        config.input.keyboard.override_alt_f4         = true; // Oh lord, kill that buggy exit confirmation
-        config.render.dxgi.fake_fullscreen_mode       = true;
-        config.display.force_windowed                 = true;
-        config.render.framerate.sleepless_render      = false;
-        config.render.framerate.sleepless_window      = false;
-        config.input.gamepad.xinput.emulate           = true; // XInput-only
-        config.input.gamepad.xinput.disable [1]       = true;
-        config.input.gamepad.xinput.disable [2]       = true;
-        config.input.gamepad.xinput.disable [3]       = true;
-        config.priority.perf_cores_only               = true;
-        config.render.hdr.remaster_8bpc_as_unorm      = true;
-        config.render.hdr.remaster_subnative_as_unorm = true;
+      case SK_GAME_ID::SonicGenerations:
+      case SK_GAME_ID::SonicXShadowGenerations:
+        // Do not enable Sleepless options in this game, it will cause problems
+        config.render.framerate.sleepless_render = false;
+        config.render.framerate.sleepless_window = false;
+        config.textures.d3d11.cache              = false;
+        config.input.cursor.manage               =  true;
+        config.input.cursor.timeout              =   500;
+        break;
 
-        // Scheduling fixes not needed anymore.
-        config.compatibility.allow_dxdiagn            = false;
+      case SK_GAME_ID::BrokenSword:
+        // Has really bad timing code that will cause major frame drops w/o.
+        config.render.framerate.max_delta_time   = 15;
+        break;
+
+      case SK_GAME_ID::Metaphor:
+        config.compatibility.init_on_separate_thread   = false;
+        config.input.keyboard.override_alt_f4          = true; // Oh lord, kill that buggy exit confirmation
+        config.render.dxgi.fake_fullscreen_mode        = true;
+        config.window.always_on_top                    = SmartAlwaysOnTop;
+        config.window.borderless                       = true;
+        config.window.fullscreen                       = true;
+        config.display.force_windowed                  = true;
+        config.render.framerate.sleepless_render       = false;
+        config.render.framerate.sleepless_window       = false;
+        config.input.gamepad.xinput.emulate            = true; // XInput-only
+        config.input.gamepad.xinput.disable [1]        = true;
+        config.input.gamepad.xinput.disable [2]        = true;
+        config.input.gamepad.xinput.disable [3]        = true;
+        config.priority.perf_cores_only                = true;
+        config.render.hdr.remaster_8bpc_as_unorm       = true;
+        config.render.hdr.remaster_subnative_as_unorm  = true;
+        config.input.gamepad.dinput.block_enum_devices = true; // Avoid perf issues
+        config.textures.cache.allow_staging            = true;
+        config.render.dxgi.deferred_isolation          = true; // Needed for correct texture caching on staging uploads
+
+        config.render.d3d12.force_anisotropic          = true;
+        config.render.d3d12.max_anisotropy             =  6UL;
+        config.render.d3d12.force_lod_bias             =-0.001f;
+
+        // Scheduling fixes still needed.
+        config.compatibility.allow_dxdiagn             = true;
+
+        SK_RunOnce
+        (
+          // Auto-load Metaphor Fix if it is present
+          if (PathFileExistsW (L"MetaphorFix.asi")
+              && LoadLibraryW (L"MetaphorFix.asi"))
+          {
+            SK_ImGui_CreateNotification (
+              "PlugIn.Load", SK_ImGui_Toast::Success,
+                 "MetaphorFix.asi",
+                   "Special K Plug-In Loaded",
+                   5000, SK_ImGui_Toast::UseDuration |
+                         SK_ImGui_Toast::ShowCaption |
+                         SK_ImGui_Toast::ShowTitle );
+          }
+        );
         break;
 
       case SK_GAME_ID::DiabloIV:
@@ -3891,6 +3942,7 @@ auto DeclKeybind =
   //
   // Load Parameters
   //
+  compatibility.sdl_sanity_level->load      (config.compatibility.sdl_sanity_level);
   compatibility.allow_fake_streamline->load (config.compatibility.allow_fake_streamline);
   compatibility.fsr3_mode->load             (config.compatibility.fsr3_mode);
   compatibility.reshade_mode->load          (config.compatibility.reshade_mode);
@@ -5850,6 +5902,7 @@ SK_SaveConfig ( std::wstring name,
   compatibility.using_wine->store             (config.compatibility.using_wine);
   compatibility.allow_dxdiagn->store          (config.compatibility.allow_dxdiagn);
   compatibility.allow_fake_streamline->store  (config.compatibility.allow_fake_streamline);
+  compatibility.sdl_sanity_level->store       (config.compatibility.sdl_sanity_level);
 
 #ifdef _M_IX86
   compatibility.auto_large_address->store     (config.compatibility.auto_large_address_patch);

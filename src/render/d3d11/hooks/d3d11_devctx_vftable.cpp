@@ -1516,7 +1516,11 @@ D3D11_CopyResource_Override (
   if (pDstResource == nullptr || pSrcResource == nullptr)
     return;
 
-  if (! SK_D3D11_IgnoreWrappedOrDeferred (FALSE, SK_D3D11_IsDevCtxDeferred (This), This))
+  ////
+  // This API must be processed, even on deferred contexts, or HDR remastering
+  //   may cause the call to fail.
+  //
+  ////if (! SK_D3D11_IgnoreWrappedOrDeferred (FALSE, SK_D3D11_IsDevCtxDeferred (This), This))
   {
     return
       SK_D3D11_CopyResource_Impl ( This,
@@ -1573,7 +1577,11 @@ D3D11_CopySubresourceRegion_Override (
     return;
   }
 
-  if (! SK_D3D11_IgnoreWrappedOrDeferred (FALSE, SK_D3D11_IsDevCtxDeferred (This), This))
+  ////
+  // This API must be processed, even on deferred contexts, or HDR remastering
+  //   may cause the call to fail.
+  //
+  ////if (! SK_D3D11_IgnoreWrappedOrDeferred (FALSE, SK_D3D11_IsDevCtxDeferred (This), This))
   {
     return
       SK_D3D11_CopySubresourceRegion_Impl (
@@ -1627,7 +1635,11 @@ D3D11_ResolveSubresource_Override (
   if (pDstResource == nullptr || pSrcResource == nullptr)
     return;
 
-  if (! SK_D3D11_IgnoreWrappedOrDeferred (FALSE, SK_D3D11_IsDevCtxDeferred (This), This))
+  ////
+  // This API must be processed, even on deferred contexts, or HDR remastering
+  //   may cause the call to fail.
+  //
+  ////if (! SK_D3D11_IgnoreWrappedOrDeferred (FALSE, SK_D3D11_IsDevCtxDeferred (This), This))
   {
     return
       SK_D3D11_ResolveSubresource_Impl ( This,
@@ -2228,14 +2240,19 @@ D3D11_RSSetViewports_Override (
   );
 }
 
+extern concurrency::concurrent_unordered_set <ID3D11SamplerState *>
+    _SK_D3D11_OverrideSamplers__UserDefinedLODBias,
+    _SK_D3D11_OverrideSamplers__UserDefinedAnisotropy,
+    _SK_D3D11_OverrideSamplers__UserForcedAnisotropic;
+
 void
 WINAPI
 D3D11_PSSetSamplers_Override
 (
-  _In_     ID3D11DeviceContext       *This,
-  _In_     UINT                       StartSlot,
-  _In_     UINT                       NumSamplers,
-  _In_opt_ ID3D11SamplerState *const *ppSamplers )
+  _In_     ID3D11DeviceContext          *This,
+  _In_     UINT                          StartSlot,
+  _In_     UINT                          NumSamplers,
+  _In_opt_ ID3D11SamplerState */*const*/* ppSamplers)
 {
   if (! (SK_D3D11_IsDevCtxDeferred (This)))
   {
@@ -2331,6 +2348,73 @@ D3D11_PSSetSamplers_Override
     }
 #endif
   }
+
+  //
+  // TODO: Make this adjustable in real-time; requires recycling a constant set of override
+  //         samplers...
+  //
+#if 0
+  SK_ComPtr <ID3D11SamplerState> samplers [D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+
+  if (StartSlot + NumSamplers <= D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT)
+  {
+    for (UINT i = 0 ; i < NumSamplers ; ++i)
+    {
+      if ( ppSamplers     != nullptr &&
+           ppSamplers [i] != nullptr )
+      {
+        const bool bUserDefinedLOD =
+          _SK_D3D11_OverrideSamplers__UserDefinedLODBias.count    (ppSamplers [i]),
+                   bUserDefinedAnisotropy =
+          _SK_D3D11_OverrideSamplers__UserDefinedAnisotropy.count (ppSamplers [i]),
+                   bUserForcedAnisotropic =
+          _SK_D3D11_OverrideSamplers__UserForcedAnisotropic.count (ppSamplers [i]);
+  
+        if ( bUserDefinedLOD        ||
+             bUserDefinedAnisotropy ||
+             bUserForcedAnisotropic )
+        {
+          D3D11_SAMPLER_DESC        samplerDesc = { };
+          ppSamplers [i]->GetDesc (&samplerDesc);
+  
+          bool createNew = false;
+  
+          // Check if the sampler desc matches the user's current prefs.
+          if (bUserDefinedAnisotropy && samplerDesc.MaxAnisotropy != (UINT)config.render.d3d12.max_anisotropy)
+          {
+            createNew                 = true;
+            samplerDesc.MaxAnisotropy = config.render.d3d12.max_anisotropy;
+          }
+  
+          if (bUserDefinedLOD && samplerDesc.MipLODBias != config.render.d3d12.force_lod_bias)
+          {
+            createNew              = true;
+            samplerDesc.MipLODBias = config.render.d3d12.force_lod_bias;
+          }
+  
+          ///if (bUserForcedAnisotropic && samplerDesc.Filter != config.render.d3d12.force_lod_bias)
+          ///{
+          ///  // Need MipLOD Bias Adjust...
+          ///}
+  
+          if (createNew)
+          {
+            SK_ComPtr <ID3D11Device>
+                              pDev11;
+            This->GetDevice (&pDev11.p);
+  
+            if (SUCCEEDED (D3D11Dev_CreateSamplerState_Original (pDev11.p, &samplerDesc, &samplers [i].p)))
+            {
+              ppSamplers [i]->AddRef (); // Ensure that the game doesn't release the final reference
+                                         //   to the object we are not going to bind to the dev ctx.
+              ppSamplers [i] = samplers [i];
+            }
+          }
+        }
+      }
+    }
+  }
+#endif
 
   D3D11_PSSetSamplers_Original (
     This, StartSlot,

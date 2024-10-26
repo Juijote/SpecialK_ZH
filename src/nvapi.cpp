@@ -1730,7 +1730,7 @@ NVAPI::InitializeLibrary (const wchar_t* wszAppName)
     GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN, L"nvapi.dll",   &hLib);
 #endif
 
-    if (hLib != nullptr)
+    if (hLib != nullptr && (! SK_IsRunDLLInvocation ()))
     {
       static auto NvAPI_QueryInterface =
         reinterpret_cast <NvAPI_QueryInterface_pfn> (
@@ -2655,9 +2655,9 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
 #define ENABLE_DXVK                   0x00080000
 
 #define OGL_DX_LAYERED_PRESENT_ID     0x20D690F8
-#define OGL_DX_LAYERED_PRESENT_AUTO   0x00000000
+#define OGL_DX_LAYERED_PRESENT_NATIVE 0x00000000
 #define OGL_DX_LAYERED_PRESENT_DXGI   0x00000001
-#define OGL_DX_LAYERED_PRESENT_NATIVE 0x00000002
+#define OGL_DX_LAYERED_PRESENT_AUTO   0x00000002
 
   static constexpr int uiOptimalInteropFlags =
     ( DISABLE_FULLSCREEN_OPT      | ENABLE_DFLIP_ALWAYS     |
@@ -2773,11 +2773,14 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
     bEnable ? OGL_DX_LAYERED_PRESENT_DXGI
             : OGL_DX_LAYERED_PRESENT_NATIVE;
 
+  bool bPendingChanges = false;
+
   if (ogl_dx_present_layer_val.u32CurrentValue != dwLayeredPresent)
   {
     NVAPI_SET_DWORD (ogl_dx_present_layer_val,         OGL_DX_LAYERED_PRESENT_ID, dwLayeredPresent);
     NVAPI_CALL    (DRS_SetSetting (hSession, hProfile, &ogl_dx_present_layer_val));
 
+    bPendingChanges  = true;
     bRestartRequired = true;
   }
 
@@ -2788,7 +2791,9 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
       if ((ogl_dx_present_debug_val.u32CurrentValue & (uiOptimalInteropFlags))
                                                    != (uiOptimalInteropFlags))
       {
-        NVAPI_CALL (DRS_SaveSettings   (hSession));
+        if (bPendingChanges)
+          NVAPI_CALL (DRS_SaveSettings (hSession));
+
         NVAPI_CALL (DRS_DestroySession (hSession));
 
         std::wstring wszCommand =
@@ -2805,7 +2810,7 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
                                L"NVIDIA Vulkan/DXGI Layer Setup", MB_OKCANCEL | MB_ICONINFORMATION )
            )
         {
-          SK_ElevateToAdmin (wszCommand.c_str ());
+          SK_ElevateToAdmin (wszCommand.c_str (), false);
           bRestartRequired = true;
         }
 
@@ -2819,7 +2824,9 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
       if ((ogl_dx_present_debug_val.u32CurrentValue & ENABLE_DXVK)
                                                    == ENABLE_DXVK)
       {
-        NVAPI_CALL (DRS_SaveSettings   (hSession));
+        if (bPendingChanges)
+          NVAPI_CALL (DRS_SaveSettings (hSession));
+
         NVAPI_CALL (DRS_DestroySession (hSession));
 
         std::wstring wszCommand =
@@ -2836,7 +2843,7 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
                                L"NVIDIA Vulkan/DXGI Layer Setup", MB_OKCANCEL | MB_ICONINFORMATION )
            )
         {
-          SK_ElevateToAdmin (wszCommand.c_str ());
+          SK_ElevateToAdmin (wszCommand.c_str (), false);
           bRestartRequired = true;
         }
 
@@ -2849,16 +2856,23 @@ BOOL SK_NvAPI_EnableVulkanBridge (BOOL bEnable)
   // Highly unlikely that we'll ever reach this point... don't run games as admin! :P
   if (SK_IsAdmin ())
   {
-    NVAPI_SET_DWORD (ogl_dx_present_debug_val,         OGL_DX_PRESENT_DEBUG_ID,
-                                             bEnable ? ogl_dx_present_debug_val.u32CurrentValue |
-                                                        uiOptimalInteropFlags
-                                                     : ogl_dx_present_debug_val.u32CurrentValue &
-                                                      (~ENABLE_DXVK));
-    NVAPI_CALL   (DRS_SetSetting (hSession, hProfile, &ogl_dx_present_debug_val));
+    auto new_val =
+      bEnable ? ogl_dx_present_debug_val.u32CurrentValue |
+                 uiOptimalInteropFlags
+              : ogl_dx_present_debug_val.u32CurrentValue &
+               (~ENABLE_DXVK);
+      
+    NVAPI_SET_DWORD (ogl_dx_present_debug_val,    OGL_DX_PRESENT_DEBUG_ID, new_val);
+    NVAPI_CALL      (DRS_SetSetting (hSession, hProfile, &ogl_dx_present_debug_val));
+
+    if (ogl_dx_present_debug_val.u32CurrentValue != new_val)
+      bPendingChanges = true;
   }
   NVAPI_VERBOSE ();
 
-  NVAPI_CALL (DRS_SaveSettings   (hSession));
+  if (bPendingChanges)
+    NVAPI_CALL (DRS_SaveSettings (hSession));
+
   NVAPI_CALL (DRS_DestroySession (hSession));
 
   if (bRestartRequired)

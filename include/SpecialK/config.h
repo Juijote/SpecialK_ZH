@@ -1011,7 +1011,7 @@ struct sk_config_t
 
   struct input_s {
     struct cursor_s {
-      bool    gamepad_deactivates =  false;
+      bool    gamepad_deactivates =   true;
       bool    keys_activate       =  false;
       bool    manage              =  false;
       int     timeout             = 1500UL;
@@ -1178,7 +1178,7 @@ struct sk_config_t
                      x.percent  > -0.00001F && x.percent   < 0.00001F &&
                      y.percent  > -0.00001F && y.percent   < 0.00001F; }
     } offset;
-    int     always_on_top       = NoPreferenceOnTop;
+    int     always_on_top       = SmartAlwaysOnTop;//NoPreferenceOnTop;
     bool    background_render   = false;
     bool    background_mute     = false;
     bool    confine_cursor      = false;
@@ -1226,6 +1226,7 @@ struct sk_config_t
     bool     reshade_mode             = false;
     bool     fsr3_mode                = false;
     bool     allow_fake_streamline    =  true;
+    int      sdl_sanity_level         =     1;
   } compatibility;
 
   struct apis_s {
@@ -1669,6 +1670,10 @@ enum class SK_GAME_ID
   ShadPS4,                      // shadPS4.exe
   GodOfWarRagnarok,             // GoWR.exe
   Metaphor,                     // METAPHOR.exe
+  SonicXShadowGenerations,      // SONIC_X_SHADOW_GENERATIONS.exe
+  SonicGenerations,             // SONIC_GENERATIONS.exe
+  BrokenSword,                  // BS1R.exe
+  YsX,                          // YsX.exe
 
   UNKNOWN_GAME               = 0xffff
 };
