@@ -2066,7 +2066,7 @@ auto DeclKeybind =
     ConfigEntry (steam.system.crapcom_mode,              L"Special mode to workaround CAPCOM DRM without memory leaks",dll_ini,         L"Steam.System",          L"BypassCRAPCOM"),
 
     // 此选项是针对每个游戏的，因为它存在潜在的兼容性问题......
-    //ConfigEntry (steam.screenshots.smart_capture,        L"增强的截图速度和 HUD 选项；仅限 D3D11",                       dll_ini,         L"Steam.Screenshots",     L"EnableSmartCapture"),
+    ConfigEntry (steam.screenshots.smart_capture,        L"增强的截图速度和 HUD 选项；仅限 D3D11",                       dll_ini,         L"Steam.Screenshots",     L"EnableSmartCapture"),
     ConfigEntry (screenshots.include_osd_default,        L"Steam 触发的屏幕截图是否应该包含 SK 的 OSD ?",                platform_ini,    L"Steam.Screenshots",     L"DefaultKeybindCapturesOSD"),
 
     ConfigEntry (eos.system.warned_online,               L"用户是否被告知 EOS 不兼容?",                                 dll_ini,         L"Platform.System",       L"WarnedEOSIncompat"),
@@ -5455,6 +5455,8 @@ auto DeclKeybind =
   ///    SK_ImGui_Warning ( L"Executable is not Large Address Aware, disabling Smart Screenshots." );
   ///  }
   ///}
+
+  config.steam.screenshots.smart_capture = false; // 由于兼容性问题，汉化版默认禁用 EnableSmartCapture 【汉化修改配置额外添加】
 
 
   SK_Resource_SetRoot (config.textures.d3d11.res_root.c_str ());
