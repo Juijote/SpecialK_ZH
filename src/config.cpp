@@ -2371,7 +2371,7 @@ auto DeclKeybind =
 
 
   //
-  // Application Compatibility Overrides
+  // 应用程序兼容性覆盖
   // ===================================
   //
   if (SK_GetCurrentGameID () != SK_GAME_ID::UNKNOWN_GAME)
@@ -5456,7 +5456,7 @@ auto DeclKeybind =
   ///  }
   ///}
 
-  config.steam.screenshots.smart_capture = false; // 由于兼容性问题，汉化版默认禁用 EnableSmartCapture 【汉化修改配置额外添加】
+  steam.screenshots.smart_capture = false; // 由于兼容性问题，汉化版默认禁用 EnableSmartCapture 【汉化修改配置额外添加】
 
 
   SK_Resource_SetRoot (config.textures.d3d11.res_root.c_str ());
