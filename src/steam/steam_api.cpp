@@ -1,23 +1,4 @@
-﻿/**
-* This file is part of Special K.
-*
-* Special K is free software : you can redistribute it
-* and/or modify it under the terms of the GNU General Public License
-* as published by The Free Software Foundation, either version 3 of
-* the License, or (at your option) any later version.
-*
-* Special K is distributed in the hope that it will be useful,
-*
-* But WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Special K.
-*
-*   If not, see <http://www.gnu.org/licenses/>.
-*
-**/
+﻿// 汉化相关
 
 #include <SpecialK/stdafx.h>
 #include <SpecialK/storefront/achievements.h>
@@ -3938,8 +3919,7 @@ SK::SteamAPI::TakeScreenshot (SK_ScreenshotStage when, bool allow_sound, std::st
 
     if ( when != SK_ScreenshotStage::EndOfFrame )
     {
-      steam_log->Log (L" >> WARNING: Smart Capture disabled or unsupported"
-                      L"; screenshot taken at end-of-frame.");
+      steam_log->Log (L" >> 警告：智能捕获已禁用或不支持在帧结束时截取的屏幕截图。");
     }
   }
 

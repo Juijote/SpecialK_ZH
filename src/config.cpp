@@ -253,7 +253,7 @@ SK_GetCurrentGameID (void)
                _games, hash_lower (SK_GetHostApp ())
                             );
 
-    // For games that can't be matched using a single executable filename
+    // 对于无法使用单个可执行文件名匹配的游戏
     if (current_game == SK_GAME_ID::UNKNOWN_GAME)
     {
 #ifdef _M_AMD64
@@ -381,7 +381,7 @@ SK_GetCurrentGameID (void)
 
     else
     {
-      // CAPCOM games crash at start if we don't kill this
+      // 如果我们不删除这个，CAPCOM 游戏就会在开始时崩溃
       if (current_game == SK_GAME_ID::CrashReport)
       {
         if (StrStrIW (SK_VerifyTrust_GetCodeSignature (SK_GetHostApp ()).subject.c_str (), L"CAPCOM"))
@@ -1473,7 +1473,7 @@ auto DeclKeybind =
 }
 
   //
-  // Create Parameters
+  // 创建参数
   //
   struct param_decl_s {
            sk::iParameter **parameter_   = nullptr;
@@ -1485,7 +1485,7 @@ auto DeclKeybind =
   };
 
   static const std::initializer_list <param_decl_s> params_to_build
-  //// nb: If you want any hope of reading this table, turn line wrapping off.
+  //// 注意：如果希望阅读此表，请关闭换行。
   //
   {
     ConfigEntry (osd.version_banner.duration,            L"How long to display version info at startup, 0=disable)",   osd_ini,         L"SpecialK.VersionBanner",L"Duration"),
@@ -2032,7 +2032,7 @@ auto DeclKeybind =
     // The one odd-ball Steam achievement setting that can be specified per-game
     ConfigEntry (platform.achievements.sound_file,       L"Achievement Sound File",                                    dll_ini,         L"Platform.Achievements", L"SoundFile"),
 
-    // Steam Achievement Enhancements  (Global Settings)
+    // Steam 成就增强（全局设置）
     //////////////////////////////////////////////////////////////////////////
 
     ConfigEntry (platform.achievements.play_sound,       L"Silence is Bliss?",                                         platform_ini,    L"Platform.Achievements", L"PlaySound"),
@@ -2045,7 +2045,7 @@ auto DeclKeybind =
     ConfigEntry (platform.achievements.popup.inset,      L"Achievement Notification Inset X",                          platform_ini,    L"Platform.Achievements", L"PopupInset"),
     ConfigEntry (platform.achievements.popup.duration,   L"Achievement Popup Duration (in ms)",                        platform_ini,    L"Platform.Achievements", L"PopupDuration"),
 
-    ConfigEntry (platform.system.notify_corner,          L"Overlay Notification Position  (non-Big Picture Mode)",     dll_ini,         L"Platform.System",       L"NotifyCorner"),
+    ConfigEntry (platform.system.notify_corner,          L"叠加通知位置（非大图片模式）",                                dll_ini,         L"Platform.System",       L"NotifyCorner"),
     ConfigEntry (platform.system.reuse_overlay_pause,    L"Pause Overlay Aware games when control panel is visible",   dll_ini,         L"Platform.System",       L"ReuseOverlayPause"),
 
     ConfigEntry (steam.system.appid,                     L"Steam AppID",                                               dll_ini,         L"Steam.System",          L"AppID"),
@@ -2065,21 +2065,21 @@ auto DeclKeybind =
     ConfigEntry (platform.overlay.no_draw,               L"Disable Steam Overlay using 'SteamNoOverlayUIDrawing'",     dll_ini,         L"Steam.System",          L"NoDrawOverlay"),
     ConfigEntry (steam.system.crapcom_mode,              L"Special mode to workaround CAPCOM DRM without memory leaks",dll_ini,         L"Steam.System",          L"BypassCRAPCOM"),
 
-    // This option is per-game, since it has potential compatibility issues...
-    ConfigEntry (steam.screenshots.smart_capture,        L"Enhanced screenshot speed and HUD options; D3D11-only.",    dll_ini,         L"Steam.Screenshots",     L"EnableSmartCapture"),
-    ConfigEntry (screenshots.include_osd_default,        L"Should a screenshot triggered BY Steam include SK's OSD?",  platform_ini,    L"Steam.Screenshots",     L"DefaultKeybindCapturesOSD"),
+    // 此选项是针对每个游戏的，因为它存在潜在的兼容性问题......
+    //ConfigEntry (steam.screenshots.smart_capture,        L"增强的截图速度和 HUD 选项；仅限 D3D11",                       dll_ini,         L"Steam.Screenshots",     L"EnableSmartCapture"),
+    ConfigEntry (screenshots.include_osd_default,        L"Steam 触发的屏幕截图是否应该包含 SK 的 OSD ?",                platform_ini,    L"Steam.Screenshots",     L"DefaultKeybindCapturesOSD"),
 
-    ConfigEntry (eos.system.warned_online,               L"Has user been told about EOS incompatibility?",             dll_ini,         L"Platform.System",       L"WarnedEOSIncompat"),
+    ConfigEntry (eos.system.warned_online,               L"用户是否被告知 EOS 不兼容?",                                 dll_ini,         L"Platform.System",       L"WarnedEOSIncompat"),
 
     // These are all system-wide for all Steam games
-    ConfigEntry (platform.overlay.hdr_luminance,         L"Make the Steam Overlay visible in HDR mode!",               platform_ini,    L"Platform.Overlay",      L"Luminance_scRGB"),
+    ConfigEntry (platform.overlay.hdr_luminance,         L"使 Steam 叠加层在 HDR 模式下可见！",                         platform_ini,    L"Platform.Overlay",      L"Luminance_scRGB"),
 
     // Swashbucklers pay attention
     //////////////////////////////////////////////////////////////////////////
 
-    ConfigEntry (platform.log.silent,                    L"Makes steam_api.log go away [DISABLES STEAMAPI FEATURES]",  dll_ini,         L"Steam.Log",             L"Silent"),
-    ConfigEntry (steam.cloud.blacklist,                  L"CSV list of files to block from cloud sync.",               dll_ini,         L"Steam.Cloud",           L"FilesNotToSync"),
-    ConfigEntry (steam.drm.spoof_BLoggedOn,              L"Fix For Stupid Games That Don't Know How DRM Works",        dll_ini,         L"Steam.DRMWorks",        L"SpoofBLoggedOn"),
+    ConfigEntry (platform.log.silent,                    L"使 steam_api.log 消失 [DISABLED STEAM_API 功能]",            dll_ini,         L"Steam.Log",             L"Silent"),
+    ConfigEntry (steam.cloud.blacklist,                  L"要阻止云同步的 CSV 文件列表",                                 dll_ini,         L"Steam.Cloud",           L"FilesNotToSync"),
+    ConfigEntry (steam.drm.spoof_BLoggedOn,              L"修复不知道 DRM 工作原理的愚蠢游戏（修复绕过离线 DRM）",         dll_ini,         L"Steam.DRMWorks",        L"SpoofBLoggedOn"),
   };
 
 
